@@ -1,11 +1,6 @@
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
 using Microsoft.AspNetCore.Hosting;
-using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Hosting;
-using Microsoft.Extensions.Logging;
+using System;
 
 namespace GrammarNazi.App
 {
@@ -21,6 +16,14 @@ namespace GrammarNazi.App
                 .ConfigureWebHostDefaults(webBuilder =>
                 {
                     webBuilder.UseStartup<Startup>();
+                    webBuilder.UseKestrel((context, options) =>
+                    {
+                        var port = Environment.GetEnvironmentVariable("PORT");
+                        if (!string.IsNullOrEmpty(port))
+                        {
+                            options.ListenAnyIP(int.Parse(port));
+                        }
+                    });
                 });
     }
 }
