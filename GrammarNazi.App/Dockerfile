@@ -4,12 +4,12 @@ FROM mcr.microsoft.com/dotnet/core/aspnet:3.1-buster-slim AS base
 WORKDIR /app
 
 # Copy csproj and restore as distinct layers
-COPY *.csproj ./
-RUN dotnet restore
+COPY ["GrammarNazi.App/GrammarNazi.App.csproj", "GrammarNazi.App/"]
+RUN dotnet restore "GrammarNazi.App/GrammarNazi.App.csproj"
 
 # Copy everything else and build
 COPY . ./
-RUN dotnet publish -c Release -o out
+RUN dotnet publish "GrammarNazi.App.csproj" -c Release -o out
 
 # Build runtime image
 FROM mcr.microsoft.com/dotnet/core/aspnet:3.1
