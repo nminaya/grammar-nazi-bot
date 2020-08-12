@@ -8,7 +8,7 @@ jobs:
      # build image
      - run: |         
          docker info
-         docker build -t aspnetapp -f Dockerfile .
+         docker build -t aspnetapp -f GrammarNazi.App/Dockerfile .
      # deploy the image
      - run: |         
          docker login --username=$HEROKU_USERNAME --password=$HEROKU_API_KEY registry.heroku.com
