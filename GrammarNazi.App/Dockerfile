@@ -20,5 +20,5 @@ RUN dotnet publish "GrammarNazi.App.csproj" -c Release -o out
 # Build runtime image
 FROM mcr.microsoft.com/dotnet/core/aspnet:3.1
 WORKDIR /app
-COPY --from=build-env /app/out .
+COPY --from=build-env /src/out .
 CMD dotnet GrammarNazi.App.dll
