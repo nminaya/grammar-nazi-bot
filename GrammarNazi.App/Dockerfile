@@ -15,10 +15,10 @@ WORKDIR "/src/GrammarNazi.App"
 RUN dotnet build "GrammarNazi.App.csproj" -c Release -o /app/build
 
 FROM build AS publish
-RUN dotnet publish "GrammarNazi.App.csproj" -c Release -o out
+RUN dotnet publish "GrammarNazi.App.csproj" -c Release -o /app/out
 
 # Build runtime image
 FROM mcr.microsoft.com/dotnet/core/aspnet:3.1
 WORKDIR /app
-COPY --from=build-env /src/out .
+COPY --from=build-env /app/out .
 CMD dotnet GrammarNazi.App.dll
