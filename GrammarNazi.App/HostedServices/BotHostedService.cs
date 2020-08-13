@@ -21,18 +21,26 @@ namespace GrammarNazi.App.HostedServices
             var apiKey = Environment.GetEnvironmentVariable("TELEGRAM_API_KEY");
 
             if (string.IsNullOrEmpty(apiKey))
-                throw new Exception("Empty TELEGRAM_API_KEY");
+                throw new InvalidOperationException("Empty TELEGRAM_API_KEY");
 
             _client = new TelegramBotClient(apiKey);
         }
 
         protected override async Task ExecuteAsync(CancellationToken stoppingToken)
         {
-            _client.StartReceiving();
-            _client.OnMessage += BotOnMessage;
-
             _logger.LogInformation("Bot Hosted Service started");
-            await Task.Delay(int.MaxValue, stoppingToken);
+
+            // workaround to maintain app running in server
+            while (!stoppingToken.IsCancellationRequested)
+            {
+                _client.StartReceiving();
+                _client.OnMessage += BotOnMessage;
+
+                await Task.Delay(60_000, stoppingToken);
+                
+                _client.OnMessage -= BotOnMessage;
+                _client.StopReceiving();
+            }
         }
 
         private void BotOnMessage(object sender, MessageEventArgs messageEvent)
