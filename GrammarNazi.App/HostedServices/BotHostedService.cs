@@ -4,6 +4,7 @@ using System;
 using System.Threading;
 using System.Threading.Tasks;
 using Telegram.Bot;
+using Telegram.Bot.Args;
 
 namespace GrammarNazi.App.HostedServices
 {
@@ -11,7 +12,6 @@ namespace GrammarNazi.App.HostedServices
     {
         private readonly ILogger<BotHostedService> _logger;
 
-        // This is for test only. This will be moved to a library
         private readonly TelegramBotClient _client;
 
         public BotHostedService(ILogger<BotHostedService> logger)
@@ -23,22 +23,24 @@ namespace GrammarNazi.App.HostedServices
             if (string.IsNullOrEmpty(apiKey))
                 throw new Exception("Empty TELEGRAM_API_KEY");
 
-            _client = new TelegramBotClient(Environment.GetEnvironmentVariable("TELEGRAM_API_KEY"));
+            _client = new TelegramBotClient(apiKey);
         }
 
         protected override async Task ExecuteAsync(CancellationToken stoppingToken)
         {
             _client.StartReceiving();
-            _client.OnMessage += Client_OnMessage;
+            _client.OnMessage += BotOnMessage;
 
-            _logger.LogWarning("Bot Hosted Service started");
+            _logger.LogInformation("Bot Hosted Service started");
             await Task.Delay(int.MaxValue, stoppingToken);
         }
 
-        private void Client_OnMessage(object sender, Telegram.Bot.Args.MessageEventArgs e)
+        private void BotOnMessage(object sender, MessageEventArgs messageEvent)
         {
-            _logger.LogError($"Message reveived: {e.Message.Text}");
-            _client.SendTextMessageAsync(e.Message.Chat.Id, "Message received");
+            _logger.LogError($"Message reveived: {messageEvent.Message.Text}");
+
+            // Fire and forget for now (It returns a Task, i.e it's awaitable)
+            _client.SendTextMessageAsync(messageEvent.Message.Chat.Id, "Message received");
         }
     }
 }
