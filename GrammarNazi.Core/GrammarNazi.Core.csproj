@@ -5,9 +5,7 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <None Update="Library\words_en-US.txt">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </None>
+    <ProjectReference Include="..\GrammarNazi.Domain\GrammarNazi.Domain.csproj" />
   </ItemGroup>
 
 </Project>

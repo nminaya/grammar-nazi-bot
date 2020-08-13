@@ -10,5 +10,16 @@
     <PackageReference Include="Telegram.Bot" Version="15.7.1" />
   </ItemGroup>
 
+  <ItemGroup>
+    <ProjectReference Include="..\GrammarNazi.Core\GrammarNazi.Core.csproj" />
+    <ProjectReference Include="..\GrammarNazi.Domain\GrammarNazi.Domain.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <None Update="Library\words_en-US.txt">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+  </ItemGroup>
+
 
 </Project>
