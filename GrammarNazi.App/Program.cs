@@ -16,7 +16,7 @@ namespace GrammarNazi.App
                 .ConfigureWebHostDefaults(webBuilder =>
                 {
                     webBuilder.UseStartup<Startup>();
-                    webBuilder.UseKestrel((context, options) =>
+                    webBuilder.UseKestrel((_, options) =>
                     {
                         var port = Environment.GetEnvironmentVariable("PORT");
                         if (!string.IsNullOrEmpty(port))
