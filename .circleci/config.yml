@@ -24,4 +24,4 @@ workflows:
     - build:
         filters:
           branches:
-            only: develop
+            only: master
