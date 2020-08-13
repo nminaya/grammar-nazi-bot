@@ -1,12 +1,10 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Text;
+﻿using GrammarNazi.Domain.Entities;
 using System.Threading.Tasks;
 
 namespace GrammarNazi.Domain.Services
 {
     public interface IGrammarService
     {
-        Task<IEnumerable<string>> GetCorrections(string text);
+        Task<CheckResult> GetCorrections(string text);
     }
 }
