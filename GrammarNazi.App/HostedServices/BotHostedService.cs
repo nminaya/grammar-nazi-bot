@@ -5,13 +5,13 @@ using System.Threading;
 using System.Threading.Tasks;
 using Telegram.Bot;
 using Telegram.Bot.Args;
+using Telegram.Bot.Types.Enums;
 
 namespace GrammarNazi.App.HostedServices
 {
     public class BotHostedService : BackgroundService
     {
         private readonly ILogger<BotHostedService> _logger;
-
         private readonly TelegramBotClient _client;
 
         public BotHostedService(ILogger<BotHostedService> logger)
@@ -30,25 +30,24 @@ namespace GrammarNazi.App.HostedServices
         {
             _logger.LogInformation("Bot Hosted Service started");
 
-            // workaround to maintain app running in server
-            while (!stoppingToken.IsCancellationRequested)
-            {
-                _client.StartReceiving();
-                _client.OnMessage += BotOnMessage;
+            _client.StartReceiving(cancellationToken: stoppingToken);
+            _client.OnMessage += BotOnMessage;
 
-                await Task.Delay(60_000, stoppingToken);
-                
-                _client.OnMessage -= BotOnMessage;
-                _client.StopReceiving();
-            }
+            // Keep hosted service alive while receiving messages
+            await Task.Delay(int.MaxValue, stoppingToken);
         }
 
         private void BotOnMessage(object sender, MessageEventArgs messageEvent)
         {
-            _logger.LogError($"Message reveived: {messageEvent.Message.Text}");
+            _logger.LogInformation($"Message reveived: {messageEvent.Message.Text}");
 
-            // Fire and forget for now (It returns a Task, i.e it's awaitable)
-            _client.SendTextMessageAsync(messageEvent.Message.Chat.Id, "Message received");
+            if (messageEvent.Message.Type == MessageType.Text)
+            {
+                // TODO: Process message text and get the spelling errors with its corrections
+
+                // Fire and forget for now (It returns a Task, i.e it's awaitable)
+                _client.SendTextMessageAsync(messageEvent.Message.Chat.Id, "Message received");
+            }
         }
     }
 }
