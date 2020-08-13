@@ -1,10 +1,9 @@
 version: 2
 jobs:
  build:
-  filters:
-    branches:
-      only:
-        - master  
+  branches:
+    only:
+      - master 
    machine: true
    steps:
      - checkout 
