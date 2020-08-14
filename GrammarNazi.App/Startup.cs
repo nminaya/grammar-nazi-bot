@@ -14,14 +14,13 @@ namespace GrammarNazi.App
 {
     public class Startup
     {
+        public IConfiguration Configuration { get; }
+
         public Startup(IConfiguration configuration)
         {
             Configuration = configuration;
         }
 
-        public IConfiguration Configuration { get; }
-
-        // This method gets called by the runtime. Use this method to add services to the container.
         public void ConfigureServices(IServiceCollection services)
         {
             services.AddControllers();
@@ -31,11 +30,12 @@ namespace GrammarNazi.App
             services.AddSingleton<IFileService, FileService>();
             services.AddSingleton<IStringDiffService, StringDiffService>();
             services.AddTransient<ILanguageToolApiClient, LanguageToolApiClient>();
-            //services.AddTransient<IGrammarService, InternalFileGrammarService>();
             services.AddTransient<IGrammarService, LanguageToolApiService>();
+
+            // Use only LanguageToolApiService for now
+            //services.AddTransient<IGrammarService, InternalFileGrammarService>();
         }
 
-        // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
         public void Configure(IApplicationBuilder app, IWebHostEnvironment env)
         {
             if (env.IsDevelopment())

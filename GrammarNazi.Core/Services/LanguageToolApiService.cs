@@ -16,37 +16,34 @@ namespace GrammarNazi.Core.Services
             _apiClient = apiClient;
         }
 
-        public async Task<CheckResult> GetCorrections(string text)
+        public async Task<GrammarCheckResult> GetCorrections(string text)
         {
-            if (text.Length > 50_000)
+            // Do not evalulate long texts
+            if (text.Length >= 10_000)
             {
-                return new CheckResult();
+                return new GrammarCheckResult(null);
             }
 
             var result = await _apiClient.Check(text);
 
-            var resultErrors = new List<ResultError>();
+            var corrections = new List<GrammarCorrection>();
 
-            // TODO: Refactor
+            // TODO: Remove magic strings
             // Do not get punctuation or uppercase corrections 
             var matches = result.Matches.Where(v => v.Rule.Id != "PUNCTUATION_PARAGRAPH_END" || v.Rule.Id != "UPPERCASE_SENTENCE_START");
 
             foreach (var item in matches)
             {
-                var resultError = new ResultError
+                var correction = new GrammarCorrection
                 {
                     WrongWord = item.Context.Text.Substring(item.Context.Offset, item.Context.Length),
                     PossibleReplacements = item.Replacements.Select(v => v.Value)
                 };
 
-                resultErrors.Add(resultError);
+                corrections.Add(correction);
             }
 
-            return new CheckResult
-            {
-                HasErrors = result.Matches.Any(),
-                ResultErrors = resultErrors
-            };
+            return new GrammarCheckResult(corrections);
         }
     }
 }

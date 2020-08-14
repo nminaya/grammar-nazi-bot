@@ -19,12 +19,12 @@ namespace GrammarNazi.Core.Services
             _stringDiffService = stringDiffService;
         }
 
-        public Task<CheckResult> GetCorrections(string text)
+        public Task<GrammarCheckResult> GetCorrections(string text)
         {
             var dictionary = _fileService.GetTextFileByLine("Library/words_en-US.txt");
             var names = _fileService.GetTextFileByLine("Library/names.txt");
 
-            var resultErros = new List<ResultError>();
+            var corrections = new List<GrammarCorrection>();
 
             var words = text.Split(" ");
 
@@ -37,16 +37,12 @@ namespace GrammarNazi.Core.Services
 
                 if (!wordFound)
                 {
-                    //TODO: Add correct word
-                    resultErros.Add(new ResultError { WrongWord = item });
+                    //TODO: Add possible replacements
+                    corrections.Add(new GrammarCorrection { WrongWord = item });
                 }
             }
 
-            return Task.FromResult(new CheckResult
-            {
-                HasErrors = resultErros.Count > 0,
-                ResultErrors = resultErros
-            });
+            return Task.FromResult(new GrammarCheckResult(corrections));
         }
     }
 }

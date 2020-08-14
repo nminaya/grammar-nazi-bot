@@ -3,6 +3,7 @@ using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using System;
 using System.Linq;
+using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 using Telegram.Bot;
@@ -48,17 +49,18 @@ namespace GrammarNazi.App.HostedServices
             {
                 var result = _grammarService.GetCorrections(messageEvent.Message.Text).GetAwaiter().GetResult();
 
-                if (result.HasErrors)
+                if (result.HasCorrections)
                 {
-                    string message = "";
+                    var messageBuilder = new StringBuilder();
 
-                    foreach (var item in result.ResultErrors)
+                    foreach (var item in result.Corrections)
                     {
-                        message += $"{Environment.NewLine}*{item.PossibleReplacements.FirstOrDefault()}";
+                        // Only suggest the first possible replacement for now
+                        messageBuilder.AppendLine($"*{item.PossibleReplacements.FirstOrDefault()}");
                     }
 
                     // Fire and forget for now (It returns a Task, i.e it's awaitable)
-                    _client.SendTextMessageAsync(messageEvent.Message.Chat.Id, message, replyToMessageId: messageEvent.Message.MessageId);
+                    _client.SendTextMessageAsync(messageEvent.Message.Chat.Id, messageBuilder.ToString(), replyToMessageId: messageEvent.Message.MessageId);
                 }
             }
         }
