@@ -2,6 +2,7 @@
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using System;
+using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using Telegram.Bot;
@@ -49,13 +50,11 @@ namespace GrammarNazi.App.HostedServices
 
                 if (result.HasErrors)
                 {
-                    //TODO: reply with correct word
+                    string message = "";
 
-                    string message = "The following words doesn't exist: ";
-
-                    foreach (var error in result.ResultErrors)
+                    foreach (var item in result.ResultErrors)
                     {
-                        message += $"{Environment.NewLine}    - {error.WrongWord}";
+                        message += $"{Environment.NewLine}*{item.PossibleReplacements.FirstOrDefault()}";
                     }
 
                     // Fire and forget for now (It returns a Task, i.e it's awaitable)

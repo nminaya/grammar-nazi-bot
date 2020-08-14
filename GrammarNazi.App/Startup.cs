@@ -1,5 +1,7 @@
 using GrammarNazi.App.HostedServices;
+using GrammarNazi.Core.Clients;
 using GrammarNazi.Core.Services;
+using GrammarNazi.Domain.Clients;
 using GrammarNazi.Domain.Services;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
@@ -28,7 +30,9 @@ namespace GrammarNazi.App
 
             services.AddSingleton<IFileService, FileService>();
             services.AddSingleton<IStringDiffService, StringDiffService>();
-            services.AddTransient<IGrammarService, InternalFileGrammarService>();
+            services.AddTransient<ILanguageToolApiClient, LanguageToolApiClient>();
+            //services.AddTransient<IGrammarService, InternalFileGrammarService>();
+            services.AddTransient<IGrammarService, LanguageToolApiService>();
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
