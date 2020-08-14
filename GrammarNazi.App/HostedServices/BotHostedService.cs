@@ -59,7 +59,7 @@ namespace GrammarNazi.App.HostedServices
                     }
 
                     // Fire and forget for now (It returns a Task, i.e it's awaitable)
-                    _client.SendTextMessageAsync(messageEvent.Message.Chat.Id, message);
+                    _client.SendTextMessageAsync(messageEvent.Message.Chat.Id, message, replyToMessageId: messageEvent.Message.MessageId);
                 }
             }
         }
