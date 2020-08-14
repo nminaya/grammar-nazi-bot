@@ -5,6 +5,6 @@ namespace GrammarNazi.Domain.Services
 {
     public interface IGrammarService
     {
-        Task<CheckResult> GetCorrections(string text);
+        Task<GrammarCheckResult> GetCorrections(string text);
     }
 }
