@@ -28,9 +28,9 @@ namespace GrammarNazi.Core.Services
 
             var corrections = new List<GrammarCorrection>();
 
-            // TODO: Remove magic strings
+            // TODO: Create a list of default rules
             // Do not get punctuation or uppercase corrections 
-            var matches = result.Matches.Where(v => !v.Rule.Id.Contains("PUNCTUATION") && v.Rule.Id != "UPPERCASE_SENTENCE_START");
+            var matches = result.Matches.Where(v => !v.Rule.Id.Contains("PUNCTUATION") && !v.Rule.Id.Contains("WHITESPACE") && v.Rule.Id != "UPPERCASE_SENTENCE_START");
 
             foreach (var match in matches)
             {
