@@ -1,6 +1,9 @@
 using GrammarNazi.App.HostedServices;
+using GrammarNazi.Core.Services;
+using GrammarNazi.Domain.Services;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
+using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
@@ -22,6 +25,10 @@ namespace GrammarNazi.App
             services.AddControllers();
 
             services.AddHostedService<BotHostedService>();
+
+            services.AddSingleton<IFileService, FileService>();
+            services.AddSingleton<IStringDiffService, StringDiffService>();
+            services.AddTransient<IGrammarService, InternalFileGrammarService>();
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
@@ -34,11 +41,16 @@ namespace GrammarNazi.App
 
             app.UseRouting();
 
-            app.UseAuthorization();
-
             app.UseEndpoints(endpoints =>
             {
                 endpoints.MapControllers();
+
+                // Return 200 if request is received
+                endpoints.MapGet("/", async context =>
+                {
+                    context.Response.StatusCode = 200;
+                    await context.Response.WriteAsync("App Running");
+                });
             });
         }
     }
