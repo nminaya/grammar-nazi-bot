@@ -38,7 +38,7 @@ namespace GrammarNazi.Core.Services
                 if (!wordFound)
                 {
                     //TODO: Add correct word
-                    resultErros.Add(new ResultError { CorrectWord = "", WrongWord = item });
+                    resultErros.Add(new ResultError { WrongWord = item });
                 }
             }
 
