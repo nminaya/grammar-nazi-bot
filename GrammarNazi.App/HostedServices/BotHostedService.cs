@@ -47,6 +47,13 @@ namespace GrammarNazi.App.HostedServices
 
             if (messageEvent.Message.Type == MessageType.Text)
             {
+                // Command
+                if (messageEvent.Message.Text.StartsWith('/'))
+                {
+                    // TODO: Handle commands
+                    return;
+                }
+
                 var result = _grammarService.GetCorrections(messageEvent.Message.Text).GetAwaiter().GetResult();
 
                 if (result.HasCorrections)
@@ -56,7 +63,7 @@ namespace GrammarNazi.App.HostedServices
                     foreach (var item in result.Corrections)
                     {
                         // Only suggest the first possible replacement for now
-                        messageBuilder.AppendLine($"*{item.PossibleReplacements.FirstOrDefault()}");
+                        messageBuilder.AppendLine($"*{item.PossibleReplacements.First()}");
                     }
 
                     // Fire and forget for now (It returns a Task, i.e it's awaitable)

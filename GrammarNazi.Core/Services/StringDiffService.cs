@@ -1,5 +1,6 @@
 ﻿using GrammarNazi.Domain.Services;
 using System;
+using System.Linq;
 
 namespace GrammarNazi.Core.Services
 {
@@ -52,6 +53,19 @@ namespace GrammarNazi.Core.Services
             }
             // Step 7
             return d[n, m];
+        }
+
+        /// <summary>
+        /// Compares the characters of two strings and returns true if it's in comparable range
+        /// </summary>
+        /// <param name="a"></param>
+        /// <param name="b"></param>
+        /// <returns></returns>
+        public bool IsInComparableRange(string a, string b)
+        {
+            const int comparableRange = 2;
+
+            return a.Except(b).Count() < comparableRange && b.Except(a).Count() < comparableRange;
         }
     }
 }

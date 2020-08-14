@@ -32,12 +32,12 @@ namespace GrammarNazi.Core.Services
             // Do not get punctuation or uppercase corrections 
             var matches = result.Matches.Where(v => !v.Rule.Id.Contains("PUNCTUATION") && v.Rule.Id != "UPPERCASE_SENTENCE_START");
 
-            foreach (var item in matches)
+            foreach (var match in matches)
             {
                 var correction = new GrammarCorrection
                 {
-                    WrongWord = item.Context.Text.Substring(item.Context.Offset, item.Context.Length),
-                    PossibleReplacements = item.Replacements.Select(v => v.Value)
+                    WrongWord = match.Context.Text.Substring(match.Context.Offset, match.Context.Length),
+                    PossibleReplacements = match.Replacements.Select(v => v.Value)
                 };
 
                 corrections.Add(correction);
