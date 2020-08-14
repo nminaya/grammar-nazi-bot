@@ -31,7 +31,12 @@ namespace GrammarNazi.Core.Services
             foreach (var item in words)
             {
                 // Remove special characters
-                var word = Regex.Replace(item, "[^0-9a-zA-Z:,]+", "").ToLower();
+                var word = Regex.Replace(item, "[^0-9a-zA-Z]+", "").ToLower();
+
+                if (string.IsNullOrEmpty(word))
+                {
+                    continue;
+                }
 
                 var wordFound = dictionaryAndNames.Any(v => v == word);
 
