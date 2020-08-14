@@ -1,6 +1,5 @@
 ﻿using GrammarNazi.Domain.Entities;
 using GrammarNazi.Domain.Services;
-using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text.RegularExpressions;
@@ -23,6 +22,7 @@ namespace GrammarNazi.Core.Services
         {
             var dictionary = _fileService.GetTextFileByLine("Library/words_en-US.txt");
             var names = _fileService.GetTextFileByLine("Library/names.txt");
+            var dictionaryAndNames = dictionary.Union(names.Select(v => v.ToLower()));
 
             var corrections = new List<GrammarCorrection>();
 
@@ -33,21 +33,14 @@ namespace GrammarNazi.Core.Services
                 // Remove special characters
                 var word = Regex.Replace(item, "[^0-9a-zA-Z:,]+", "").ToLower();
 
-                var wordFound = dictionary.Any(v => v == word);
-                var nameFound = names.Any(v => string.Equals(v, word, StringComparison.OrdinalIgnoreCase));
+                var wordFound = dictionaryAndNames.Any(v => v == word);
 
-                if (!wordFound && !nameFound)
+                if (!wordFound)
                 {
-                    if (!wordFound)
-                    {
-                        var possibleCorrections = dictionary.Where(v => _stringDiffService.IsInComparableRange(v, word) && _stringDiffService.ComputeDistance(v, word) < 2);
-                        corrections.Add(new GrammarCorrection { WrongWord = item, PossibleReplacements = possibleCorrections });
-                        continue;
-                    }
+                    var possibleCorrections = dictionaryAndNames.Where(v => _stringDiffService.IsInComparableRange(v, word) && _stringDiffService.ComputeDistance(v, word) < 2);
 
-                    if (!nameFound)
+                    if (possibleCorrections.Any())
                     {
-                        var possibleCorrections = names.Where(v => _stringDiffService.IsInComparableRange(v, word) && _stringDiffService.ComputeDistance(v, word) < 2);
                         corrections.Add(new GrammarCorrection { WrongWord = item, PossibleReplacements = possibleCorrections });
                     }
                 }

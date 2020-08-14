@@ -55,9 +55,17 @@ namespace GrammarNazi.Core.Services
             return d[n, m];
         }
 
+        /// <summary>
+        /// Compares the characters of two strings and returns true if it's in comparable range
+        /// </summary>
+        /// <param name="a"></param>
+        /// <param name="b"></param>
+        /// <returns></returns>
         public bool IsInComparableRange(string a, string b)
         {
-            return a.Except(b).Count() < 2 && b.Except(a).Count() < 2;
+            const int comparableRange = 2;
+
+            return a.Except(b).Count() < comparableRange && b.Except(a).Count() < comparableRange;
         }
     }
 }

@@ -63,7 +63,7 @@ namespace GrammarNazi.App.HostedServices
                     foreach (var item in result.Corrections)
                     {
                         // Only suggest the first possible replacement for now
-                        messageBuilder.AppendLine($"*{item.PossibleReplacements.FirstOrDefault()}");
+                        messageBuilder.AppendLine($"*{item.PossibleReplacements.First()}");
                     }
 
                     // Fire and forget for now (It returns a Task, i.e it's awaitable)
