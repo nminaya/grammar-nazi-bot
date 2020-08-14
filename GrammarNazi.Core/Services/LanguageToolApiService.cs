@@ -30,7 +30,7 @@ namespace GrammarNazi.Core.Services
 
             // TODO: Remove magic strings
             // Do not get punctuation or uppercase corrections 
-            var matches = result.Matches.Where(v => v.Rule.Id != "PUNCTUATION_PARAGRAPH_END" || v.Rule.Id != "UPPERCASE_SENTENCE_START");
+            var matches = result.Matches.Where(v => !v.Rule.Id.Contains("PUNCTUATION") && v.Rule.Id != "UPPERCASE_SENTENCE_START");
 
             foreach (var item in matches)
             {
