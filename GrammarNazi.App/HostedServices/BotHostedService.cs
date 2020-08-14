@@ -47,6 +47,13 @@ namespace GrammarNazi.App.HostedServices
 
             if (messageEvent.Message.Type == MessageType.Text)
             {
+                // Command
+                if (messageEvent.Message.Text.StartsWith('/'))
+                {
+                    // TODO: Handle commands
+                    return;
+                }
+
                 var result = _grammarService.GetCorrections(messageEvent.Message.Text).GetAwaiter().GetResult();
 
                 if (result.HasCorrections)

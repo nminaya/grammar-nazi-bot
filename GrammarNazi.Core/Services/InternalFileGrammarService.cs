@@ -28,17 +28,28 @@ namespace GrammarNazi.Core.Services
 
             var words = text.Split(" ");
 
-            foreach (var item in words.Where(v => !v.StartsWith("/")))
+            foreach (var item in words)
             {
                 // Remove special characters
                 var word = Regex.Replace(item, "[^0-9a-zA-Z:,]+", "").ToLower();
 
-                var wordFound = dictionary.Any(v => v == word) || names.Any(v => string.Equals(v, word, StringComparison.OrdinalIgnoreCase));
+                var wordFound = dictionary.Any(v => v == word);
+                var nameFound = names.Any(v => string.Equals(v, word, StringComparison.OrdinalIgnoreCase));
 
-                if (!wordFound)
+                if (!wordFound && !nameFound)
                 {
-                    //TODO: Add possible replacements
-                    corrections.Add(new GrammarCorrection { WrongWord = item });
+                    if (!wordFound)
+                    {
+                        var possibleCorrections = dictionary.Where(v => _stringDiffService.IsInComparableRange(v, word) && _stringDiffService.ComputeDistance(v, word) < 2);
+                        corrections.Add(new GrammarCorrection { WrongWord = item, PossibleReplacements = possibleCorrections });
+                        continue;
+                    }
+
+                    if (!nameFound)
+                    {
+                        var possibleCorrections = names.Where(v => _stringDiffService.IsInComparableRange(v, word) && _stringDiffService.ComputeDistance(v, word) < 2);
+                        corrections.Add(new GrammarCorrection { WrongWord = item, PossibleReplacements = possibleCorrections });
+                    }
                 }
             }
 

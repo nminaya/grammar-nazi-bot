@@ -30,10 +30,10 @@ namespace GrammarNazi.App
             services.AddSingleton<IFileService, FileService>();
             services.AddSingleton<IStringDiffService, StringDiffService>();
             services.AddTransient<ILanguageToolApiClient, LanguageToolApiClient>();
-            services.AddTransient<IGrammarService, LanguageToolApiService>();
+            //services.AddTransient<IGrammarService, LanguageToolApiService>();
 
             // Use only LanguageToolApiService for now
-            //services.AddTransient<IGrammarService, InternalFileGrammarService>();
+            services.AddTransient<IGrammarService, InternalFileGrammarService>();
         }
 
         public void Configure(IApplicationBuilder app, IWebHostEnvironment env)
