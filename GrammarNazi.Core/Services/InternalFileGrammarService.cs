@@ -12,11 +12,14 @@ namespace GrammarNazi.Core.Services
         private readonly IFileService _fileService;
         private readonly IStringDiffService _stringDiffService;
 
+        public GrammarAlgorithms GrammarAlgorith => GrammarAlgorithms.InternalAlgorithm;
+
         public InternalFileGrammarService(IFileService fileService, IStringDiffService stringDiffService)
         {
             _fileService = fileService;
             _stringDiffService = stringDiffService;
         }
+
 
         public Task<GrammarCheckResult> GetCorrections(string text)
         {

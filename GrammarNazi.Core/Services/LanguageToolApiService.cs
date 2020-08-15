@@ -1,5 +1,6 @@
 ﻿using GrammarNazi.Domain.Clients;
 using GrammarNazi.Domain.Entities;
+using GrammarNazi.Domain.Entities.LanguageToolAPI;
 using GrammarNazi.Domain.Services;
 using System.Collections.Generic;
 using System.Linq;
@@ -10,6 +11,7 @@ namespace GrammarNazi.Core.Services
     public class LanguageToolApiService : IGrammarService
     {
         private readonly ILanguageToolApiClient _apiClient;
+        public GrammarAlgorithms GrammarAlgorith => GrammarAlgorithms.LanguageToolApi;
 
         public LanguageToolApiService(ILanguageToolApiClient apiClient)
         {
@@ -28,9 +30,7 @@ namespace GrammarNazi.Core.Services
 
             var corrections = new List<GrammarCorrection>();
 
-            // TODO: Create a list of default rules
-            // Do not get punctuation or uppercase corrections 
-            var matches = result.Matches.Where(v => !v.Rule.Id.Contains("PUNCTUATION") && !v.Rule.Id.Contains("WHITESPACE") && v.Rule.Id != "UPPERCASE_SENTENCE_START");
+            var matches = result.Matches.Where(RulesFilter);
 
             foreach (var match in matches)
             {
@@ -44,6 +44,16 @@ namespace GrammarNazi.Core.Services
             }
 
             return new GrammarCheckResult(corrections);
+        }
+
+        private bool RulesFilter(Match match)
+        {
+            // TODO: Create a list of default rules
+            // Do not get punctuation or uppercase corrections
+            return !match.Rule.Id.Contains("PUNCTUATION")
+                && !match.Rule.Id.Contains("WHITESPACE")
+                && match.Rule.Id != "UPPERCASE_SENTENCE_START"
+                && match.Rule.Id != "PROFANITY";
         }
     }
 }

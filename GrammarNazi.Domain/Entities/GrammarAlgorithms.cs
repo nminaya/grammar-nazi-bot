@@ -6,7 +6,7 @@ namespace GrammarNazi.Domain.Entities
 {
     public enum GrammarAlgorithms
     {
-        InternalAlgorithm,
-        LanguageToolApi
+        InternalAlgorithm = 1,
+        LanguageToolApi = 2
     }
 }
