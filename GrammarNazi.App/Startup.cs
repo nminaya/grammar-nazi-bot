@@ -1,7 +1,9 @@
 using GrammarNazi.App.HostedServices;
 using GrammarNazi.Core.Clients;
+using GrammarNazi.Core.Repositories;
 using GrammarNazi.Core.Services;
 using GrammarNazi.Domain.Clients;
+using GrammarNazi.Domain.Repositories;
 using GrammarNazi.Domain.Services;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
@@ -25,14 +27,24 @@ namespace GrammarNazi.App
         {
             services.AddControllers();
 
+            // Hosted services
             services.AddHostedService<BotHostedService>();
+            
+            ConfigureDependencies(services);
+        }
 
+        private static void ConfigureDependencies(IServiceCollection services)
+        {
+            // Repository
+            services.AddTransient(typeof(IRepository<>), typeof(InMemoryRepository<>));
+
+            // Services
             services.AddSingleton<IFileService, FileService>();
             services.AddSingleton<IStringDiffService, StringDiffService>();
             services.AddTransient<ILanguageToolApiClient, LanguageToolApiClient>();
-            services.AddTransient<IGrammarService, LanguageToolApiService>();
 
             // Use only LanguageToolApiService for now
+            services.AddTransient<IGrammarService, LanguageToolApiService>();
             //services.AddTransient<IGrammarService, InternalFileGrammarService>();
         }
 
