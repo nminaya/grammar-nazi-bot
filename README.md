@@ -23,4 +23,4 @@ This project is still under development, there are a lot of features to implemen
 - Trained ML model that improves the internal algorithm corrections.
 
 ## Run the Project
-To run this project locally you just need to clone the repo and run the **GrammarNazi.App** project. But, before that you should [create a Telegram Bot](https://core.telegram.org/bots#6-botfather) with [BotFather](https://t.me/BotFather) and set the Token as an environment variable named **TELEGRAM_API_KEY**. If you run the project in Visual Studio, you can set the environment variable in [launchSettings.json](https://github.com/nminaya/grammar-nazi-bot/blob/master/GrammarNazi.App/Properties/launchSettings.json).
+To run this project locally you just need to clone the repo and run the **GrammarNazi.App** project. But, before that you should [create a Telegram Bot](https://core.telegram.org/bots#6-botfather) with [BotFather](https://t.me/BotFather) and set the Token as an environment variable named **TELEGRAM_API_KEY**. You can set the environment variable in [launchSettings.json](https://github.com/nminaya/grammar-nazi-bot/blob/master/GrammarNazi.App/Properties/launchSettings.json).
