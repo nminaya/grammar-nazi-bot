@@ -95,10 +95,7 @@ namespace GrammarNazi.App.HostedServices
         {
             var text = messageEvent.Message.Text;
 
-            // TODO: Get bot name from config
-            if (text == Commands.Start
-                || text == $"{Commands.Start}@grammarNz_Bot"
-                || text == $"{Commands.Start}@grammarNaziTest_Bot")
+            if (IsCommand(Commands.Start, text))
             {
                 var messageBuilder = new StringBuilder();
                 messageBuilder.AppendLine("Hi, I'm GrammarNazi.");
@@ -107,11 +104,11 @@ namespace GrammarNazi.App.HostedServices
 
                 _client.SendTextMessageAsync(messageEvent.Message.Chat.Id, messageBuilder.ToString());
             }
-            else if (text == Commands.Help)
+            else if (IsCommand(Commands.Help, text))
             {
                 _client.SendTextMessageAsync(messageEvent.Message.Chat.Id, "/settings get configured settings.");
             }
-            else if (text == Commands.Settings)
+            else if (IsCommand(Commands.Settings, text))
             {
                 var chatConfig = _chatConfigurationService.GetConfigurationByChatId(messageEvent.Message.Chat.Id).GetAwaiter().GetResult();
 
@@ -131,7 +128,7 @@ namespace GrammarNazi.App.HostedServices
                     _client.SendTextMessageAsync(messageEvent.Message.Chat.Id, messageBuilder.ToString());
                 }
             }
-            else if (text.Contains(Commands.SetAlgorithm))
+            else if (IsCommand(Commands.SetAlgorithm, text))
             {
                 var parameters = text.Split(" ");
                 if (parameters.Length == 1)
@@ -166,12 +163,19 @@ namespace GrammarNazi.App.HostedServices
                     }
                 }
             }
-            else
+
+            static bool IsCommand(string expected, string actual)
             {
-                _client.SendTextMessageAsync(messageEvent.Message.Chat.Id, "Command not suported. Type /help");
+                if(actual.Contains("@"))
+                {
+                    // TODO: Get bot name from config
+                    return actual.StartsWith($"{expected}@grammarNz_Bot") || actual.StartsWith($"{expected}@grammarNaziTest_Bot");
+                }
+
+                return actual.StartsWith(expected);
             }
 
-            string GetAvailableAlgorithms()
+            static string GetAvailableAlgorithms()
             {
                 var algorithms = Enum.GetValues(typeof(GrammarAlgorithms)).Cast<GrammarAlgorithms>();
 

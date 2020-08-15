@@ -30,7 +30,9 @@ namespace GrammarNazi.Core.Services
 
             var corrections = new List<GrammarCorrection>();
 
-            var matches = result.Matches.Where(RulesFilter);
+            var matches = result
+                            .Matches.Where(RulesFilter)
+                            .Where(v => v.Replacements.Count > 0);
 
             foreach (var match in matches)
             {
