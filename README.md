@@ -17,10 +17,10 @@ The solution design focuses on a basic Domain Driven Design techniques and imple
 -   **GrammarNazi.App**  - This assembly is the web-based application host.
 
 ## Features to implement
-This project is still under development.
+This project is still under development, there are a lot of features to implement.
 - Multiple language support.
-- Unit test and Integration Test projects
-- Internal algorithm improvement.
+- Unit test and Integration Test projects.
+- Trained ML model that improves the internal algorithm corrections.
 
 ## Run the Project
 To run this project locally you just need to clone the repo and run the **GrammarNazi.App** project. But, before that you should [create a Telegram Bot](https://core.telegram.org/bots#6-botfather) with [BotFather](https://t.me/BotFather) and set the Token as an environment variable named **TELEGRAM_API_KEY**. If you run the project in Visual Studio, you can set the environment variable in [launchSettings.json](https://github.com/nminaya/grammar-nazi-bot/blob/master/GrammarNazi.App/Properties/launchSettings.json).
