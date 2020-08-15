@@ -40,13 +40,13 @@ namespace GrammarNazi.App.HostedServices
             _logger.LogInformation("Bot Hosted Service started");
 
             _client.StartReceiving(cancellationToken: stoppingToken);
-            _client.OnMessage += BotOnMessage;
+            _client.OnMessage += OnMessageReceived;
 
             // Keep hosted service alive while receiving messages
             await Task.Delay(int.MaxValue, stoppingToken);
         }
 
-        private void BotOnMessage(object sender, MessageEventArgs messageEvent)
+        private void OnMessageReceived(object sender, MessageEventArgs messageEvent)
         {
             _logger.LogInformation($"Message reveived: {messageEvent.Message.Text}");
 
