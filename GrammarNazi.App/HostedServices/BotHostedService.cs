@@ -101,7 +101,7 @@ namespace GrammarNazi.App.HostedServices
                 || text == $"{Commands.Start}@grammarNaziTest_Bot")
             {
                 var messageBuilder = new StringBuilder();
-                messageBuilder.AppendLine("Hi, I'm Grammar Nazi.");
+                messageBuilder.AppendLine("Hi, I'm GrammarNazi.");
                 messageBuilder.AppendLine("I'm currently working and correcting all spelling error in this chat.");
                 messageBuilder.AppendLine("Type /help to get useful commands.");
 
