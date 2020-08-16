@@ -46,6 +46,7 @@ namespace GrammarNazi.App.HostedServices
             await Task.Delay(int.MaxValue, stoppingToken);
         }
 
+        // TODO: Evaluate using async void for this event
         private void OnMessageReceived(object sender, MessageEventArgs messageEvent)
         {
             _logger.LogInformation($"Message reveived: {messageEvent.Message.Text}");
