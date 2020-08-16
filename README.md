@@ -19,6 +19,8 @@ The solution design focuses on a basic Domain Driven Design techniques and imple
 ## Features to implement
 This project is still under development, there are a lot of features to implement.
 - Multiple language support.
+- Configurable [Grammar rules](https://community.languagetool.org/rule/)
+- Percent accuracy for possible corrections.
 - Unit test and Integration Test projects.
 - Trained ML model that improves the internal algorithm corrections.
 
