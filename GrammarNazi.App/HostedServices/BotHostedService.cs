@@ -1,5 +1,6 @@
 ﻿using GrammarNazi.Domain.Constants;
 using GrammarNazi.Domain.Entities;
+using GrammarNazi.Domain.Enums;
 using GrammarNazi.Domain.Services;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
@@ -167,7 +168,7 @@ namespace GrammarNazi.App.HostedServices
 
             static bool IsCommand(string expected, string actual)
             {
-                if(actual.Contains("@"))
+                if (actual.Contains("@"))
                 {
                     // TODO: Get bot name from config
                     return actual.StartsWith($"{expected}@grammarNz_Bot") || actual.StartsWith($"{expected}@grammarNaziTest_Bot");

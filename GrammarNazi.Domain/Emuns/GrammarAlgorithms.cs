@@ -2,7 +2,7 @@
 using System.Collections.Generic;
 using System.Text;
 
-namespace GrammarNazi.Domain.Entities
+namespace GrammarNazi.Domain.Enums
 {
     public enum GrammarAlgorithms
     {

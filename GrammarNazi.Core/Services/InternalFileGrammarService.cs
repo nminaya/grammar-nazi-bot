@@ -1,4 +1,5 @@
 ﻿using GrammarNazi.Domain.Entities;
+using GrammarNazi.Domain.Enums;
 using GrammarNazi.Domain.Services;
 using System.Collections.Generic;
 using System.Linq;
@@ -19,7 +20,6 @@ namespace GrammarNazi.Core.Services
             _fileService = fileService;
             _stringDiffService = stringDiffService;
         }
-
 
         public Task<GrammarCheckResult> GetCorrections(string text)
         {
