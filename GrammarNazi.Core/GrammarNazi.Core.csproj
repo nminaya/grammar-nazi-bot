@@ -5,6 +5,10 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <PackageReference Include="NTextCat" Version="0.3.65" />
+  </ItemGroup>
+
+  <ItemGroup>
     <ProjectReference Include="..\GrammarNazi.Domain\GrammarNazi.Domain.csproj" />
   </ItemGroup>
 

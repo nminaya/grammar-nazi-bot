@@ -43,6 +43,7 @@ namespace GrammarNazi.App
             services.AddSingleton<IStringDiffService, StringDiffService>();
             services.AddTransient<ILanguageToolApiClient, LanguageToolApiClient>();
             services.AddTransient<IChatConfigurationService, ChatConfigurationService>();
+            services.AddTransient<ILanguageService, NTextCatLanguageService>();
             services.AddTransient<IGrammarService, LanguageToolApiService>();
             services.AddTransient<IGrammarService, InternalFileGrammarService>();
         }
