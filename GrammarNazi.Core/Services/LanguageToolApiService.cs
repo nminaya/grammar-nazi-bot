@@ -1,5 +1,5 @@
-﻿using GrammarNazi.Core.Extensions;
-using GrammarNazi.Domain.Clients;
+﻿using GrammarNazi.Domain.Clients;
+using GrammarNazi.Domain.Constants;
 using GrammarNazi.Domain.Entities;
 using GrammarNazi.Domain.Entities.LanguageToolAPI;
 using GrammarNazi.Domain.Enums;
@@ -34,7 +34,7 @@ namespace GrammarNazi.Core.Services
             var languageInfo = _languageService.IdentifyLanguage(text);
 
             // Use english if language not identified
-            var languageCode = languageInfo?.TwoLetterISOLanguageName ?? SupportedLanguages.English.GetDescription();
+            var languageCode = languageInfo?.TwoLetterISOLanguageName ?? Defaults.LanguageCode;
 
             var result = await _apiClient.Check(text, languageCode);
 
