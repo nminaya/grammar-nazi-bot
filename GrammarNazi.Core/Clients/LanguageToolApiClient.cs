@@ -9,10 +9,10 @@ namespace GrammarNazi.Core.Clients
 {
     public class LanguageToolApiClient : ILanguageToolApiClient
     {
-        public async Task<LanguageToolCheckResult> Check(string text)
+        public async Task<LanguageToolCheckResult> Check(string text, string languageCode)
         {
             // TODO: Get url from config
-            var url = $"https://languagetool.org/api/v2/check?text={HttpUtility.UrlEncode(text)}&language=en-US";
+            var url = $"https://languagetool.org/api/v2/check?text={HttpUtility.UrlEncode(text)}&language={languageCode}";
 
             using var httpClient = new HttpClient();
             var response = await httpClient.PostAsync(url, null);

@@ -1,4 +1,5 @@
-﻿using GrammarNazi.Domain.Clients;
+﻿using GrammarNazi.Core.Extensions;
+using GrammarNazi.Domain.Clients;
 using GrammarNazi.Domain.Entities;
 using GrammarNazi.Domain.Entities.LanguageToolAPI;
 using GrammarNazi.Domain.Enums;
@@ -12,11 +13,14 @@ namespace GrammarNazi.Core.Services
     public class LanguageToolApiService : IGrammarService
     {
         private readonly ILanguageToolApiClient _apiClient;
+        private readonly ILanguageService _languageService;
+
         public GrammarAlgorithms GrammarAlgorith => GrammarAlgorithms.LanguageToolApi;
 
-        public LanguageToolApiService(ILanguageToolApiClient apiClient)
+        public LanguageToolApiService(ILanguageToolApiClient apiClient, ILanguageService languageService)
         {
             _apiClient = apiClient;
+            _languageService = languageService;
         }
 
         public async Task<GrammarCheckResult> GetCorrections(string text)
@@ -27,7 +31,12 @@ namespace GrammarNazi.Core.Services
                 return new GrammarCheckResult(null);
             }
 
-            var result = await _apiClient.Check(text);
+            var languageInfo = _languageService.IdentifyLanguage(text);
+
+            // Use english if language not identified
+            var languageCode = languageInfo?.TwoLetterISOLanguageName ?? SupportedLanguages.English.GetDescription();
+
+            var result = await _apiClient.Check(text, languageCode);
 
             var corrections = new List<GrammarCorrection>();
 

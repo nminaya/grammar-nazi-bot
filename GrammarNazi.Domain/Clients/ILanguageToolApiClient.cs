@@ -5,6 +5,6 @@ namespace GrammarNazi.Domain.Clients
 {
     public interface ILanguageToolApiClient
     {
-        Task<LanguageToolCheckResult> Check(string text);
+        Task<LanguageToolCheckResult> Check(string text, string languageCode);
     }
 }

@@ -29,7 +29,7 @@ namespace GrammarNazi.App
 
             // Hosted services
             services.AddHostedService<BotHostedService>();
-            
+
             ConfigureDependencies(services);
         }
 

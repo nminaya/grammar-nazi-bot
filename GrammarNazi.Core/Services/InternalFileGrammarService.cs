@@ -1,4 +1,5 @@
-﻿using GrammarNazi.Domain.Entities;
+﻿using GrammarNazi.Core.Extensions;
+using GrammarNazi.Domain.Entities;
 using GrammarNazi.Domain.Enums;
 using GrammarNazi.Domain.Services;
 using System.Collections.Generic;
@@ -12,17 +13,27 @@ namespace GrammarNazi.Core.Services
     {
         private readonly IFileService _fileService;
         private readonly IStringDiffService _stringDiffService;
+        private readonly ILanguageService _languageService;
 
         public GrammarAlgorithms GrammarAlgorith => GrammarAlgorithms.InternalAlgorithm;
 
-        public InternalFileGrammarService(IFileService fileService, IStringDiffService stringDiffService)
+        public InternalFileGrammarService(IFileService fileService,
+            IStringDiffService stringDiffService,
+            ILanguageService languageService)
         {
             _fileService = fileService;
             _stringDiffService = stringDiffService;
+            _languageService = languageService;
         }
 
         public Task<GrammarCheckResult> GetCorrections(string text)
         {
+            var languageInfo = _languageService.IdentifyLanguage(text);
+
+            // TODO: Implement spanish corrections
+            if (languageInfo.ThreeLetterISOLanguageName == SupportedLanguages.Spanish.GetDescription())
+                return Task.FromResult(new GrammarCheckResult(null));
+
             var dictionary = _fileService.GetTextFileByLine("Library/words_en-US.txt");
             var names = _fileService.GetTextFileByLine("Library/names.txt");
             var dictionaryAndNames = dictionary.Union(names.Select(v => v.ToLower()));
