@@ -1,4 +1,6 @@
-﻿using GrammarNazi.Domain.Entities;
+﻿using GrammarNazi.Core.Extensions;
+using GrammarNazi.Domain.Entities;
+using GrammarNazi.Domain.Enums;
 using GrammarNazi.Domain.Services;
 using NTextCat;
 using System;
@@ -19,7 +21,7 @@ namespace GrammarNazi.Core.Services
         public LanguageInformation IdentifyLanguage(string text)
         {
             var identifier = _rankedLanguageIdentifierFactory.Load("Library/Core14.profile.xml");
-            var languages = identifier.Identify(text);
+            var languages = identifier.Identify(text).Where(v => GetSupportedLanguages().Contains(v.Item1.Iso639_3));
 
             if (!languages.Any())
                 return null;
@@ -39,6 +41,14 @@ namespace GrammarNazi.Core.Services
                             .FirstOrDefault(v => v.ThreeLetterISOLanguageName == langCode || v.ThreeLetterWindowsLanguageName.ToLower() == langCode);
 
             return culture.TwoLetterISOLanguageName;
+        }
+
+        private string[] GetSupportedLanguages()
+        {
+            return Enum.GetValues(typeof(SupportedLanguages))
+                    .Cast<SupportedLanguages>()
+                    .Select(v => v.GetDescription())
+                    .ToArray();
         }
     }
 }
