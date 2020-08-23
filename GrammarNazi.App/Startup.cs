@@ -11,6 +11,8 @@ using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
+using System;
+using Telegram.Bot;
 
 namespace GrammarNazi.App
 {
@@ -46,6 +48,17 @@ namespace GrammarNazi.App
             services.AddTransient<ILanguageService, NTextCatLanguageService>();
             services.AddTransient<IGrammarService, LanguageToolApiService>();
             services.AddTransient<IGrammarService, InternalFileGrammarService>();
+
+            // Telegram client
+            services.AddTransient<ITelegramBotClient>(_ =>
+            {
+                var apiKey = Environment.GetEnvironmentVariable("TELEGRAM_API_KEY");
+
+                if (string.IsNullOrEmpty(apiKey))
+                    throw new InvalidOperationException("Empty TELEGRAM_API_KEY");
+
+                return new TelegramBotClient(apiKey);
+            });
         }
 
         public void Configure(IApplicationBuilder app, IWebHostEnvironment env)

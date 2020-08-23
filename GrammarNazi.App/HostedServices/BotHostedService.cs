@@ -21,19 +21,17 @@ namespace GrammarNazi.App.HostedServices
         private readonly ILogger<BotHostedService> _logger;
         private readonly IEnumerable<IGrammarService> _grammarServices;
         private readonly IChatConfigurationService _chatConfigurationService;
-        private readonly TelegramBotClient _client;
+        private readonly ITelegramBotClient _client;
 
-        public BotHostedService(ILogger<BotHostedService> logger, IEnumerable<IGrammarService> grammarServices, IChatConfigurationService chatConfigurationService)
+        public BotHostedService(ILogger<BotHostedService> logger,
+            ITelegramBotClient telegramBotClient,
+            IEnumerable<IGrammarService> grammarServices,
+            IChatConfigurationService chatConfigurationService)
         {
             _logger = logger;
             _grammarServices = grammarServices;
             _chatConfigurationService = chatConfigurationService;
-            var apiKey = Environment.GetEnvironmentVariable("TELEGRAM_API_KEY");
-
-            if (string.IsNullOrEmpty(apiKey))
-                throw new InvalidOperationException("Empty TELEGRAM_API_KEY");
-
-            _client = new TelegramBotClient(apiKey);
+            _client = telegramBotClient;
         }
 
         protected override async Task ExecuteAsync(CancellationToken stoppingToken)
