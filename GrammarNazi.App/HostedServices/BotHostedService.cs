@@ -1,7 +1,9 @@
-﻿using GrammarNazi.Domain.Constants;
+﻿using GrammarNazi.Core.Extensions;
+using GrammarNazi.Domain.Constants;
 using GrammarNazi.Domain.Entities;
 using GrammarNazi.Domain.Enums;
 using GrammarNazi.Domain.Services;
+using Microsoft.AspNetCore.Hosting;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using System;
@@ -21,16 +23,19 @@ namespace GrammarNazi.App.HostedServices
         private readonly ILogger<BotHostedService> _logger;
         private readonly IEnumerable<IGrammarService> _grammarServices;
         private readonly IChatConfigurationService _chatConfigurationService;
+        private readonly IWebHostEnvironment _webHostEnvironment;
         private readonly ITelegramBotClient _client;
 
         public BotHostedService(ILogger<BotHostedService> logger,
             ITelegramBotClient telegramBotClient,
             IEnumerable<IGrammarService> grammarServices,
-            IChatConfigurationService chatConfigurationService)
+            IChatConfigurationService chatConfigurationService,
+            IWebHostEnvironment webHostEnvironment)
         {
             _logger = logger;
             _grammarServices = grammarServices;
             _chatConfigurationService = chatConfigurationService;
+            _webHostEnvironment = webHostEnvironment;
             _client = telegramBotClient;
         }
 
@@ -45,23 +50,25 @@ namespace GrammarNazi.App.HostedServices
             await Task.Delay(int.MaxValue, stoppingToken);
         }
 
-        // TODO: Evaluate using async void for this event
-        private void OnMessageReceived(object sender, MessageEventArgs messageEvent)
+        private async void OnMessageReceived(object sender, MessageEventArgs messageEvent)
         {
-            _logger.LogInformation($"Message reveived: {messageEvent.Message.Text}");
+            _logger.LogInformation($"Message received from chat id: {messageEvent.Message.Chat.Id}");
+
+            if(_webHostEnvironment.IsDevelopment())
+                _logger.LogInformation($"Message: {messageEvent.Message.Text}");
 
             if (messageEvent.Message.Type == MessageType.Text)
             {
                 // Command
                 if (messageEvent.Message.Text.StartsWith('/'))
                 {
-                    HandleCommand(messageEvent);
+                    await HandleCommand(messageEvent);
                     return;
                 }
 
-                var grammarService = GetConfiguredGrammarService(messageEvent.Message.Chat.Id);
+                var grammarService = await GetConfiguredGrammarService(messageEvent.Message.Chat.Id);
 
-                var result = grammarService.GetCorrections(messageEvent.Message.Text).GetAwaiter().GetResult();
+                var result = await grammarService.GetCorrections(messageEvent.Message.Text);
 
                 if (result.HasCorrections)
                 {
@@ -73,15 +80,14 @@ namespace GrammarNazi.App.HostedServices
                         messageBuilder.AppendLine($"*{item.PossibleReplacements.First()}");
                     }
 
-                    // Fire and forget for now (It returns a Task, i.e it's awaitable)
-                    _client.SendTextMessageAsync(messageEvent.Message.Chat.Id, messageBuilder.ToString(), replyToMessageId: messageEvent.Message.MessageId);
+                    await _client.SendTextMessageAsync(messageEvent.Message.Chat.Id, messageBuilder.ToString(), replyToMessageId: messageEvent.Message.MessageId);
                 }
             }
         }
 
-        private IGrammarService GetConfiguredGrammarService(long chatId)
+        private async Task<IGrammarService> GetConfiguredGrammarService(long chatId)
         {
-            var chatConfig = _chatConfigurationService.GetConfigurationByChatId(chatId).GetAwaiter().GetResult();
+            var chatConfig = await _chatConfigurationService.GetConfigurationByChatId(chatId);
 
             if (chatConfig != null)
             {
@@ -91,7 +97,7 @@ namespace GrammarNazi.App.HostedServices
             return _grammarServices.First(v => v.GrammarAlgorith == GrammarAlgorithms.LanguageToolApi);
         }
 
-        private void HandleCommand(MessageEventArgs messageEvent)
+        private async Task HandleCommand(MessageEventArgs messageEvent)
         {
             var text = messageEvent.Message.Text;
 
@@ -99,18 +105,18 @@ namespace GrammarNazi.App.HostedServices
             {
                 var messageBuilder = new StringBuilder();
                 messageBuilder.AppendLine("Hi, I'm GrammarNazi.");
-                messageBuilder.AppendLine("I'm currently working and correcting all spelling error in this chat.");
+                messageBuilder.AppendLine("I'm currently working and correcting all spelling errors in this chat.");
                 messageBuilder.AppendLine("Type /help to get useful commands.");
 
-                _client.SendTextMessageAsync(messageEvent.Message.Chat.Id, messageBuilder.ToString());
+                await _client.SendTextMessageAsync(messageEvent.Message.Chat.Id, messageBuilder.ToString());
             }
             else if (IsCommand(Commands.Help, text))
             {
-                _client.SendTextMessageAsync(messageEvent.Message.Chat.Id, "/settings get configured settings.");
+                await _client.SendTextMessageAsync(messageEvent.Message.Chat.Id, "/settings get configured settings.");
             }
             else if (IsCommand(Commands.Settings, text))
             {
-                var chatConfig = _chatConfigurationService.GetConfigurationByChatId(messageEvent.Message.Chat.Id).GetAwaiter().GetResult();
+                var chatConfig = await _chatConfigurationService.GetConfigurationByChatId(messageEvent.Message.Chat.Id);
 
                 if (chatConfig != null)
                 {
@@ -118,14 +124,14 @@ namespace GrammarNazi.App.HostedServices
                     messageBuilder.AppendLine(GetAvailableAlgorithms());
                     messageBuilder.AppendLine($"This chat has the algorithm {chatConfig.GrammarAlgorithm} configured.");
 
-                    _client.SendTextMessageAsync(messageEvent.Message.Chat.Id, messageBuilder.ToString());
+                    await _client.SendTextMessageAsync(messageEvent.Message.Chat.Id, messageBuilder.ToString());
                 }
                 else
                 {
                     var messageBuilder = new StringBuilder();
                     messageBuilder.AppendLine("Type /set_algorithm <algorithm_numer> to set an algorithm");
                     messageBuilder.AppendLine(GetAvailableAlgorithms());
-                    _client.SendTextMessageAsync(messageEvent.Message.Chat.Id, messageBuilder.ToString());
+                    await _client.SendTextMessageAsync(messageEvent.Message.Chat.Id, messageBuilder.ToString());
                 }
             }
             else if (IsCommand(Commands.SetAlgorithm, text))
@@ -133,7 +139,7 @@ namespace GrammarNazi.App.HostedServices
                 var parameters = text.Split(" ");
                 if (parameters.Length == 1)
                 {
-                    _client.SendTextMessageAsync(messageEvent.Message.Chat.Id, "Parameter not received. Type /set_algorithm <algorithm_numer> to set an algorithm.");
+                    await _client.SendTextMessageAsync(messageEvent.Message.Chat.Id, "Parameter not received. Type /set_algorithm <algorithm_numer> to set an algorithm.");
                 }
                 else
                 {
@@ -141,11 +147,11 @@ namespace GrammarNazi.App.HostedServices
 
                     if (parsedOk)
                     {
-                        var chatConfig = _chatConfigurationService.GetConfigurationByChatId(messageEvent.Message.Chat.Id).GetAwaiter().GetResult();
+                        var chatConfig = await _chatConfigurationService.GetConfigurationByChatId(messageEvent.Message.Chat.Id);
 
                         if (chatConfig != null)
                         {
-                            _chatConfigurationService.Delete(chatConfig).GetAwaiter().GetResult();
+                            await _chatConfigurationService.Delete(chatConfig);
                         }
 
                         var config = new ChatConfiguration
@@ -154,22 +160,24 @@ namespace GrammarNazi.App.HostedServices
                             GrammarAlgorithm = (GrammarAlgorithms)algorithm
                         };
 
-                        _chatConfigurationService.AddConfiguration(config).GetAwaiter().GetResult();
-                        _client.SendTextMessageAsync(messageEvent.Message.Chat.Id, "Algorithm updated.");
+                        await _chatConfigurationService.AddConfiguration(config);
+                        await _client.SendTextMessageAsync(messageEvent.Message.Chat.Id, "Algorithm updated.");
                     }
                     else
                     {
-                        _client.SendTextMessageAsync(messageEvent.Message.Chat.Id, "Invalid parameter. Type /set_algorithm <algorithm_numer> to set an algorithm.");
+                        await _client.SendTextMessageAsync(messageEvent.Message.Chat.Id, "Invalid parameter. Type /set_algorithm <algorithm_numer> to set an algorithm.");
                     }
                 }
             }
 
-            static bool IsCommand(string expected, string actual)
+            bool IsCommand(string expected, string actual)
             {
                 if (actual.Contains("@"))
                 {
                     // TODO: Get bot name from config
-                    return actual.StartsWith($"{expected}@grammarNz_Bot") || actual.StartsWith($"{expected}@grammarNaziTest_Bot");
+                    return _webHostEnvironment.IsDevelopment()
+                        ? actual.StartsWith($"{expected}@grammarNaziTest_Bot")
+                        : actual.StartsWith($"{expected}@grammarNz_Bot");
                 }
 
                 return actual.StartsWith(expected);
@@ -184,7 +192,7 @@ namespace GrammarNazi.App.HostedServices
 
                 foreach (var item in algorithms)
                 {
-                    messageBuilder.AppendLine($"{(int)item} - {item}");
+                    messageBuilder.AppendLine($"{(int)item} - {item.GetDescription()}");
                 }
 
                 return messageBuilder.ToString();
