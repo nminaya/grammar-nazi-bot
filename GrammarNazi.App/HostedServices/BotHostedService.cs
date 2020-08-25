@@ -44,17 +44,17 @@ namespace GrammarNazi.App.HostedServices
             _logger.LogInformation("Bot Hosted Service started");
 
             _client.StartReceiving(cancellationToken: stoppingToken);
-            _client.OnMessage += OnMessageReceived;
+            _client.OnMessage += async (obj, eventArgs) => await OnMessageReceived(obj, eventArgs);
 
             // Keep hosted service alive while receiving messages
             await Task.Delay(int.MaxValue, stoppingToken);
         }
 
-        private async void OnMessageReceived(object sender, MessageEventArgs messageEvent)
+        private async Task OnMessageReceived(object sender, MessageEventArgs messageEvent)
         {
             _logger.LogInformation($"Message received from chat id: {messageEvent.Message.Chat.Id}");
 
-            if(_webHostEnvironment.IsDevelopment())
+            if (_webHostEnvironment.IsDevelopment())
                 _logger.LogInformation($"Message: {messageEvent.Message.Text}");
 
             if (messageEvent.Message.Type == MessageType.Text)
@@ -122,7 +122,7 @@ namespace GrammarNazi.App.HostedServices
                 {
                     var messageBuilder = new StringBuilder();
                     messageBuilder.AppendLine(GetAvailableAlgorithms());
-                    messageBuilder.AppendLine($"This chat has the algorithm {chatConfig.GrammarAlgorithm} configured.");
+                    messageBuilder.AppendLine($"This chat has the algorithm {chatConfig.GrammarAlgorithm.GetDescription()} configured.");
 
                     await _client.SendTextMessageAsync(messageEvent.Message.Chat.Id, messageBuilder.ToString());
                 }
