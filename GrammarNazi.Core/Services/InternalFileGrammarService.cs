@@ -14,6 +14,7 @@ namespace GrammarNazi.Core.Services
         private readonly IFileService _fileService;
         private readonly IStringDiffService _stringDiffService;
         private readonly ILanguageService _languageService;
+        private SupportedLanguages _selectedLanguage;
 
         public GrammarAlgorithms GrammarAlgorith => GrammarAlgorithms.InternalAlgorithm;
 
@@ -28,11 +29,15 @@ namespace GrammarNazi.Core.Services
 
         public Task<GrammarCheckResult> GetCorrections(string text)
         {
-            var languageInfo = _languageService.IdentifyLanguage(text);
+            if (_selectedLanguage == SupportedLanguages.Auto)
+            {
+                // TODO: Use automatic language detection
+                var languageInfo = _languageService.IdentifyLanguage(text);
 
-            // TODO: Implement spanish corrections
-            if (languageInfo.ThreeLetterISOLanguageName == SupportedLanguages.Spanish.GetDescription())
-                return Task.FromResult(new GrammarCheckResult(null));
+                // TODO: Implement spanish corrections
+                if (languageInfo.ThreeLetterISOLanguageName == SupportedLanguages.Spanish.GetDescription())
+                    return Task.FromResult(new GrammarCheckResult(null));
+            }
 
             var dictionary = _fileService.GetTextFileByLine("Library/words_en-US.txt");
             var names = _fileService.GetTextFileByLine("Library/names.txt");
@@ -66,6 +71,11 @@ namespace GrammarNazi.Core.Services
             }
 
             return Task.FromResult(new GrammarCheckResult(corrections));
+        }
+
+        public void SetSelectedLanguage(SupportedLanguages supportedLanguage)
+        {
+            _selectedLanguage = supportedLanguage;
         }
     }
 }

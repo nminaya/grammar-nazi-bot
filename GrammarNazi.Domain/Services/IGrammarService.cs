@@ -8,6 +8,8 @@ namespace GrammarNazi.Domain.Services
     {
         public GrammarAlgorithms GrammarAlgorith { get; }
 
+        void SetSelectedLanguage(SupportedLanguages supportedLanguage);
+
         Task<GrammarCheckResult> GetCorrections(string text);
     }
 }

@@ -1,4 +1,6 @@
-﻿using GrammarNazi.Domain.Clients;
+﻿using GrammarNazi.Core.Extensions;
+using GrammarNazi.Core.Utilities;
+using GrammarNazi.Domain.Clients;
 using GrammarNazi.Domain.Constants;
 using GrammarNazi.Domain.Entities;
 using GrammarNazi.Domain.Entities.LanguageToolAPI;
@@ -15,6 +17,8 @@ namespace GrammarNazi.Core.Services
         private readonly ILanguageToolApiClient _apiClient;
         private readonly ILanguageService _languageService;
 
+        private SupportedLanguages _selectedLanguage;
+
         public GrammarAlgorithms GrammarAlgorith => GrammarAlgorithms.LanguageToolApi;
 
         public LanguageToolApiService(ILanguageToolApiClient apiClient, ILanguageService languageService)
@@ -26,15 +30,23 @@ namespace GrammarNazi.Core.Services
         public async Task<GrammarCheckResult> GetCorrections(string text)
         {
             // Do not evalulate long texts
-            if (text.Length >= 10_000)
+            if (text.Length >= Defaults.MaxLengthText)
             {
                 return new GrammarCheckResult(null);
             }
 
-            var languageInfo = _languageService.IdentifyLanguage(text);
+            string languageCode;
+            if (_selectedLanguage != SupportedLanguages.Auto)
+            {
+                languageCode = LanguageUtils.GetLanguageCode(_selectedLanguage.GetDescription());
+            }
+            else
+            {
+                var languageInfo = _languageService.IdentifyLanguage(text);
 
-            // Use english if language not identified
-            var languageCode = languageInfo?.TwoLetterISOLanguageName ?? Defaults.LanguageCode;
+                // Use english if language not identified
+                languageCode = languageInfo?.TwoLetterISOLanguageName ?? Defaults.LanguageCode;
+            }
 
             var result = await _apiClient.Check(text, languageCode);
 
@@ -56,6 +68,11 @@ namespace GrammarNazi.Core.Services
             }
 
             return new GrammarCheckResult(corrections);
+        }
+
+        public void SetSelectedLanguage(SupportedLanguages supportedLanguage)
+        {
+            _selectedLanguage = supportedLanguage;
         }
 
         private bool RulesFilter(Match match)

@@ -7,5 +7,7 @@ namespace GrammarNazi.Domain.Entities
         public long ChatId { get; set; }
 
         public GrammarAlgorithms GrammarAlgorithm { get; set; }
+
+        public SupportedLanguages SelectedLanguage { get; set; }
     }
 }
