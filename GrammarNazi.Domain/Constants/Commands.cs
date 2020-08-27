@@ -10,5 +10,6 @@ namespace GrammarNazi.Domain.Constants
         public const string Help = "/help";
         public const string Settings = "/settings";
         public const string SetAlgorithm = "/set_algorithm";
+        public const string Language = "/lang";
     }
 }

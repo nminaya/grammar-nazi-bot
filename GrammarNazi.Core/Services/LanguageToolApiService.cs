@@ -32,7 +32,7 @@ namespace GrammarNazi.Core.Services
             // Do not evalulate long texts
             if (text.Length >= Defaults.MaxLengthText)
             {
-                return new GrammarCheckResult(null);
+                return new GrammarCheckResult(default);
             }
 
             string languageCode;

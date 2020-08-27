@@ -57,31 +57,31 @@ namespace GrammarNazi.App.HostedServices
             if (_webHostEnvironment.IsDevelopment())
                 _logger.LogInformation($"Message: {messageEvent.Message.Text}");
 
-            if (messageEvent.Message.Type == MessageType.Text)
+            if (messageEvent.Message.Type != MessageType.Text) // Just analyze Text messages
+                return;
+
+            // Command
+            if (messageEvent.Message.Text.StartsWith('/'))
             {
-                // Command
-                if (messageEvent.Message.Text.StartsWith('/'))
+                await HandleCommand(messageEvent);
+                return;
+            }
+
+            var grammarService = await GetConfiguredGrammarService(messageEvent.Message.Chat.Id);
+
+            var corretionResult = await grammarService.GetCorrections(messageEvent.Message.Text);
+
+            if (corretionResult.HasCorrections)
+            {
+                var messageBuilder = new StringBuilder();
+
+                foreach (var correction in corretionResult.Corrections)
                 {
-                    await HandleCommand(messageEvent);
-                    return;
+                    // Only suggest the first possible replacement for now
+                    messageBuilder.AppendLine($"*{correction.PossibleReplacements.First()}");
                 }
 
-                var grammarService = await GetConfiguredGrammarService(messageEvent.Message.Chat.Id);
-
-                var result = await grammarService.GetCorrections(messageEvent.Message.Text);
-
-                if (result.HasCorrections)
-                {
-                    var messageBuilder = new StringBuilder();
-
-                    foreach (var item in result.Corrections)
-                    {
-                        // Only suggest the first possible replacement for now
-                        messageBuilder.AppendLine($"*{item.PossibleReplacements.First()}");
-                    }
-
-                    await _client.SendTextMessageAsync(messageEvent.Message.Chat.Id, messageBuilder.ToString(), replyToMessageId: messageEvent.Message.MessageId);
-                }
+                await _client.SendTextMessageAsync(messageEvent.Message.Chat.Id, messageBuilder.ToString(), replyToMessageId: messageEvent.Message.MessageId);
             }
         }
 
@@ -91,7 +91,10 @@ namespace GrammarNazi.App.HostedServices
 
             if (chatConfig != null)
             {
-                return _grammarServices.First(v => v.GrammarAlgorith == chatConfig.GrammarAlgorithm);
+                var grammarService = _grammarServices.First(v => v.GrammarAlgorith == chatConfig.GrammarAlgorithm);
+                grammarService.SetSelectedLanguage(chatConfig.SelectedLanguage);
+
+                return grammarService;
             }
 
             return _grammarServices.First(v => v.GrammarAlgorith == GrammarAlgorithms.LanguageToolApi);
@@ -100,6 +103,8 @@ namespace GrammarNazi.App.HostedServices
         private async Task HandleCommand(MessageEventArgs messageEvent)
         {
             var text = messageEvent.Message.Text;
+
+            // TODO: Evaluate moving all this logic into a service, and a refactor
 
             if (IsCommand(Commands.Start, text))
             {
@@ -112,7 +117,13 @@ namespace GrammarNazi.App.HostedServices
             }
             else if (IsCommand(Commands.Help, text))
             {
-                await _client.SendTextMessageAsync(messageEvent.Message.Chat.Id, "/settings get configured settings.");
+                var messageBuilder = new StringBuilder();
+                messageBuilder.AppendLine("Help").AppendLine();
+                messageBuilder.AppendLine("Useful commands:");
+                messageBuilder.AppendLine($"{Commands.Settings} get configured settings.");
+                messageBuilder.AppendLine($"{Commands.SetAlgorithm} <algorithm_numer> to set an algorithm.");
+                messageBuilder.AppendLine($"{Commands.Language} <language_number> to set a language.");
+                await _client.SendTextMessageAsync(messageEvent.Message.Chat.Id, messageBuilder.ToString());
             }
             else if (IsCommand(Commands.Settings, text))
             {
@@ -122,16 +133,18 @@ namespace GrammarNazi.App.HostedServices
                 {
                     var messageBuilder = new StringBuilder();
                     messageBuilder.AppendLine(GetAvailableAlgorithms());
-                    messageBuilder.AppendLine($"This chat has the algorithm {chatConfig.GrammarAlgorithm.GetDescription()} configured.");
+                    messageBuilder.AppendLine(GetSupportedLanguages());
+
+                    var configuredAlgorith = chatConfig.GrammarAlgorithm == 0 ? GrammarAlgorithms.LanguageToolApi : chatConfig.GrammarAlgorithm;
+
+                    messageBuilder.AppendLine($"This chat has the algorithm {configuredAlgorith.GetDescription()} configured.");
+                    messageBuilder.AppendLine($"This chat has the language {chatConfig.SelectedLanguage} configured.");
 
                     await _client.SendTextMessageAsync(messageEvent.Message.Chat.Id, messageBuilder.ToString());
                 }
                 else
                 {
-                    var messageBuilder = new StringBuilder();
-                    messageBuilder.AppendLine("Type /set_algorithm <algorithm_numer> to set an algorithm");
-                    messageBuilder.AppendLine(GetAvailableAlgorithms());
-                    await _client.SendTextMessageAsync(messageEvent.Message.Chat.Id, messageBuilder.ToString());
+                    await _client.SendTextMessageAsync(messageEvent.Message.Chat.Id, "This chat does not have any configuration set.");
                 }
             }
             else if (IsCommand(Commands.SetAlgorithm, text))
@@ -139,7 +152,7 @@ namespace GrammarNazi.App.HostedServices
                 var parameters = text.Split(" ");
                 if (parameters.Length == 1)
                 {
-                    await _client.SendTextMessageAsync(messageEvent.Message.Chat.Id, "Parameter not received. Type /set_algorithm <algorithm_numer> to set an algorithm.");
+                    await _client.SendTextMessageAsync(messageEvent.Message.Chat.Id, "Parameter not received. Type /set_algorithm <algorithm_numer> to set an algorithm");
                 }
                 else
                 {
@@ -169,6 +182,49 @@ namespace GrammarNazi.App.HostedServices
                     }
                 }
             }
+            else if (IsCommand(Commands.Language, text))
+            {
+                var parameters = text.Split(" ");
+
+                if (parameters.Length == 1)
+                {
+                    var messageBuilder = new StringBuilder();
+                    messageBuilder.AppendLine(GetSupportedLanguages());
+                    messageBuilder.AppendLine($"Parameter not received. Type {Commands.Language} <language_number> to set a language.");
+                    await _client.SendTextMessageAsync(messageEvent.Message.Chat.Id, messageBuilder.ToString());
+                }
+                else
+                {
+                    bool parsedOk = int.TryParse(parameters[1], out int language);
+
+                    if (parsedOk)
+                    {
+                        var chatConfig = await _chatConfigurationService.GetConfigurationByChatId(messageEvent.Message.Chat.Id);
+
+                        if (chatConfig != null)
+                        {
+                            chatConfig.SelectedLanguage = (SupportedLanguages)language;
+                        }
+                        else
+                        {
+                            var config = new ChatConfiguration
+                            {
+                                ChatId = messageEvent.Message.Chat.Id,
+                                SelectedLanguage = (SupportedLanguages)language,
+                                GrammarAlgorithm = Defaults.DefaultAlgorithm
+                            };
+
+                            await _chatConfigurationService.AddConfiguration(config);
+                        }
+
+                        await _client.SendTextMessageAsync(messageEvent.Message.Chat.Id, "Language updated.");
+                    }
+                    else
+                    {
+                        await _client.SendTextMessageAsync(messageEvent.Message.Chat.Id, $"Invalid parameter. Type {Commands.Language} <language_number> to set a language.");
+                    }
+                }
+            }
 
             bool IsCommand(string expected, string actual)
             {
@@ -193,6 +249,21 @@ namespace GrammarNazi.App.HostedServices
                 foreach (var item in algorithms)
                 {
                     messageBuilder.AppendLine($"{(int)item} - {item.GetDescription()}");
+                }
+
+                return messageBuilder.ToString();
+            }
+
+            static string GetSupportedLanguages()
+            {
+                var languages = Enum.GetValues(typeof(SupportedLanguages)).Cast<SupportedLanguages>();
+
+                var messageBuilder = new StringBuilder();
+                messageBuilder.AppendLine("Supported Languages:");
+
+                foreach (var item in languages)
+                {
+                    messageBuilder.AppendLine($"{(int)item} - {item}");
                 }
 
                 return messageBuilder.ToString();

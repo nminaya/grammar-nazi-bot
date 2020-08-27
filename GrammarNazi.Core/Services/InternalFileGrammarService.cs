@@ -31,7 +31,6 @@ namespace GrammarNazi.Core.Services
         {
             if (_selectedLanguage == SupportedLanguages.Auto)
             {
-                // TODO: Use automatic language detection
                 var languageInfo = _languageService.IdentifyLanguage(text);
 
                 // TODO: Implement spanish corrections
