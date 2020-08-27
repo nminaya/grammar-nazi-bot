@@ -152,7 +152,10 @@ namespace GrammarNazi.App.HostedServices
                 var parameters = text.Split(" ");
                 if (parameters.Length == 1)
                 {
-                    await _client.SendTextMessageAsync(messageEvent.Message.Chat.Id, "Parameter not received. Type /set_algorithm <algorithm_numer> to set an algorithm");
+                    var messageBuilder = new StringBuilder();
+                    messageBuilder.AppendLine($"Parameter not received. Type {Commands.SetAlgorithm} <algorithm_numer> to set an algorithm").AppendLine();
+                    messageBuilder.AppendLine(GetAvailableAlgorithms());
+                    await _client.SendTextMessageAsync(messageEvent.Message.Chat.Id, messageBuilder.ToString());
                 }
                 else
                 {
@@ -189,8 +192,8 @@ namespace GrammarNazi.App.HostedServices
                 if (parameters.Length == 1)
                 {
                     var messageBuilder = new StringBuilder();
+                    messageBuilder.AppendLine($"Parameter not received. Type {Commands.Language} <language_number> to set a language.").AppendLine();
                     messageBuilder.AppendLine(GetSupportedLanguages());
-                    messageBuilder.AppendLine($"Parameter not received. Type {Commands.Language} <language_number> to set a language.");
                     await _client.SendTextMessageAsync(messageEvent.Message.Chat.Id, messageBuilder.ToString());
                 }
                 else
