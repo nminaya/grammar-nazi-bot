@@ -97,14 +97,14 @@ namespace GrammarNazi.App.HostedServices
                 return grammarService;
             }
 
-            return _grammarServices.First(v => v.GrammarAlgorith == GrammarAlgorithms.LanguageToolApi);
+            return _grammarServices.First(v => v.GrammarAlgorith == Defaults.DefaultAlgorithm);
         }
 
         private async Task HandleCommand(MessageEventArgs messageEvent)
         {
             var text = messageEvent.Message.Text;
 
-            // TODO: Evaluate moving all this logic into a service, and a refactor
+            // TODO: Evaluate moving all this logic into a service, and do a refactor
 
             if (IsCommand(Commands.Start, text))
             {
@@ -135,7 +135,7 @@ namespace GrammarNazi.App.HostedServices
                     messageBuilder.AppendLine(GetAvailableAlgorithms());
                     messageBuilder.AppendLine(GetSupportedLanguages());
 
-                    var configuredAlgorith = chatConfig.GrammarAlgorithm == 0 ? GrammarAlgorithms.LanguageToolApi : chatConfig.GrammarAlgorithm;
+                    var configuredAlgorith = chatConfig.GrammarAlgorithm == 0 ? Defaults.DefaultAlgorithm : chatConfig.GrammarAlgorithm;
 
                     messageBuilder.AppendLine($"This chat has the algorithm {configuredAlgorith.GetDescription()} configured.");
                     messageBuilder.AppendLine($"This chat has the language {chatConfig.SelectedLanguage} configured.");
