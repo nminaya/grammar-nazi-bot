@@ -5,6 +5,7 @@ This bot analyzes each message that is sent in a Telegram chat, and if it finds 
 
 ### Features
 - Configurable grammar analyzer algorithm or provider.
+- Multiple language support (English and Spanish).
 
 ### Solution Design
 The solution design focuses on a basic Domain Driven Design techniques and implementation, while keeping the things as simple as possible but can be extended as needed. Multiple assemblies are used for separation of concerns to keep logic isolated from the other components. **Microsoft .NET Core 3.1 C#** is the default framework and language for this application.
@@ -18,7 +19,6 @@ The solution design focuses on a basic Domain Driven Design techniques and imple
 
 ## Features to implement
 This project is still under development, there are a lot of features to implement.
-- Multiple language support.
 - Configurable [Grammar rules](https://community.languagetool.org/rule/)
 - Accuracy percentage for possible corrections.
 - Unit test and Integration Test projects.
