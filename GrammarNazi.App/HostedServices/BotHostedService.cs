@@ -110,7 +110,7 @@ namespace GrammarNazi.App.HostedServices
                 var messageBuilder = new StringBuilder();
                 messageBuilder.AppendLine("Hi, I'm GrammarNazi.");
                 messageBuilder.AppendLine("I'm currently working and correcting all spelling errors in this chat.");
-                messageBuilder.AppendLine("Type /help to get useful commands.");
+                messageBuilder.AppendLine($"Type {Commands.Help} to get useful commands.");
 
                 await _client.SendTextMessageAsync(messageEvent.Message.Chat.Id, messageBuilder.ToString());
             }
@@ -180,7 +180,7 @@ namespace GrammarNazi.App.HostedServices
                     }
                     else
                     {
-                        await _client.SendTextMessageAsync(messageEvent.Message.Chat.Id, "Invalid parameter. Type /set_algorithm <algorithm_numer> to set an algorithm.");
+                        await _client.SendTextMessageAsync(messageEvent.Message.Chat.Id, $"Invalid parameter. Type {Commands.SetAlgorithm} <algorithm_numer> to set an algorithm.");
                     }
                 }
             }
