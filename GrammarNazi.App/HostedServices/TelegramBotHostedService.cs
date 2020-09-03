@@ -18,15 +18,15 @@ using Telegram.Bot.Types.Enums;
 
 namespace GrammarNazi.App.HostedServices
 {
-    public class BotHostedService : BackgroundService
+    public class TelegramBotHostedService : BackgroundService
     {
-        private readonly ILogger<BotHostedService> _logger;
+        private readonly ILogger<TelegramBotHostedService> _logger;
         private readonly IEnumerable<IGrammarService> _grammarServices;
         private readonly IChatConfigurationService _chatConfigurationService;
         private readonly IWebHostEnvironment _webHostEnvironment;
         private readonly ITelegramBotClient _client;
 
-        public BotHostedService(ILogger<BotHostedService> logger,
+        public TelegramBotHostedService(ILogger<TelegramBotHostedService> logger,
             ITelegramBotClient telegramBotClient,
             IEnumerable<IGrammarService> grammarServices,
             IChatConfigurationService chatConfigurationService,

@@ -32,7 +32,7 @@ namespace GrammarNazi.App
             services.AddControllers();
 
             // Hosted services
-            services.AddHostedService<BotHostedService>();
+            services.AddHostedService<TelegramBotHostedService>();
             services.AddHostedService<TwitterBotHostedService>();
 
             ConfigureDependencies(services);
