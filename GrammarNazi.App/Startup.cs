@@ -13,6 +13,8 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using System;
 using Telegram.Bot;
+using Tweetinvi;
+using Tweetinvi.Models;
 
 namespace GrammarNazi.App
 {
@@ -31,6 +33,7 @@ namespace GrammarNazi.App
 
             // Hosted services
             services.AddHostedService<BotHostedService>();
+            services.AddHostedService<TwitterBotHostedService>();
 
             ConfigureDependencies(services);
         }
@@ -58,6 +61,17 @@ namespace GrammarNazi.App
                     throw new InvalidOperationException("Empty TELEGRAM_API_KEY");
 
                 return new TelegramBotClient(apiKey);
+            });
+
+            // Twitter client
+            services.AddSingleton<ITwitterClient>(_ =>
+            {
+                var consumerKey = Environment.GetEnvironmentVariable("TWITTER_CONSUMER_KEY");
+                var consumerSecret = Environment.GetEnvironmentVariable("TWITTER_CONSUMER_SECRET");
+                var accessToken = Environment.GetEnvironmentVariable("TWITTER_ACCESS_TOKEN");
+                var accessTokenSecret = Environment.GetEnvironmentVariable("TWITTER_ACCESS_TOKEN_SECRET");
+
+                return new TwitterClient(consumerKey, consumerSecret, accessToken, accessTokenSecret);
             });
         }
 
