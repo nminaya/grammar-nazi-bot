@@ -46,16 +46,17 @@ namespace GrammarNazi.App.HostedServices
                     _logger.LogInformation($"Getting followers");
                     var user = await _twitterClient.Users.GetUserAsync("GrammarNazi_Bot"); // TODO: Get bot name from config
 
-                    var followerIds = user.GetFollowerIds();
+                    var followerIdsIterator = user.GetFollowerIds();
 
                     var followers = new List<IUser>();
 
-                    while (!followerIds.Completed)
+                    while (!followerIdsIterator.Completed)
                     {
-                        var page = await followerIds.NextPageAsync();
-                        foreach (var item in page)
+                        var page = await followerIdsIterator.NextPageAsync();
+
+                        foreach (var followerId in page)
                         {
-                            followers.Add(await _twitterClient.Users.GetUserAsync(item));
+                            followers.Add(await _twitterClient.Users.GetUserAsync(followerId));
                         }
                     }
 
@@ -80,10 +81,10 @@ namespace GrammarNazi.App.HostedServices
                             continue;
                         }
 
-                        tweetList.AddRange(timeLine);
+                        tweetList.AddRange(timeLine.Where(v => !v.Text.StartsWith("RT"))); // Avoid Retweets
                     }
 
-                    foreach (var tweet in tweetList.Where(v => !v.Text.StartsWith("RT"))) // Avoid Retweets
+                    foreach (var tweet in tweetList)
                     {
                         var correctionsResult = await _grammarService.GetCorrections(tweet.Text);
 
@@ -118,11 +119,11 @@ namespace GrammarNazi.App.HostedServices
                 }
                 catch (Exception ex)
                 {
-                    _logger.LogError(ex, ex.ToString());
+                    _logger.LogError(ex, ex.Message);
                 }
 
                 // TODO: Get this value from config
-                // Wait 10 minutes
+                // Wait 10 minutes to execute again
                 await Task.Delay(10 * 60_000);
             }
         }
