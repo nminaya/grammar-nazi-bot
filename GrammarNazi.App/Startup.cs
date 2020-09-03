@@ -1,4 +1,5 @@
 using GrammarNazi.App.HostedServices;
+using GrammarNazi.Core;
 using GrammarNazi.Core.Clients;
 using GrammarNazi.Core.Repositories;
 using GrammarNazi.Core.Services;
@@ -8,6 +9,7 @@ using GrammarNazi.Domain.Services;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Http;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
@@ -31,9 +33,12 @@ namespace GrammarNazi.App
         {
             services.AddControllers();
 
+            // Add framework services.
+            services.AddDbContext<GrammarNaziContext>(options => options.UseSqlite(Configuration.GetConnectionString("DefaultConnection")));
+
             // Hosted services
             services.AddHostedService<TelegramBotHostedService>();
-            services.AddHostedService<TwitterBotHostedService>();
+            //services.AddHostedService<TwitterBotHostedService>();
 
             ConfigureDependencies(services);
         }
@@ -41,7 +46,8 @@ namespace GrammarNazi.App
         private static void ConfigureDependencies(IServiceCollection services)
         {
             // Repository
-            services.AddTransient(typeof(IRepository<>), typeof(InMemoryRepository<>));
+            services.AddTransient(typeof(IRepository<>), typeof(EFRepository<>));
+            services.AddTransient<DbContext, GrammarNaziContext>();
 
             // Services
             services.AddSingleton<IFileService, FileService>();
@@ -75,6 +81,13 @@ namespace GrammarNazi.App
             });
         }
 
+        private void EnsureDatabaseCreated(IApplicationBuilder app)
+        {
+            using var serviceScope = app.ApplicationServices.GetRequiredService<IServiceScopeFactory>().CreateScope();
+            var context = serviceScope.ServiceProvider.GetService<DbContext>();
+            context.Database.EnsureCreated();
+        }
+
         public void Configure(IApplicationBuilder app, IWebHostEnvironment env)
         {
             if (env.IsDevelopment())
@@ -83,6 +96,8 @@ namespace GrammarNazi.App
             }
 
             app.UseRouting();
+
+            EnsureDatabaseCreated(app);
 
             app.UseEndpoints(endpoints =>
             {

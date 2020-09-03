@@ -7,7 +7,7 @@ using System.Threading.Tasks;
 
 namespace GrammarNazi.Core.Repositories
 {
-    public class InMemoryRepository<T> : IRepository<T>
+    public class InMemoryRepository<T> : IRepository<T> where T : class
     {
         private static readonly List<T> _list = new List<T>();
 
