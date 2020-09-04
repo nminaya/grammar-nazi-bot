@@ -13,6 +13,8 @@ namespace GrammarNazi.Domain.Services
 
         Task Delete(ChatConfiguration chatConfiguration);
 
+        Task Update(ChatConfiguration chatConfiguration);
+
         Task<ChatConfiguration> GetConfigurationByChatId(long chatId);
     }
 }

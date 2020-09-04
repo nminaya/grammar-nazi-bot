@@ -46,7 +46,7 @@ namespace GrammarNazi.App
         private static void ConfigureDependencies(IServiceCollection services)
         {
             // Repository
-            services.AddTransient(typeof(IRepository<>), typeof(EFRepository<>));
+            services.AddTransient(typeof(IRepository<>), typeof(FirebaseRepository<>));
             services.AddTransient<DbContext, GrammarNaziContext>();
 
             // Services

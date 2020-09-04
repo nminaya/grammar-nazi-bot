@@ -41,5 +41,17 @@ namespace GrammarNazi.Core.Repositories
         {
             return Task.FromResult(_list.Max(selector.Compile()));
         }
+
+        public Task Update(T entity, Expression<Func<T, bool>> identifier)
+        {
+            var obj = _list.FirstOrDefault(identifier.Compile());
+
+            if (obj != default)
+                _list.Remove(obj);
+
+            _list.Add(entity);
+
+            return Task.CompletedTask;
+        }
     }
 }

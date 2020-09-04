@@ -21,9 +21,7 @@ namespace GrammarNazi.Core.Repositories
 
         public async Task Add(T entity)
         {
-            var entityName = typeof(T).Name;
-
-            await _firebaseClient.Child(entityName).PostAsync(Newtonsoft.Json.JsonConvert.SerializeObject(entity));
+            await _firebaseClient.Child(typeof(T).Name).PostAsync(Newtonsoft.Json.JsonConvert.SerializeObject(entity));
         }
 
         public async Task<bool> Any(Expression<Func<T, bool>> filter = null)
@@ -60,6 +58,16 @@ namespace GrammarNazi.Core.Repositories
             var results = await GetList();
 
             return results.Max(selector.Compile());
+        }
+
+        public async Task Update(T entity, Expression<Func<T, bool>> identifier)
+        {
+            var obj = await GetFirst(identifier);
+
+            if (obj != default)
+                await Delete(obj);
+
+            await Add(entity);
         }
 
         private async Task<IEnumerable<T>> GetList() => (await _firebaseClient.Child(typeof(T).Name).OnceAsync<T>()).Select(v => v.Object);

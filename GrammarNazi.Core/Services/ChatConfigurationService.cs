@@ -28,5 +28,10 @@ namespace GrammarNazi.Core.Services
         {
             return _repository.GetFirst(v => v.ChatId == chatId);
         }
+
+        public async Task Update(ChatConfiguration chatConfiguration)
+        {
+            await _repository.Update(chatConfiguration, v => v.ChatId == chatConfiguration.ChatId);
+        }
     }
 }

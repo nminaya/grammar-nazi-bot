@@ -38,12 +38,22 @@ namespace GrammarNazi.Core.Repositories
 
         public async Task<T> GetFirst(Expression<Func<T, bool>> filter)
         {
-            return await _dbContext.Set<T>().FirstOrDefaultAsync(filter);
+            return await _dbContext.Set<T>().AsNoTracking().FirstOrDefaultAsync(filter);
         }
 
         public async Task<TResult> Max<TResult>(Expression<Func<T, TResult>> selector)
         {
             return await _dbContext.Set<T>().MaxAsync(selector);
+        }
+
+        public async Task Update(T entity, Expression<Func<T, bool>> identifier)
+        {
+            var obj = await _dbContext.Set<T>().FirstOrDefaultAsync(identifier);
+            if (obj != default)
+                _dbContext.Set<T>().Remove(obj);
+
+            await _dbContext.Set<T>().AddAsync(entity);
+            await _dbContext.SaveChangesAsync();
         }
     }
 }

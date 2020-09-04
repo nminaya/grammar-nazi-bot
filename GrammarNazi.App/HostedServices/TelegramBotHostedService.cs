@@ -166,7 +166,8 @@ namespace GrammarNazi.App.HostedServices
 
                         if (chatConfig != null)
                         {
-                            await _chatConfigurationService.Delete(chatConfig);
+                            chatConfig.GrammarAlgorithm = (GrammarAlgorithms)algorithm;
+                            await _chatConfigurationService.Update(chatConfig);
                         }
 
                         var config = new ChatConfiguration
@@ -206,6 +207,7 @@ namespace GrammarNazi.App.HostedServices
                         if (chatConfig != null)
                         {
                             chatConfig.SelectedLanguage = (SupportedLanguages)language;
+                            await _chatConfigurationService.Update(chatConfig);
                         }
                         else
                         {
