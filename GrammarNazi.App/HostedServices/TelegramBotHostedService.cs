@@ -77,7 +77,7 @@ namespace GrammarNazi.App.HostedServices
                 foreach (var correction in corretionResult.Corrections)
                 {
                     // Only suggest the first possible replacement for now
-                    messageBuilder.AppendLine($"*{correction.PossibleReplacements.First()}");
+                    messageBuilder.AppendLine($"*{correction.PossibleReplacements.First()} [{correction.Message}]");
                 }
 
                 await _client.SendTextMessageAsync(messageEvent.Message.Chat.Id, messageBuilder.ToString(), replyToMessageId: messageEvent.Message.MessageId);

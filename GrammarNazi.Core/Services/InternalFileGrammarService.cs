@@ -64,7 +64,7 @@ namespace GrammarNazi.Core.Services
 
                     if (possibleCorrections.Any())
                     {
-                        corrections.Add(new GrammarCorrection { WrongWord = item, PossibleReplacements = possibleCorrections });
+                        corrections.Add(new GrammarCorrection { WrongWord = item, PossibleReplacements = possibleCorrections, Message = string.Empty });
                     }
                 }
             }

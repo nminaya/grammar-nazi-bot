@@ -61,7 +61,8 @@ namespace GrammarNazi.Core.Services
                 var correction = new GrammarCorrection
                 {
                     WrongWord = match.Context.Text.Substring(match.Context.Offset, match.Context.Length),
-                    PossibleReplacements = match.Replacements.Select(v => v.Value)
+                    PossibleReplacements = match.Replacements.Select(v => v.Value),
+                    Message = match.Message
                 };
 
                 corrections.Add(correction);

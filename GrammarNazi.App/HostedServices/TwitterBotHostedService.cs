@@ -108,7 +108,7 @@ namespace GrammarNazi.App.HostedServices
                             foreach (var correction in correctionsResult.Corrections)
                             {
                                 // Only suggest the first possible replacement for now
-                                messageBuilder.AppendLine($"*{correction.PossibleReplacements.First()}");
+                                messageBuilder.AppendLine($"*{correction.PossibleReplacements.First()} [{correction.Message}]");
                             }
 
                             var correctionString = messageBuilder.ToString();

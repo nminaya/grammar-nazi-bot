@@ -33,7 +33,6 @@ namespace GrammarNazi.App
         {
             services.AddControllers();
 
-            // Add framework services.
             services.AddDbContext<GrammarNaziContext>(options => options.UseSqlite(Configuration.GetConnectionString("DefaultConnection")));
 
             // Hosted services
@@ -98,6 +97,7 @@ namespace GrammarNazi.App
 
             app.UseRouting();
 
+            // Create Database if not exist
             EnsureDatabaseCreated(app);
 
             app.UseEndpoints(endpoints =>
