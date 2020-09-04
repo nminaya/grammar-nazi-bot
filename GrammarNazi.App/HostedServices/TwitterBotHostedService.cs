@@ -125,6 +125,10 @@ namespace GrammarNazi.App.HostedServices
                                 _logger.LogInformation("Reply sent successfuly");
                                 await _twitterLogService.LogTweet(tweet.Id, replyTweet.Id);
                             }
+
+                            // TODO: Get this value from config
+                            // Wait 15 seconds to avoid Twitter limit
+                            await Task.Delay(15_000);
                         }
                     }
                 }
