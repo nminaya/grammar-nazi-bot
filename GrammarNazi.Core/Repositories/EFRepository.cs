@@ -22,6 +22,14 @@ namespace GrammarNazi.Core.Repositories
             await _dbContext.SaveChangesAsync();
         }
 
+        public async Task<bool> Any(Expression<Func<T, bool>> filter = default)
+        {
+            if (filter == default)
+                return await _dbContext.Set<T>().AnyAsync();
+
+            return await _dbContext.Set<T>().AnyAsync(filter);
+        }
+
         public async Task Delete(T entity)
         {
             _dbContext.Set<T>().Remove(entity);
@@ -31,6 +39,11 @@ namespace GrammarNazi.Core.Repositories
         public async Task<T> GetFirst(Expression<Func<T, bool>> filter)
         {
             return await _dbContext.Set<T>().FirstOrDefaultAsync(filter);
+        }
+
+        public async Task<TResult> Max<TResult>(Expression<Func<T, TResult>> selector)
+        {
+            return await _dbContext.Set<T>().MaxAsync(selector);
         }
     }
 }

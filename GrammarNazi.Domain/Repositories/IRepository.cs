@@ -13,5 +13,9 @@ namespace GrammarNazi.Domain.Repositories
         Task Delete(T entity);
 
         Task<T> GetFirst(Expression<Func<T, bool>> filter);
+
+        Task<bool> Any(Expression<Func<T, bool>> filter = default);
+
+        Task<TResult> Max<TResult>(Expression<Func<T, TResult>> selector);
     }
 }
