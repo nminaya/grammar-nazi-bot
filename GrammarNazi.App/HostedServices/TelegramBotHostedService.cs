@@ -169,14 +169,17 @@ namespace GrammarNazi.App.HostedServices
                             chatConfig.GrammarAlgorithm = (GrammarAlgorithms)algorithm;
                             await _chatConfigurationService.Update(chatConfig);
                         }
-
-                        var config = new ChatConfiguration
+                        else
                         {
-                            ChatId = messageEvent.Message.Chat.Id,
-                            GrammarAlgorithm = (GrammarAlgorithms)algorithm
-                        };
+                            var config = new ChatConfiguration
+                            {
+                                ChatId = messageEvent.Message.Chat.Id,
+                                GrammarAlgorithm = (GrammarAlgorithms)algorithm
+                            };
 
-                        await _chatConfigurationService.AddConfiguration(config);
+                            await _chatConfigurationService.AddConfiguration(config);
+                        }
+
                         await _client.SendTextMessageAsync(messageEvent.Message.Chat.Id, "Algorithm updated.");
                     }
                     else
