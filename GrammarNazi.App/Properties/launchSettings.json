@@ -23,6 +23,7 @@
         "TWITTER_CONSUMER_SECRET": "",
         "TWITTER_ACCESS_TOKEN": "",
         "TWITTER_ACCESS_TOKEN_SECRET": "",
+        "FIREBASE_DATABASE_URL": "",
         "ASPNETCORE_ENVIRONMENT": "Development"
       },
       "applicationUrl": "http://localhost:5000"

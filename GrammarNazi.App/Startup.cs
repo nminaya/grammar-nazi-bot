@@ -1,3 +1,4 @@
+using Firebase.Database;
 using GrammarNazi.App.HostedServices;
 using GrammarNazi.Core;
 using GrammarNazi.Core.Clients;
@@ -78,6 +79,14 @@ namespace GrammarNazi.App
                 var accessTokenSecret = Environment.GetEnvironmentVariable("TWITTER_ACCESS_TOKEN_SECRET");
 
                 return new TwitterClient(consumerKey, consumerSecret, accessToken, accessTokenSecret);
+            });
+
+            // Firebase Client
+            services.AddSingleton(_ =>
+            {
+                var databaseUrl = Environment.GetEnvironmentVariable("FIREBASE_DATABASE_URL");
+
+                return new FirebaseClient(databaseUrl);
             });
         }
 
