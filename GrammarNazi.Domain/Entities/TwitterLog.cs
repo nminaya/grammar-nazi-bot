@@ -8,5 +8,6 @@ namespace GrammarNazi.Domain.Entities
     {
         public long TweetId { get; set; }
         public long ReplyTweetId { get; set; }
+        public DateTime CreatedDate { get; set; }
     }
 }

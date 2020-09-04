@@ -1,6 +1,7 @@
 ﻿using GrammarNazi.Domain.Entities;
 using GrammarNazi.Domain.Repositories;
 using GrammarNazi.Domain.Services;
+using System;
 using System.Threading.Tasks;
 
 namespace GrammarNazi.Core.Services
@@ -29,7 +30,8 @@ namespace GrammarNazi.Core.Services
             var twitterLog = new TwitterLog
             {
                 TweetId = tweetId,
-                ReplyTweetId = replyTweetId
+                ReplyTweetId = replyTweetId,
+                CreatedDate = DateTime.Now
             };
 
             await _repository.Add(twitterLog);
