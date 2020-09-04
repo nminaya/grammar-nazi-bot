@@ -38,7 +38,7 @@ namespace GrammarNazi.App
 
             // Hosted services
             services.AddHostedService<TelegramBotHostedService>();
-            //services.AddHostedService<TwitterBotHostedService>();
+            services.AddHostedService<TwitterBotHostedService>();
 
             ConfigureDependencies(services);
         }
@@ -57,6 +57,7 @@ namespace GrammarNazi.App
             services.AddTransient<ILanguageService, NTextCatLanguageService>();
             services.AddTransient<IGrammarService, LanguageToolApiService>();
             services.AddTransient<IGrammarService, InternalFileGrammarService>();
+            services.AddTransient<ITwitterLogService, TwitterLogService>();
 
             // Telegram client
             services.AddTransient<ITelegramBotClient>(_ =>
