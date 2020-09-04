@@ -14,6 +14,9 @@ namespace GrammarNazi.Core
         {
             modelBuilder.Entity<ChatConfiguration>()
                 .HasKey(v => v.ChatId);
+
+            modelBuilder.Entity<TwitterLog>()
+                .HasKey(v => v.TweetId);
         }
     }
 }

@@ -17,22 +17,27 @@ namespace GrammarNazi.App.HostedServices
     public class TwitterBotHostedService : BackgroundService
     {
         private readonly ILogger<TwitterBotHostedService> _logger;
+        private readonly ITwitterLogService _twitterLogService;
         private readonly IGrammarService _grammarService;
         private readonly ITwitterClient _twitterClient;
 
-        // TODO: Save this value using a repository
-        // It will contain the last tweet the bot replied
-        private static long _lastTweetId = 0;
-
         public TwitterBotHostedService(ILogger<TwitterBotHostedService> logger,
             IEnumerable<IGrammarService> grammarServices,
+            ITwitterLogService twitterLogService,
             ITwitterClient userClient)
         {
             _logger = logger;
+            _twitterLogService = twitterLogService;
             _twitterClient = userClient;
 
             // Use only DefaultAlgorithm for now
             _grammarService = grammarServices.First(v => v.GrammarAlgorith == Defaults.DefaultAlgorithm);
+        }
+
+        public override Task StartAsync(CancellationToken cancellationToken)
+        {
+            _logger.LogInformation("TwitterBotHostedService started");
+            return base.StartAsync(cancellationToken);
         }
 
         protected override async Task ExecuteAsync(CancellationToken stoppingToken)
@@ -41,14 +46,16 @@ namespace GrammarNazi.App.HostedServices
             {
                 try
                 {
-                    _logger.LogInformation($"Getting tweets from followers");
+                    _logger.LogInformation("Getting tweets from followers");
 
-                    _logger.LogInformation($"Getting followers");
+                    _logger.LogInformation("Getting followers");
                     var user = await _twitterClient.Users.GetUserAsync("GrammarNazi_Bot"); // TODO: Get bot name from config
 
                     var followerIdsIterator = user.GetFollowerIds();
 
                     var followers = new List<IUser>();
+
+                    var lastTweetIdTask = _twitterLogService.GetLastTweetId();
 
                     while (!followerIdsIterator.Completed)
                     {
@@ -62,17 +69,21 @@ namespace GrammarNazi.App.HostedServices
 
                     _logger.LogInformation($"Followers: {followers.Count}");
 
-                    var tweetList = new List<ITweet>();
+                    var tweets = new List<ITweet>();
+
+                    long sinceTweetId = await lastTweetIdTask;
 
                     foreach (var follower in followers)
                     {
                         _logger.LogInformation($"Getting TimeLine of {follower.ScreenName}");
 
-                        var getTimeLineParameters = new GetUserTimelineParameters(follower.Id)
-                        {
-                            SinceId = _lastTweetId == 0 ? (long?)null : _lastTweetId,
-                            PageSize = 5 // TODO: Get this value from config
-                        };
+                        var getTimeLineParameters = new GetUserTimelineParameters(follower.Id);
+
+                        if (sinceTweetId == 0)
+                            getTimeLineParameters.PageSize = 5; // TODO: Get this value from config
+                        else
+                            getTimeLineParameters.SinceId = sinceTweetId;
+
                         var timeLine = await _twitterClient.Timelines.GetUserTimelineAsync(getTimeLineParameters);
 
                         if (timeLine.Length == 0)
@@ -81,10 +92,10 @@ namespace GrammarNazi.App.HostedServices
                             continue;
                         }
 
-                        tweetList.AddRange(timeLine.Where(v => !v.Text.StartsWith("RT"))); // Avoid Retweets
+                        tweets.AddRange(timeLine.Where(v => !v.Text.StartsWith("RT"))); // Avoid Retweets
                     }
 
-                    foreach (var tweet in tweetList)
+                    foreach (var tweet in tweets)
                     {
                         var correctionsResult = await _grammarService.GetCorrections(tweet.Text);
 
@@ -111,8 +122,8 @@ namespace GrammarNazi.App.HostedServices
 
                             if (replyTweet != null)
                             {
-                                _lastTweetId = tweet.Id;
                                 _logger.LogInformation("Reply sent successfuly");
+                                await _twitterLogService.LogTweet(tweet.Id, replyTweet.Id);
                             }
                         }
                     }
