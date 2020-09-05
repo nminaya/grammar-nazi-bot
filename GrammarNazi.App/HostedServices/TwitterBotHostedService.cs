@@ -10,6 +10,7 @@ using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 using Tweetinvi;
+using Tweetinvi.Iterators;
 using Tweetinvi.Models;
 using Tweetinvi.Parameters;
 
@@ -50,31 +51,16 @@ namespace GrammarNazi.App.HostedServices
                     _logger.LogInformation("Getting tweets from followers");
 
                     _logger.LogInformation("Getting followers");
-                    var user = await _twitterClient.Users.GetUserAsync("GrammarNazi_Bot"); // TODO: Get bot name from config
-
-                    var followerIdsIterator = user.GetFollowerIds();
-
-                    var followers = new List<IUser>();
 
                     var lastTweetIdTask = _twitterLogService.GetLastTweetId();
 
-                    while (!followerIdsIterator.Completed)
-                    {
-                        var page = await followerIdsIterator.NextPageAsync();
-
-                        foreach (var followerId in page)
-                        {
-                            followers.Add(await _twitterClient.Users.GetUserAsync(followerId));
-                        }
-                    }
-
-                    _logger.LogInformation($"Followers: {followers.Count}");
-
-                    var tweets = new List<ITweet>();
+                    var user = await _twitterClient.Users.GetUserAsync("GrammarNazi_Bot"); // TODO: Get bot name from config
 
                     long sinceTweetId = await lastTweetIdTask;
 
-                    foreach (var follower in followers)
+                    var tweets = new List<ITweet>();
+
+                    await foreach (var follower in GetFollowers(user))
                     {
                         _logger.LogInformation($"Getting TimeLine of {follower.ScreenName}");
 
@@ -150,6 +136,21 @@ namespace GrammarNazi.App.HostedServices
                 // TODO: Get this value from config
                 // Wait 10 minutes to execute again
                 await Task.Delay(10 * 60_000);
+            }
+        }
+
+        private async IAsyncEnumerable<IUser> GetFollowers(IUser user)
+        {
+            var followerIdsIterator = user.GetFollowerIds();
+
+            while (!followerIdsIterator.Completed)
+            {
+                var page = await followerIdsIterator.NextPageAsync();
+
+                foreach (var followerId in page)
+                {
+                    yield return await _twitterClient.Users.GetUserAsync(followerId);
+                }
             }
         }
     }
