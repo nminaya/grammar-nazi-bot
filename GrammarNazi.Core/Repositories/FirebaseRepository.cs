@@ -1,6 +1,7 @@
 ﻿using Firebase.Database;
 using Firebase.Database.Query;
 using GrammarNazi.Domain.Repositories;
+using Newtonsoft.Json;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -21,15 +22,18 @@ namespace GrammarNazi.Core.Repositories
 
         public async Task Add(T entity)
         {
-            await _firebaseClient.Child(typeof(T).Name).PostAsync(Newtonsoft.Json.JsonConvert.SerializeObject(entity));
+            await _firebaseClient.Child(typeof(T).Name).PostAsync(JsonConvert.SerializeObject(entity));
         }
 
         public async Task<bool> Any(Expression<Func<T, bool>> filter = null)
         {
-            var results = await GetList();
-
             if (filter == default)
-                return results.Any();
+            {
+                var items = await _firebaseClient.Child(typeof(T).Name).OrderByKey().LimitToFirst(1).OnceAsync<T>();
+                return items.Count > 0;
+            }
+
+            var results = await GetAllItems();
 
             return results.Any(filter.Compile());
         }
@@ -48,14 +52,14 @@ namespace GrammarNazi.Core.Repositories
 
         public async Task<T> GetFirst(Expression<Func<T, bool>> filter)
         {
-            var results = await GetList();
+            var results = await GetAllItems();
 
             return results.FirstOrDefault(filter.Compile());
         }
 
         public async Task<TResult> Max<TResult>(Expression<Func<T, TResult>> selector)
         {
-            var results = await GetList();
+            var results = await GetAllItems();
 
             return results.Max(selector.Compile());
         }
@@ -70,6 +74,6 @@ namespace GrammarNazi.Core.Repositories
             await Add(entity);
         }
 
-        private async Task<IEnumerable<T>> GetList() => (await _firebaseClient.Child(typeof(T).Name).OnceAsync<T>()).Select(v => v.Object);
+        private async Task<IEnumerable<T>> GetAllItems() => (await _firebaseClient.Child(typeof(T).Name).OnceAsync<T>()).Select(v => v.Object);
     }
 }
