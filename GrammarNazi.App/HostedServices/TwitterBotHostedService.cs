@@ -1,4 +1,5 @@
-﻿using GrammarNazi.Domain.Constants;
+﻿using GrammarNazi.Core.Extensions;
+using GrammarNazi.Domain.Constants;
 using GrammarNazi.Domain.Services;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
@@ -103,7 +104,8 @@ namespace GrammarNazi.App.HostedServices
                         {
                             var messageBuilder = new StringBuilder();
 
-                            messageBuilder.Append($"@{tweet.CreatedBy.ScreenName} {tweet.Prefix}");
+                            var mentionedUsers = tweet.UserMentions.Select(v => v.ToString()).Join(" "); // Other users mentioned in the tweet
+                            messageBuilder.Append($"@{tweet.CreatedBy.ScreenName} {mentionedUsers}");
 
                             foreach (var correction in correctionsResult.Corrections)
                             {
