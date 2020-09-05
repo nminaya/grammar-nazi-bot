@@ -64,7 +64,13 @@ namespace GrammarNazi.Core.Services
 
                     if (possibleCorrections.Any())
                     {
-                        corrections.Add(new GrammarCorrection { WrongWord = item, PossibleReplacements = possibleCorrections, Message = string.Empty });
+                        var correction = new GrammarCorrection
+                        {
+                            WrongWord = item,
+                            PossibleReplacements = possibleCorrections,
+                            Message = $"The word \"{item}\" doesn't exist or isn't in the internal dictionary."
+                        };
+                        corrections.Add(correction);
                     }
                 }
             }

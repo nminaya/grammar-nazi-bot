@@ -54,11 +54,11 @@ namespace GrammarNazi.App.HostedServices
         {
             _logger.LogInformation($"Message received from chat id: {messageEvent.Message.Chat.Id}");
 
-            if (_webHostEnvironment.IsDevelopment())
-                _logger.LogInformation($"Message: {messageEvent.Message.Text}");
-
             if (messageEvent.Message.Type != MessageType.Text) // We only analyze Text messages
                 return;
+
+            if (_webHostEnvironment.IsDevelopment())
+                _logger.LogInformation($"Message: {messageEvent.Message.Text}");
 
             if (messageEvent.Message.Text.StartsWith('/')) // Text is a command
             {
