@@ -133,6 +133,14 @@ namespace GrammarNazi.App.HostedServices
                             await Task.Delay(15_000);
                         }
                     }
+
+                    if (tweets.Any())
+                    {
+                        var lastTweet = tweets.OrderByDescending(v => v.Id).First();
+
+                        // Save last Tweet Id
+                        await _twitterLogService.LogTweet(lastTweet.Id, 0);
+                    }
                 }
                 catch (Exception ex)
                 {
