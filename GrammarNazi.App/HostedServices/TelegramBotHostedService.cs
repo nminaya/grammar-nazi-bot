@@ -125,7 +125,7 @@ namespace GrammarNazi.App.HostedServices
 
             if (IsCommand(Commands.Start, text))
             {
-                var chatConfig = await GetChatConfiguration(messageEvent.Message.Chat.Id);
+                var chatConfig = await _chatConfigurationService.GetConfigurationByChatId(messageEvent.Message.Chat.Id);
                 var messageBuilder = new StringBuilder();
 
                 if (chatConfig == null)
@@ -167,7 +167,7 @@ namespace GrammarNazi.App.HostedServices
                 messageBuilder.AppendLine($"{Commands.Start} start/activate the Bot.");
                 messageBuilder.AppendLine($"{Commands.Stop} stop/disable the Bot.");
                 messageBuilder.AppendLine($"{Commands.Settings} get configured settings.");
-                messageBuilder.AppendLine($"{Commands.SetAlgorithm} <algorithm_numer> to set an algorithm.");
+                messageBuilder.AppendLine($"{Commands.SetAlgorithm} <algorithm_number> to set an algorithm.");
                 messageBuilder.AppendLine($"{Commands.Language} <language_number> to set a language.");
                 await _client.SendTextMessageAsync(messageEvent.Message.Chat.Id, messageBuilder.ToString());
             }
@@ -180,7 +180,7 @@ namespace GrammarNazi.App.HostedServices
                 messageBuilder.AppendLine(GetSupportedLanguages(chatConfig.SelectedLanguage));
 
                 if (chatConfig.IsBotStopped)
-                    messageBuilder.AppendLine($"The bot is currently stopped. Type {Commands.Start} the Bot.");
+                    messageBuilder.AppendLine($"The bot is currently stopped. Type {Commands.Start} to activate the Bot.");
 
                 await _client.SendTextMessageAsync(messageEvent.Message.Chat.Id, messageBuilder.ToString());
             }
@@ -205,7 +205,8 @@ namespace GrammarNazi.App.HostedServices
                         var chatConfig = await GetChatConfiguration(messageEvent.Message.Chat.Id);
                         chatConfig.GrammarAlgorithm = (GrammarAlgorithms)algorithm;
 
-                        await _chatConfigurationService.Update(chatConfig);
+                        // Fire and forget
+                        _ = _chatConfigurationService.Update(chatConfig);
 
                         await _client.SendTextMessageAsync(messageEvent.Message.Chat.Id, "Algorithm updated.");
                     }
@@ -237,7 +238,8 @@ namespace GrammarNazi.App.HostedServices
                         var chatConfig = await GetChatConfiguration(messageEvent.Message.Chat.Id);
                         chatConfig.SelectedLanguage = (SupportedLanguages)language;
 
-                        await _chatConfigurationService.Update(chatConfig);
+                        // Fire and forget
+                        _ = _chatConfigurationService.Update(chatConfig);
 
                         await _client.SendTextMessageAsync(messageEvent.Message.Chat.Id, "Language updated.");
                     }
@@ -253,7 +255,8 @@ namespace GrammarNazi.App.HostedServices
 
                 chatConfig.IsBotStopped = true;
 
-                await _chatConfigurationService.Update(chatConfig);
+                // Fire and forger
+                _ = _chatConfigurationService.Update(chatConfig);
 
                 await _client.SendTextMessageAsync(messageEvent.Message.Chat.Id, $"Bot stopped");
             }
