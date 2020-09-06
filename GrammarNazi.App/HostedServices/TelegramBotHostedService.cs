@@ -66,7 +66,12 @@ namespace GrammarNazi.App.HostedServices
                 return;
             }
 
-            var grammarService = await GetConfiguredGrammarService(messageEvent.Message.Chat.Id);
+            var chatConfig = await GetChatConfiguration(messageEvent.Message.Chat.Id);
+
+            if (chatConfig.IsBotStopped)
+                return;
+
+            var grammarService = GetConfiguredGrammarService(chatConfig);
 
             var corretionResult = await grammarService.GetCorrections(messageEvent.Message.Text);
 
@@ -85,19 +90,31 @@ namespace GrammarNazi.App.HostedServices
             }
         }
 
-        private async Task<IGrammarService> GetConfiguredGrammarService(long chatId)
+        private async Task<ChatConfiguration> GetChatConfiguration(long chatId)
         {
             var chatConfig = await _chatConfigurationService.GetConfigurationByChatId(chatId);
 
             if (chatConfig != null)
+                return chatConfig;
+
+            var chatConfiguration = new ChatConfiguration
             {
-                var grammarService = _grammarServices.First(v => v.GrammarAlgorith == chatConfig.GrammarAlgorithm);
-                grammarService.SetSelectedLanguage(chatConfig.SelectedLanguage);
+                ChatId = chatId,
+                GrammarAlgorithm = Defaults.DefaultAlgorithm,
+                SelectedLanguage = SupportedLanguages.Auto
+            };
 
-                return grammarService;
-            }
+            await _chatConfigurationService.AddConfiguration(chatConfiguration);
 
-            return _grammarServices.First(v => v.GrammarAlgorith == Defaults.DefaultAlgorithm);
+            return chatConfiguration;
+        }
+
+        private IGrammarService GetConfiguredGrammarService(ChatConfiguration chatConfig)
+        {
+            var grammarService = _grammarServices.First(v => v.GrammarAlgorith == chatConfig.GrammarAlgorithm);
+            grammarService.SetSelectedLanguage(chatConfig.SelectedLanguage);
+
+            return grammarService;
         }
 
         private async Task HandleCommand(MessageEventArgs messageEvent)
