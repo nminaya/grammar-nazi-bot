@@ -125,10 +125,37 @@ namespace GrammarNazi.App.HostedServices
 
             if (IsCommand(Commands.Start, text))
             {
+                var chatConfig = await GetChatConfiguration(messageEvent.Message.Chat.Id);
                 var messageBuilder = new StringBuilder();
-                messageBuilder.AppendLine("Hi, I'm GrammarNazi.");
-                messageBuilder.AppendLine("I'm currently working and correcting all spelling errors in this chat.");
-                messageBuilder.AppendLine($"Type {Commands.Help} to get useful commands.");
+
+                if (chatConfig == null)
+                {
+                    messageBuilder.AppendLine("Hi, I'm GrammarNazi.");
+                    messageBuilder.AppendLine("I'm currently working and correcting all spelling errors in this chat.");
+                    messageBuilder.AppendLine($"Type {Commands.Help} to get useful commands.");
+
+                    var chatConfiguration = new ChatConfiguration
+                    {
+                        ChatId = messageEvent.Message.Chat.Id,
+                        GrammarAlgorithm = Defaults.DefaultAlgorithm,
+                        SelectedLanguage = SupportedLanguages.Auto
+                    };
+
+                    await _chatConfigurationService.AddConfiguration(chatConfiguration);
+                }
+                else
+                {
+                    if (chatConfig.IsBotStopped)
+                    {
+                        chatConfig.IsBotStopped = false;
+                        await _chatConfigurationService.Update(chatConfig);
+                        messageBuilder.AppendLine("Bot started");
+                    }
+                    else
+                    {
+                        messageBuilder.AppendLine("Bot is already started");
+                    }
+                }
 
                 await _client.SendTextMessageAsync(messageEvent.Message.Chat.Id, messageBuilder.ToString());
             }
@@ -137,6 +164,8 @@ namespace GrammarNazi.App.HostedServices
                 var messageBuilder = new StringBuilder();
                 messageBuilder.AppendLine("Help").AppendLine();
                 messageBuilder.AppendLine("Useful commands:");
+                messageBuilder.AppendLine($"{Commands.Start} start/activate the Bot.");
+                messageBuilder.AppendLine($"{Commands.Stop} stop/disable the Bot.");
                 messageBuilder.AppendLine($"{Commands.Settings} get configured settings.");
                 messageBuilder.AppendLine($"{Commands.SetAlgorithm} <algorithm_numer> to set an algorithm.");
                 messageBuilder.AppendLine($"{Commands.Language} <language_number> to set a language.");
@@ -144,34 +173,27 @@ namespace GrammarNazi.App.HostedServices
             }
             else if (IsCommand(Commands.Settings, text))
             {
-                var chatConfig = await _chatConfigurationService.GetConfigurationByChatId(messageEvent.Message.Chat.Id);
+                var chatConfig = await GetChatConfiguration(messageEvent.Message.Chat.Id);
 
-                if (chatConfig != null)
-                {
-                    var messageBuilder = new StringBuilder();
-                    messageBuilder.AppendLine(GetAvailableAlgorithms());
-                    messageBuilder.AppendLine(GetSupportedLanguages());
+                var messageBuilder = new StringBuilder();
+                messageBuilder.AppendLine(GetAvailableAlgorithms(chatConfig.GrammarAlgorithm));
+                messageBuilder.AppendLine(GetSupportedLanguages(chatConfig.SelectedLanguage));
 
-                    var configuredAlgorith = chatConfig.GrammarAlgorithm == 0 ? Defaults.DefaultAlgorithm : chatConfig.GrammarAlgorithm;
+                if (chatConfig.IsBotStopped)
+                    messageBuilder.AppendLine($"The bot is currently stopped. Type {Commands.Start} the Bot.");
 
-                    messageBuilder.AppendLine($"This chat has the algorithm {configuredAlgorith.GetDescription()} configured.");
-                    messageBuilder.AppendLine($"This chat has the language {chatConfig.SelectedLanguage} configured.");
-
-                    await _client.SendTextMessageAsync(messageEvent.Message.Chat.Id, messageBuilder.ToString());
-                }
-                else
-                {
-                    await _client.SendTextMessageAsync(messageEvent.Message.Chat.Id, "This chat does not have any configuration set.");
-                }
+                await _client.SendTextMessageAsync(messageEvent.Message.Chat.Id, messageBuilder.ToString());
             }
             else if (IsCommand(Commands.SetAlgorithm, text))
             {
                 var parameters = text.Split(" ");
                 if (parameters.Length == 1)
                 {
+                    var chatConfig = await GetChatConfiguration(messageEvent.Message.Chat.Id);
+
                     var messageBuilder = new StringBuilder();
                     messageBuilder.AppendLine($"Parameter not received. Type {Commands.SetAlgorithm} <algorithm_numer> to set an algorithm").AppendLine();
-                    messageBuilder.AppendLine(GetAvailableAlgorithms());
+                    messageBuilder.AppendLine(GetAvailableAlgorithms(chatConfig.GrammarAlgorithm));
                     await _client.SendTextMessageAsync(messageEvent.Message.Chat.Id, messageBuilder.ToString());
                 }
                 else
@@ -180,23 +202,10 @@ namespace GrammarNazi.App.HostedServices
 
                     if (parsedOk)
                     {
-                        var chatConfig = await _chatConfigurationService.GetConfigurationByChatId(messageEvent.Message.Chat.Id);
+                        var chatConfig = await GetChatConfiguration(messageEvent.Message.Chat.Id);
+                        chatConfig.GrammarAlgorithm = (GrammarAlgorithms)algorithm;
 
-                        if (chatConfig != null)
-                        {
-                            chatConfig.GrammarAlgorithm = (GrammarAlgorithms)algorithm;
-                            await _chatConfigurationService.Update(chatConfig);
-                        }
-                        else
-                        {
-                            var config = new ChatConfiguration
-                            {
-                                ChatId = messageEvent.Message.Chat.Id,
-                                GrammarAlgorithm = (GrammarAlgorithms)algorithm
-                            };
-
-                            await _chatConfigurationService.AddConfiguration(config);
-                        }
+                        await _chatConfigurationService.Update(chatConfig);
 
                         await _client.SendTextMessageAsync(messageEvent.Message.Chat.Id, "Algorithm updated.");
                     }
@@ -212,9 +221,11 @@ namespace GrammarNazi.App.HostedServices
 
                 if (parameters.Length == 1)
                 {
+                    var chatConfig = await GetChatConfiguration(messageEvent.Message.Chat.Id);
+
                     var messageBuilder = new StringBuilder();
                     messageBuilder.AppendLine($"Parameter not received. Type {Commands.Language} <language_number> to set a language.").AppendLine();
-                    messageBuilder.AppendLine(GetSupportedLanguages());
+                    messageBuilder.AppendLine(GetSupportedLanguages(chatConfig.SelectedLanguage));
                     await _client.SendTextMessageAsync(messageEvent.Message.Chat.Id, messageBuilder.ToString());
                 }
                 else
@@ -223,24 +234,10 @@ namespace GrammarNazi.App.HostedServices
 
                     if (parsedOk)
                     {
-                        var chatConfig = await _chatConfigurationService.GetConfigurationByChatId(messageEvent.Message.Chat.Id);
+                        var chatConfig = await GetChatConfiguration(messageEvent.Message.Chat.Id);
+                        chatConfig.SelectedLanguage = (SupportedLanguages)language;
 
-                        if (chatConfig != null)
-                        {
-                            chatConfig.SelectedLanguage = (SupportedLanguages)language;
-                            await _chatConfigurationService.Update(chatConfig);
-                        }
-                        else
-                        {
-                            var config = new ChatConfiguration
-                            {
-                                ChatId = messageEvent.Message.Chat.Id,
-                                SelectedLanguage = (SupportedLanguages)language,
-                                GrammarAlgorithm = Defaults.DefaultAlgorithm
-                            };
-
-                            await _chatConfigurationService.AddConfiguration(config);
-                        }
+                        await _chatConfigurationService.Update(chatConfig);
 
                         await _client.SendTextMessageAsync(messageEvent.Message.Chat.Id, "Language updated.");
                     }
@@ -249,6 +246,16 @@ namespace GrammarNazi.App.HostedServices
                         await _client.SendTextMessageAsync(messageEvent.Message.Chat.Id, $"Invalid parameter. Type {Commands.Language} <language_number> to set a language.");
                     }
                 }
+            }
+            else if (IsCommand(Commands.Stop, text))
+            {
+                var chatConfig = await GetChatConfiguration(messageEvent.Message.Chat.Id);
+
+                chatConfig.IsBotStopped = true;
+
+                await _chatConfigurationService.Update(chatConfig);
+
+                await _client.SendTextMessageAsync(messageEvent.Message.Chat.Id, $"Bot stopped");
             }
 
             bool IsCommand(string expected, string actual)
@@ -264,7 +271,7 @@ namespace GrammarNazi.App.HostedServices
                 return actual.StartsWith(expected);
             }
 
-            static string GetAvailableAlgorithms()
+            static string GetAvailableAlgorithms(GrammarAlgorithms selectedAlgorith)
             {
                 var algorithms = Enum.GetValues(typeof(GrammarAlgorithms)).Cast<GrammarAlgorithms>();
 
@@ -273,13 +280,14 @@ namespace GrammarNazi.App.HostedServices
 
                 foreach (var item in algorithms)
                 {
-                    messageBuilder.AppendLine($"{(int)item} - {item.GetDescription()}");
+                    var selected = item == selectedAlgorith ? "✅" : "";
+                    messageBuilder.AppendLine($"{(int)item} - {item.GetDescription()} {selected}");
                 }
 
                 return messageBuilder.ToString();
             }
 
-            static string GetSupportedLanguages()
+            static string GetSupportedLanguages(SupportedLanguages selectedLanguage)
             {
                 var languages = Enum.GetValues(typeof(SupportedLanguages)).Cast<SupportedLanguages>();
 
@@ -288,7 +296,8 @@ namespace GrammarNazi.App.HostedServices
 
                 foreach (var item in languages)
                 {
-                    messageBuilder.AppendLine($"{(int)item} - {item}");
+                    var selected = item == selectedLanguage ? "✅" : "";
+                    messageBuilder.AppendLine($"{(int)item} - {item} {selected}");
                 }
 
                 return messageBuilder.ToString();
