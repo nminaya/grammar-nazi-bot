@@ -10,6 +10,8 @@ namespace GrammarNazi.Domain.Entities
 
         public SupportedLanguages SelectedLanguage { get; set; }
 
+        public bool IsBotStopped { get; set; }
+
         public override bool Equals(object obj)
         {
             if (obj is ChatConfiguration chatConfiguration)
