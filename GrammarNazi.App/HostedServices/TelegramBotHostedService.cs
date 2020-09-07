@@ -81,8 +81,9 @@ namespace GrammarNazi.App.HostedServices
 
                 foreach (var correction in corretionResult.Corrections)
                 {
+                    var message = !string.IsNullOrEmpty(correction.Message) && !chatConfig.HideCorrectionDetails ? $"[{correction.Message}]" : string.Empty;
+
                     // Only suggest the first possible replacement for now
-                    var message = string.IsNullOrEmpty(correction.Message) ? string.Empty : $"[{correction.Message}]";
                     messageBuilder.AppendLine($"*{correction.PossibleReplacements.First()} {message}");
                 }
 
@@ -169,6 +170,8 @@ namespace GrammarNazi.App.HostedServices
                 messageBuilder.AppendLine($"{Commands.Settings} get configured settings.");
                 messageBuilder.AppendLine($"{Commands.SetAlgorithm} <algorithm_number> to set an algorithm.");
                 messageBuilder.AppendLine($"{Commands.Language} <language_number> to set a language.");
+                messageBuilder.AppendLine($"{Commands.ShowDetails} Show correction details");
+                messageBuilder.AppendLine($"{Commands.HideDetails} Hide correction details");
                 await _client.SendTextMessageAsync(messageEvent.Message.Chat.Id, messageBuilder.ToString());
             }
             else if (IsCommand(Commands.Settings, text))
@@ -178,6 +181,9 @@ namespace GrammarNazi.App.HostedServices
                 var messageBuilder = new StringBuilder();
                 messageBuilder.AppendLine(GetAvailableAlgorithms(chatConfig.GrammarAlgorithm));
                 messageBuilder.AppendLine(GetSupportedLanguages(chatConfig.SelectedLanguage));
+
+                var showCorrectionDetailsIcon = chatConfig.HideCorrectionDetails ? "❌" :"✅"; 
+                messageBuilder.AppendLine($"Show correction details {showCorrectionDetailsIcon}");
 
                 if (chatConfig.IsBotStopped)
                     messageBuilder.AppendLine($"The bot is currently stopped. Type {Commands.Start} to activate the Bot.");
@@ -255,10 +261,32 @@ namespace GrammarNazi.App.HostedServices
 
                 chatConfig.IsBotStopped = true;
 
-                // Fire and forger
+                // Fire and forget
                 _ = _chatConfigurationService.Update(chatConfig);
 
                 await _client.SendTextMessageAsync(messageEvent.Message.Chat.Id, $"Bot stopped");
+            }
+            else if (IsCommand(Commands.HideDetails, text))
+            {
+                var chatConfig = await GetChatConfiguration(messageEvent.Message.Chat.Id);
+
+                chatConfig.HideCorrectionDetails = true;
+
+                // Fire and forget
+                _ = _chatConfigurationService.Update(chatConfig);
+
+                await _client.SendTextMessageAsync(messageEvent.Message.Chat.Id, "Correction details hidden ✅");
+            }
+            else if (IsCommand(Commands.ShowDetails, text))
+            {
+                var chatConfig = await GetChatConfiguration(messageEvent.Message.Chat.Id);
+
+                chatConfig.HideCorrectionDetails = false;
+
+                // Fire and forget
+                _ = _chatConfigurationService.Update(chatConfig);
+
+                await _client.SendTextMessageAsync(messageEvent.Message.Chat.Id, "Show correction details ✅");
             }
 
             bool IsCommand(string expected, string actual)
