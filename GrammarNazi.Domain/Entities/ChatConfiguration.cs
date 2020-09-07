@@ -12,6 +12,8 @@ namespace GrammarNazi.Domain.Entities
 
         public bool IsBotStopped { get; set; }
 
+        public bool HideCorrectionDetails { get; set; }
+
         public override bool Equals(object obj)
         {
             if (obj is ChatConfiguration chatConfiguration)
