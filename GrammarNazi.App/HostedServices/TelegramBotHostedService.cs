@@ -81,10 +81,10 @@ namespace GrammarNazi.App.HostedServices
 
                 foreach (var correction in corretionResult.Corrections)
                 {
-                    var message = !string.IsNullOrEmpty(correction.Message) && !chatConfig.HideCorrectionDetails ? $"[{correction.Message}]" : string.Empty;
+                    var correctionDetailMessage = !string.IsNullOrEmpty(correction.Message) && !chatConfig.HideCorrectionDetails ? $"[{correction.Message}]" : string.Empty;
 
                     // Only suggest the first possible replacement for now
-                    messageBuilder.AppendLine($"*{correction.PossibleReplacements.First()} {message}");
+                    messageBuilder.AppendLine($"*{correction.PossibleReplacements.First()} {correctionDetailMessage}");
                 }
 
                 await _client.SendTextMessageAsync(messageEvent.Message.Chat.Id, messageBuilder.ToString(), replyToMessageId: messageEvent.Message.MessageId);
@@ -172,6 +172,7 @@ namespace GrammarNazi.App.HostedServices
                 messageBuilder.AppendLine($"{Commands.Language} <language_number> to set a language.");
                 messageBuilder.AppendLine($"{Commands.ShowDetails} Show correction details");
                 messageBuilder.AppendLine($"{Commands.HideDetails} Hide correction details");
+
                 await _client.SendTextMessageAsync(messageEvent.Message.Chat.Id, messageBuilder.ToString());
             }
             else if (IsCommand(Commands.Settings, text))
