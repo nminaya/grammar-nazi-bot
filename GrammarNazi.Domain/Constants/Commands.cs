@@ -1,8 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Text;
-
-namespace GrammarNazi.Domain.Constants
+﻿namespace GrammarNazi.Domain.Constants
 {
     public static class Commands
     {
@@ -12,5 +8,7 @@ namespace GrammarNazi.Domain.Constants
         public const string SetAlgorithm = "/set_algorithm";
         public const string Language = "/lang";
         public const string Stop = "/stop";
+        public const string HideDetails = "/hide_details";
+        public const string ShowDetails = "/show_details";
     }
 }
