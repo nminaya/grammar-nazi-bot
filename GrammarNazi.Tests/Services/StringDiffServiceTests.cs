@@ -22,5 +22,24 @@ namespace GrammarNazi.Tests.Services
             // Assert
             Assert.Equal(expectedResult, result);
         }
+
+        [Theory]
+        [InlineData("TEST", "TEST", true)]
+        [InlineData("TEST", "BEST", true)]
+        [InlineData("TEST", "REST", true)]
+        [InlineData("TEST", "LEFT", false)]
+        [InlineData("TEST", "CHEST", false)]
+        [InlineData("TEST", "DATA", false)]
+        public void IsInComparableRange_GivenTwoStrings_Should_ReturnExpectedResult(string a, string b, bool expectedResult)
+        {
+            // Arrange
+            var service = new StringDiffService();
+
+            // Act
+            var result = service.IsInComparableRange(a, b);
+
+            // Assert
+            Assert.Equal(expectedResult, result);
+        }
     }
 }
