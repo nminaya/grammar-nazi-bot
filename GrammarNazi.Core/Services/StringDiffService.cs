@@ -1,4 +1,5 @@
-﻿using GrammarNazi.Domain.Services;
+﻿using GrammarNazi.Domain.Constants;
+using GrammarNazi.Domain.Services;
 using System;
 using System.Linq;
 
@@ -63,9 +64,7 @@ namespace GrammarNazi.Core.Services
         /// <returns></returns>
         public bool IsInComparableRange(string a, string b)
         {
-            const int comparableRange = 2;
-
-            return a.Except(b).Count() < comparableRange && b.Except(a).Count() < comparableRange;
+            return a.Except(b).Count() < Defaults.StringComparableRange && b.Except(a).Count() < Defaults.StringComparableRange;
         }
     }
 }

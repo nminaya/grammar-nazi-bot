@@ -1,4 +1,5 @@
 ﻿using GrammarNazi.Core.Extensions;
+using GrammarNazi.Domain.Constants;
 using GrammarNazi.Domain.Entities;
 using GrammarNazi.Domain.Enums;
 using GrammarNazi.Domain.Services;
@@ -60,7 +61,7 @@ namespace GrammarNazi.Core.Services
 
                 if (!wordFound)
                 {
-                    var possibleCorrections = dictionaryAndNames.Where(v => _stringDiffService.IsInComparableRange(v, word) && _stringDiffService.ComputeDistance(v, word) < 2);
+                    var possibleCorrections = dictionaryAndNames.Where(v => _stringDiffService.IsInComparableRange(v, word) && _stringDiffService.ComputeDistance(v, word) < Defaults.StringComparableRange);
 
                     if (possibleCorrections.Any())
                     {
