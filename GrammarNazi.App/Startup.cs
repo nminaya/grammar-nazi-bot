@@ -34,8 +34,6 @@ namespace GrammarNazi.App
         {
             services.AddControllers();
 
-            services.AddDbContext<GrammarNaziContext>(options => options.UseSqlite(Configuration.GetConnectionString("DefaultConnection")));
-
             // Hosted services
             services.AddHostedService<TelegramBotHostedService>();
             services.AddHostedService<TwitterBotHostedService>();
@@ -47,7 +45,6 @@ namespace GrammarNazi.App
         {
             // Repository
             services.AddTransient(typeof(IRepository<>), typeof(FirebaseRepository<>)); // Use Firebase for now
-            services.AddTransient<DbContext, GrammarNaziContext>();
 
             // Services
             services.AddSingleton<IFileService, FileService>();
@@ -90,13 +87,6 @@ namespace GrammarNazi.App
             });
         }
 
-        private void EnsureDatabaseCreated(IApplicationBuilder app)
-        {
-            using var serviceScope = app.ApplicationServices.GetRequiredService<IServiceScopeFactory>().CreateScope();
-            var context = serviceScope.ServiceProvider.GetService<DbContext>();
-            context.Database.EnsureCreated();
-        }
-
         public void Configure(IApplicationBuilder app, IWebHostEnvironment env)
         {
             if (env.IsDevelopment())
@@ -105,9 +95,6 @@ namespace GrammarNazi.App
             }
 
             app.UseRouting();
-
-            // Create Database if not exist
-            EnsureDatabaseCreated(app);
 
             app.UseEndpoints(endpoints =>
             {

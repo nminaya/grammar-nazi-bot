@@ -25,7 +25,7 @@ namespace GrammarNazi.Core.Repositories
             await _firebaseClient.Child(typeof(T).Name).PostAsync(JsonConvert.SerializeObject(entity));
         }
 
-        public async Task<bool> Any(Expression<Func<T, bool>> filter = null)
+        public async Task<bool> Any(Expression<Func<T, bool>> filter = default)
         {
             if (filter == default)
             {

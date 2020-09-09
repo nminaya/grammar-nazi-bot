@@ -48,8 +48,6 @@ namespace GrammarNazi.App.HostedServices
             {
                 try
                 {
-                    _logger.LogInformation("Getting tweets from followers");
-
                     _logger.LogInformation("Getting followers");
 
                     var lastTweetIdTask = _twitterLogService.GetLastTweetId();
