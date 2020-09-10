@@ -31,12 +31,14 @@ namespace GrammarNazi.Core.Services
             }
 
             // Step 2
-            for (int i = 0; i <= n; d[i, 0] = i++)
+            for (int i = 0; i <= n; i++)
             {
+                d[i, 0] = i;
             }
 
-            for (int j = 0; j <= m; d[0, j] = j++)
+            for (int j = 0; j <= m; j++)
             {
+                d[0, j] = j;
             }
 
             // Step 3
