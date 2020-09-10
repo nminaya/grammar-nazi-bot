@@ -21,16 +21,14 @@ The solution design focuses on a basic Domain Driven Design techniques and imple
 -   **GrammarNazi.Core**  - This assembly contains all domain implementations.
 -   **GrammarNazi.Domain**  - This assembly contains constants, entities and interfaces.
 -   **GrammarNazi.Tests**  - This assembly contains unit test classes based on the xunit test framework.
--   **GrammarNazi.Integration.Tests**  - This assembly contains integration test classes based on the xunit test framework.     
 -   **GrammarNazi.App**  - This assembly is the web-based application host.
 
 ## Features to implement
 This project is still under development, there are a lot of features to implement.
+- Accuracy percentage for possible corrections.
+- Trained ML model that improves the internal algorithm corrections.
 #### Telegram Bot
 - Configurable [Grammar rules](https://community.languagetool.org/rule/)
-- Accuracy percentage for possible corrections.
-- Unit test and Integration Test projects.
-- Trained ML model that improves the internal algorithm corrections.
 #### Twitter Bot
 - Publish tweets with statistics based on corrected tweets.
 
