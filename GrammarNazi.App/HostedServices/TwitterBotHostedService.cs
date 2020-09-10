@@ -103,6 +103,7 @@ namespace GrammarNazi.App.HostedServices
                             var publishTweetParameters = new PublishTweetParameters(correctionString)
                             {
                                 InReplyToTweetId = tweet.Id,
+                                AutoPopulateReplyMetadata = true
                             };
                             var replyTweet = await _twitterClient.Tweets.PublishTweetAsync(publishTweetParameters);
 
