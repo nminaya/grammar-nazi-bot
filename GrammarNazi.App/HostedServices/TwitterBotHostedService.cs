@@ -48,8 +48,6 @@ namespace GrammarNazi.App.HostedServices
             {
                 try
                 {
-                    _logger.LogInformation("Getting followers");
-
                     var lastTweetIdTask = _twitterLogService.GetLastTweetId();
 
                     var user = await _twitterClient.Users.GetUserAsync("GrammarNazi_Bot"); // TODO: Get bot name from config
@@ -103,7 +101,6 @@ namespace GrammarNazi.App.HostedServices
                             var publishTweetParameters = new PublishTweetParameters(correctionString)
                             {
                                 InReplyToTweetId = tweet.Id,
-                                AutoPopulateReplyMetadata = true
                             };
                             var replyTweet = await _twitterClient.Tweets.PublishTweetAsync(publishTweetParameters);
 
