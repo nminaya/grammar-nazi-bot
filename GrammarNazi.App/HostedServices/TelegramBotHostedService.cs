@@ -14,6 +14,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using Telegram.Bot;
 using Telegram.Bot.Args;
+using Telegram.Bot.Types;
 using Telegram.Bot.Types.Enums;
 
 namespace GrammarNazi.App.HostedServices
@@ -52,28 +53,30 @@ namespace GrammarNazi.App.HostedServices
 
         private async Task OnMessageReceived(object sender, MessageEventArgs messageEvent)
         {
-            _logger.LogInformation($"Message received from chat id: {messageEvent.Message.Chat.Id}");
+            var message = messageEvent.Message;
 
-            if (messageEvent.Message.Type != MessageType.Text) // We only analyze Text messages
+            _logger.LogInformation($"Message received from chat id: {message.Chat.Id}");
+
+            if (message.Type != MessageType.Text) // We only analyze Text messages
                 return;
 
             if (_webHostEnvironment.IsDevelopment())
-                _logger.LogInformation($"Message: {messageEvent.Message.Text}");
+                _logger.LogInformation($"Message: {message.Text}");
 
-            if (messageEvent.Message.Text.StartsWith('/')) // Text is a command
+            if (message.Text.StartsWith('/')) // Text is a command
             {
-                await HandleCommand(messageEvent);
+                await HandleCommand(message);
                 return;
             }
 
-            var chatConfig = await GetChatConfiguration(messageEvent.Message.Chat.Id);
+            var chatConfig = await GetChatConfiguration(message.Chat.Id);
 
             if (chatConfig.IsBotStopped)
                 return;
 
             var grammarService = GetConfiguredGrammarService(chatConfig);
 
-            var corretionResult = await grammarService.GetCorrections(messageEvent.Message.Text);
+            var corretionResult = await grammarService.GetCorrections(message.Text);
 
             if (corretionResult.HasCorrections)
             {
@@ -81,13 +84,14 @@ namespace GrammarNazi.App.HostedServices
 
                 foreach (var correction in corretionResult.Corrections)
                 {
-                    var correctionDetailMessage = !string.IsNullOrEmpty(correction.Message) && !chatConfig.HideCorrectionDetails ? $"[{correction.Message}]" : string.Empty;
+                    var correctionDetailMessage = !chatConfig.HideCorrectionDetails && !string.IsNullOrEmpty(correction.Message)
+                        ? $"[{correction.Message}]"
+                        : string.Empty;
 
-                    // Only suggest the first possible replacement for now
                     messageBuilder.AppendLine($"*{correction.PossibleReplacements.First()} {correctionDetailMessage}");
                 }
 
-                await _client.SendTextMessageAsync(messageEvent.Message.Chat.Id, messageBuilder.ToString(), replyToMessageId: messageEvent.Message.MessageId);
+                await _client.SendTextMessageAsync(message.Chat.Id, messageBuilder.ToString(), replyToMessageId: message.MessageId);
             }
         }
 
@@ -118,15 +122,15 @@ namespace GrammarNazi.App.HostedServices
             return grammarService;
         }
 
-        private async Task HandleCommand(MessageEventArgs messageEvent)
+        private async Task HandleCommand(Message message)
         {
-            var text = messageEvent.Message.Text;
+            var text = message.Text;
 
             // TODO: Evaluate moving all this logic into a service, and do a refactor
 
             if (IsCommand(Commands.Start, text))
             {
-                var chatConfig = await _chatConfigurationService.GetConfigurationByChatId(messageEvent.Message.Chat.Id);
+                var chatConfig = await _chatConfigurationService.GetConfigurationByChatId(message.Chat.Id);
                 var messageBuilder = new StringBuilder();
 
                 if (chatConfig == null)
@@ -137,7 +141,7 @@ namespace GrammarNazi.App.HostedServices
 
                     var chatConfiguration = new ChatConfiguration
                     {
-                        ChatId = messageEvent.Message.Chat.Id,
+                        ChatId = message.Chat.Id,
                         GrammarAlgorithm = Defaults.DefaultAlgorithm,
                         SelectedLanguage = SupportedLanguages.Auto
                     };
@@ -158,7 +162,7 @@ namespace GrammarNazi.App.HostedServices
                     }
                 }
 
-                await _client.SendTextMessageAsync(messageEvent.Message.Chat.Id, messageBuilder.ToString());
+                await _client.SendTextMessageAsync(message.Chat.Id, messageBuilder.ToString());
             }
             else if (IsCommand(Commands.Help, text))
             {
@@ -173,35 +177,35 @@ namespace GrammarNazi.App.HostedServices
                 messageBuilder.AppendLine($"{Commands.ShowDetails} Show correction details");
                 messageBuilder.AppendLine($"{Commands.HideDetails} Hide correction details");
 
-                await _client.SendTextMessageAsync(messageEvent.Message.Chat.Id, messageBuilder.ToString());
+                await _client.SendTextMessageAsync(message.Chat.Id, messageBuilder.ToString());
             }
             else if (IsCommand(Commands.Settings, text))
             {
-                var chatConfig = await GetChatConfiguration(messageEvent.Message.Chat.Id);
+                var chatConfig = await GetChatConfiguration(message.Chat.Id);
 
                 var messageBuilder = new StringBuilder();
                 messageBuilder.AppendLine(GetAvailableAlgorithms(chatConfig.GrammarAlgorithm));
                 messageBuilder.AppendLine(GetSupportedLanguages(chatConfig.SelectedLanguage));
 
-                var showCorrectionDetailsIcon = chatConfig.HideCorrectionDetails ? "❌" :"✅"; 
+                var showCorrectionDetailsIcon = chatConfig.HideCorrectionDetails ? "❌" : "✅";
                 messageBuilder.AppendLine($"Show correction details {showCorrectionDetailsIcon}");
 
                 if (chatConfig.IsBotStopped)
                     messageBuilder.AppendLine($"The bot is currently stopped. Type {Commands.Start} to activate the Bot.");
 
-                await _client.SendTextMessageAsync(messageEvent.Message.Chat.Id, messageBuilder.ToString());
+                await _client.SendTextMessageAsync(message.Chat.Id, messageBuilder.ToString());
             }
             else if (IsCommand(Commands.SetAlgorithm, text))
             {
                 var parameters = text.Split(" ");
                 if (parameters.Length == 1)
                 {
-                    var chatConfig = await GetChatConfiguration(messageEvent.Message.Chat.Id);
+                    var chatConfig = await GetChatConfiguration(message.Chat.Id);
 
                     var messageBuilder = new StringBuilder();
                     messageBuilder.AppendLine($"Parameter not received. Type {Commands.SetAlgorithm} <algorithm_numer> to set an algorithm").AppendLine();
                     messageBuilder.AppendLine(GetAvailableAlgorithms(chatConfig.GrammarAlgorithm));
-                    await _client.SendTextMessageAsync(messageEvent.Message.Chat.Id, messageBuilder.ToString());
+                    await _client.SendTextMessageAsync(message.Chat.Id, messageBuilder.ToString());
                 }
                 else
                 {
@@ -209,17 +213,17 @@ namespace GrammarNazi.App.HostedServices
 
                     if (parsedOk)
                     {
-                        var chatConfig = await GetChatConfiguration(messageEvent.Message.Chat.Id);
+                        var chatConfig = await GetChatConfiguration(message.Chat.Id);
                         chatConfig.GrammarAlgorithm = (GrammarAlgorithms)algorithm;
 
                         // Fire and forget
                         _ = _chatConfigurationService.Update(chatConfig);
 
-                        await _client.SendTextMessageAsync(messageEvent.Message.Chat.Id, "Algorithm updated.");
+                        await _client.SendTextMessageAsync(message.Chat.Id, "Algorithm updated.");
                     }
                     else
                     {
-                        await _client.SendTextMessageAsync(messageEvent.Message.Chat.Id, $"Invalid parameter. Type {Commands.SetAlgorithm} <algorithm_numer> to set an algorithm.");
+                        await _client.SendTextMessageAsync(message.Chat.Id, $"Invalid parameter. Type {Commands.SetAlgorithm} <algorithm_numer> to set an algorithm.");
                     }
                 }
             }
@@ -229,12 +233,12 @@ namespace GrammarNazi.App.HostedServices
 
                 if (parameters.Length == 1)
                 {
-                    var chatConfig = await GetChatConfiguration(messageEvent.Message.Chat.Id);
+                    var chatConfig = await GetChatConfiguration(message.Chat.Id);
 
                     var messageBuilder = new StringBuilder();
                     messageBuilder.AppendLine($"Parameter not received. Type {Commands.Language} <language_number> to set a language.").AppendLine();
                     messageBuilder.AppendLine(GetSupportedLanguages(chatConfig.SelectedLanguage));
-                    await _client.SendTextMessageAsync(messageEvent.Message.Chat.Id, messageBuilder.ToString());
+                    await _client.SendTextMessageAsync(message.Chat.Id, messageBuilder.ToString());
                 }
                 else
                 {
@@ -242,52 +246,52 @@ namespace GrammarNazi.App.HostedServices
 
                     if (parsedOk)
                     {
-                        var chatConfig = await GetChatConfiguration(messageEvent.Message.Chat.Id);
+                        var chatConfig = await GetChatConfiguration(message.Chat.Id);
                         chatConfig.SelectedLanguage = (SupportedLanguages)language;
 
                         // Fire and forget
                         _ = _chatConfigurationService.Update(chatConfig);
 
-                        await _client.SendTextMessageAsync(messageEvent.Message.Chat.Id, "Language updated.");
+                        await _client.SendTextMessageAsync(message.Chat.Id, "Language updated.");
                     }
                     else
                     {
-                        await _client.SendTextMessageAsync(messageEvent.Message.Chat.Id, $"Invalid parameter. Type {Commands.Language} <language_number> to set a language.");
+                        await _client.SendTextMessageAsync(message.Chat.Id, $"Invalid parameter. Type {Commands.Language} <language_number> to set a language.");
                     }
                 }
             }
             else if (IsCommand(Commands.Stop, text))
             {
-                var chatConfig = await GetChatConfiguration(messageEvent.Message.Chat.Id);
+                var chatConfig = await GetChatConfiguration(message.Chat.Id);
 
                 chatConfig.IsBotStopped = true;
 
                 // Fire and forget
                 _ = _chatConfigurationService.Update(chatConfig);
 
-                await _client.SendTextMessageAsync(messageEvent.Message.Chat.Id, $"Bot stopped");
+                await _client.SendTextMessageAsync(message.Chat.Id, $"Bot stopped");
             }
             else if (IsCommand(Commands.HideDetails, text))
             {
-                var chatConfig = await GetChatConfiguration(messageEvent.Message.Chat.Id);
+                var chatConfig = await GetChatConfiguration(message.Chat.Id);
 
                 chatConfig.HideCorrectionDetails = true;
 
                 // Fire and forget
                 _ = _chatConfigurationService.Update(chatConfig);
 
-                await _client.SendTextMessageAsync(messageEvent.Message.Chat.Id, "Correction details hidden ✅");
+                await _client.SendTextMessageAsync(message.Chat.Id, "Correction details hidden ✅");
             }
             else if (IsCommand(Commands.ShowDetails, text))
             {
-                var chatConfig = await GetChatConfiguration(messageEvent.Message.Chat.Id);
+                var chatConfig = await GetChatConfiguration(message.Chat.Id);
 
                 chatConfig.HideCorrectionDetails = false;
 
                 // Fire and forget
                 _ = _chatConfigurationService.Update(chatConfig);
 
-                await _client.SendTextMessageAsync(messageEvent.Message.Chat.Id, "Show correction details ✅");
+                await _client.SendTextMessageAsync(message.Chat.Id, "Show correction details ✅");
             }
 
             bool IsCommand(string expected, string actual)
