@@ -107,7 +107,7 @@ namespace GrammarNazi.App.HostedServices
                             if (replyTweet != null)
                             {
                                 _logger.LogInformation("Reply sent successfuly");
-                                await _twitterLogService.LogTweet(tweet.Id, replyTweet.Id);
+                                await _twitterLogService.LogReply(tweet.Id, replyTweet.Id);
                             }
 
                             // TODO: Get this value from config
@@ -121,7 +121,7 @@ namespace GrammarNazi.App.HostedServices
                         var lastTweet = tweets.OrderByDescending(v => v.Id).First();
 
                         // Save last Tweet Id
-                        await _twitterLogService.LogTweet(lastTweet.Id, 0);
+                        await _twitterLogService.LogTweet(lastTweet.Id);
                     }
                 }
                 catch (Exception ex)

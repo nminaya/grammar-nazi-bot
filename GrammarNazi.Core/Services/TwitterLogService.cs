@@ -25,12 +25,26 @@ namespace GrammarNazi.Core.Services
             return 0;
         }
 
-        public async Task LogTweet(long tweetId, long replyTweetId)
+        public async Task LogReply(long tweetId, long replyTweetId)
         {
             var twitterLog = new TwitterLog
             {
                 TweetId = tweetId,
                 ReplyTweetId = replyTweetId,
+                CreatedDate = DateTime.Now
+            };
+
+            await _repository.Add(twitterLog);
+        }
+
+        public async Task LogTweet(long tweetId)
+        {
+            if (await _repository.Any(v => v.TweetId == tweetId))
+                return;
+
+            var twitterLog = new TwitterLog
+            {
+                TweetId = tweetId,
                 CreatedDate = DateTime.Now
             };
 
