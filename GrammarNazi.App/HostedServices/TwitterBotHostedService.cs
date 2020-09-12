@@ -1,4 +1,5 @@
 ﻿using GrammarNazi.Core.Extensions;
+using GrammarNazi.Core.Utilities;
 using GrammarNazi.Domain.Constants;
 using GrammarNazi.Domain.Services;
 using Microsoft.Extensions.Hosting;
@@ -80,7 +81,9 @@ namespace GrammarNazi.App.HostedServices
 
                     foreach (var tweet in tweets)
                     {
-                        var correctionsResult = await _grammarService.GetCorrections(tweet.Text);
+                        var tweetText = StringUtils.RemoveMentions(tweet.Text);
+
+                        var correctionsResult = await _grammarService.GetCorrections(tweetText);
 
                         if (correctionsResult.HasCorrections)
                         {

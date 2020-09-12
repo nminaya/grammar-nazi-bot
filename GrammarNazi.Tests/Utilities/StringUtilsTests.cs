@@ -1,0 +1,38 @@
+﻿using GrammarNazi.Core.Utilities;
+using System;
+using System.Collections.Generic;
+using System.Text;
+using Xunit;
+
+namespace GrammarNazi.Tests.Utilities
+{
+    public class StringUtilsTests
+    {
+        [Theory]
+        [InlineData("Test", "Test")]
+        [InlineData("Test's","Tests")]
+        [InlineData("!@#$%^&*[]_", "")]
+        public void RemoveSpecialCharacters_GivenString_Should_ReturnsExpectedResult(string actual, string expected)
+        {
+            // Arrange > Act
+            var result = StringUtils.RemoveSpecialCharacters(actual);
+
+            // Assert 
+            Assert.Equal(expected, result);
+        }
+
+        [Theory]
+        [InlineData("@userTest this is a test", "this is a test")]
+        [InlineData("@USERTTEST this is a test", "this is a test")]
+        [InlineData("this is a test @USERTTEST", "this is a test")]
+        [InlineData("@USERTTEST1 @USERTTEST2 this is a test @USERTTEST", "this is a test")]
+        public void RemoveMentions_GivenString_Should_RemoveMentions_And_ReturnsExpectedResult(string actual, string expected)
+        {
+            // Arrange > Act
+            var result = StringUtils.RemoveMentions(actual);
+
+            // Assert 
+            Assert.Equal(expected, result);
+        }
+    }
+}

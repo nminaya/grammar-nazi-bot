@@ -1,4 +1,5 @@
 ﻿using GrammarNazi.Core.Extensions;
+using GrammarNazi.Core.Utilities;
 using GrammarNazi.Domain.Constants;
 using GrammarNazi.Domain.Entities;
 using GrammarNazi.Domain.Enums;
@@ -50,7 +51,7 @@ namespace GrammarNazi.Core.Services
             foreach (var item in words)
             {
                 // Remove special characters
-                var word = Regex.Replace(item, "[^0-9a-zA-Z]+", "").ToLower();
+                var word = StringUtils.RemoveSpecialCharacters(item).ToLower();
 
                 if (string.IsNullOrEmpty(word))
                 {
