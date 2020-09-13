@@ -34,5 +34,19 @@ namespace GrammarNazi.Tests.Utilities
             // Assert 
             Assert.Equal(expected, result);
         }
+
+        [Theory]
+        [InlineData("This is fun 😂", "This is fun")]
+        [InlineData("😀😁😂🤣😃😄😅😆💋👏😜💖😢😎🎶😉😍😒😘🤞😊😩😬👍", "")]
+        [InlineData("Test😁Test1", "TestTest1")]
+        [InlineData("😁Test😁Test1😁", "TestTest1")]
+        public void RemoveEmojis_GivenString_Should_RemoveEmojis_And_ReturnsExpectedResult(string actual, string expected)
+        {
+            // Arrange > Act
+            var result = StringUtils.RemoveEmojis(actual);
+
+            // Assert 
+            Assert.Equal(expected, result);
+        }
     }
 }
