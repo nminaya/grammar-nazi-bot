@@ -15,6 +15,8 @@ namespace GrammarNazi.Core.Repositories
     {
         private readonly FirebaseClient _firebaseClient;
 
+        private static object lockObject = new object();
+
         public FirebaseRepository(FirebaseClient firebaseClient)
         {
             _firebaseClient = firebaseClient;
@@ -66,12 +68,19 @@ namespace GrammarNazi.Core.Repositories
 
         public async Task Update(T entity, Expression<Func<T, bool>> identifier)
         {
-            var obj = await GetFirst(identifier);
+            // Workaround to avoid duplicity
+            lock (lockObject)
+            {
+                var items = GetAllItems().GetAwaiter().GetResult();
+                var filteredItems = items.Where(identifier.Compile());
 
-            if (obj != default)
-                await Delete(obj);
+                foreach (var item in filteredItems)
+                {
+                    Delete(item).GetAwaiter().GetResult();
+                }
 
-            await Add(entity);
+                Add(entity).GetAwaiter().GetResult();
+            }
         }
 
         private async Task<IEnumerable<T>> GetAllItems() => (await _firebaseClient.Child(typeof(T).Name).OnceAsync<T>()).Select(v => v.Object);
