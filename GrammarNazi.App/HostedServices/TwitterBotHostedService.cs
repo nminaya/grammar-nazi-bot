@@ -11,7 +11,6 @@ using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 using Tweetinvi;
-using Tweetinvi.Iterators;
 using Tweetinvi.Models;
 using Tweetinvi.Parameters;
 
@@ -62,6 +61,7 @@ namespace GrammarNazi.App.HostedServices
                         _logger.LogInformation($"Getting TimeLine of {follower.ScreenName}");
 
                         var getTimeLineParameters = new GetUserTimelineParameters(follower.Id);
+                        getTimeLineParameters.TweetMode = TweetMode.Extended;
 
                         if (sinceTweetId == 0)
                             getTimeLineParameters.PageSize = 5; // TODO: Get this value from config
@@ -76,7 +76,11 @@ namespace GrammarNazi.App.HostedServices
                             continue;
                         }
 
-                        tweets.AddRange(timeLine.Where(v => !v.Text.StartsWith("RT"))); // Avoid Retweets
+                        // Avoid Retweets.
+                        // Tweetinvi 5.0.0-alpha-6 has a bug that doesn't let you get extended tweets using GetUserTimelineAsync.
+                        // Instead, the text is cut off at character number 140. As a workaround we will only
+                        // analyze tweets with less than 140 characters until it gets fixed.
+                        tweets.AddRange(timeLine.Where(v => !v.Text.StartsWith("RT") && v.Text.Length < 140));
                     }
 
                     foreach (var tweet in tweets)
