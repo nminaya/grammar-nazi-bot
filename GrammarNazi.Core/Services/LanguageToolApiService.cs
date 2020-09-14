@@ -78,12 +78,15 @@ namespace GrammarNazi.Core.Services
 
         private bool RulesFilter(Match match)
         {
-            // TODO: Create a list of default rules
-            // Do not get punctuation or uppercase corrections
+            // TODO: Create a list of default or disabled rules
+            // TODO: Use the API endpoint parameter "disabledRules"
+
+            // Do not get the following matching rules
             return !match.Rule.Id.Contains("PUNCTUATION")
                 && !match.Rule.Id.Contains("WHITESPACE")
                 && match.Rule.Id != "UPPERCASE_SENTENCE_START"
-                && match.Rule.Id != "PROFANITY";
+                && match.Rule.Id != "PROFANITY"
+                && match.Rule.Id != "MORFOLOGIK_RULE_ES";
         }
     }
 }
