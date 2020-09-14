@@ -60,12 +60,7 @@ namespace GrammarNazi.App.HostedServices
                     {
                         _logger.LogInformation($"Getting TimeLine of {follower.ScreenName}");
 
-                        var getTimeLineParameters = new GetUserTimelineParameters(follower.Id)
-                        {
-                            // Workaround to get extended tweets until the issue with Tweetinvi is fixed
-                            // (Issue: https://github.com/linvi/tweetinvi/issues/1065)
-                            CustomQueryParameters = { new Tuple<string, string>("tweet_mode", "extended") }
-                        };
+                        var getTimeLineParameters = new GetUserTimelineParameters(follower.Id);
 
                         if (sinceTweetId == 0)
                             getTimeLineParameters.PageSize = 5; // TODO: Get this value from config

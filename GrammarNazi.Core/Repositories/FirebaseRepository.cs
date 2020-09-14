@@ -66,7 +66,7 @@ namespace GrammarNazi.Core.Repositories
             return results.Max(selector.Compile());
         }
 
-        public async Task Update(T entity, Expression<Func<T, bool>> identifier)
+        public Task Update(T entity, Expression<Func<T, bool>> identifier)
         {
             // Workaround to avoid duplicity
             lock (lockObject)
@@ -81,6 +81,8 @@ namespace GrammarNazi.Core.Repositories
 
                 Add(entity).GetAwaiter().GetResult();
             }
+
+            return Task.CompletedTask;
         }
 
         private async Task<IEnumerable<T>> GetAllItems() => (await _firebaseClient.Child(typeof(T).Name).OnceAsync<T>()).Select(v => v.Object);
