@@ -12,6 +12,13 @@ namespace GrammarNazi.Core.Utilities
         public static string RemoveMentions(string tweetText) => Regex.Replace(tweetText, @"@[0-9a-zA-Z](\.?[0-9a-zA-Z])*", "").Trim();
 
         /// <summary>
+        /// It will remove Twitter mentions from the given string
+        /// </summary>
+        /// <param name="tweetText"></param>
+        /// <returns>String without mentions</returns>
+        public static string RemoveHashtags(string tweetText) => Regex.Replace(tweetText, @"#[0-9a-zA-Z](\.?[0-9a-zA-Z])*", "").Trim();
+
+        /// <summary>
         /// It will remove special characters from the given string
         /// </summary>
         /// <param name="str"></param>

@@ -36,6 +36,20 @@ namespace GrammarNazi.Tests.Utilities
         }
 
         [Theory]
+        [InlineData("#hashTag this is a test", "this is a test")]
+        [InlineData("#HASHTAG this is a test", "this is a test")]
+        [InlineData("this is a test #HashTaG", "this is a test")]
+        [InlineData("#Ht1 #ht2 this is a test #HTT33", "this is a test")]
+        public void RemoveHashtags_GivenString_Should_RemoveHashtags_And_ReturnsExpectedResult(string actual, string expected)
+        {
+            // Arrange > Act
+            var result = StringUtils.RemoveHashtags(actual);
+
+            // Assert 
+            Assert.Equal(expected, result);
+        }
+
+        [Theory]
         [InlineData("This is fun 😂", "This is fun")]
         [InlineData("😀😁😂🤣😃😄😅😆💋👏😜💖😢😎🎶😉😍😒😘🤞😊😩😬👍", "")]
         [InlineData("Test😁Test1", "TestTest1")]
