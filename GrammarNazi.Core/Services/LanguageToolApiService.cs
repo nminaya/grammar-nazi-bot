@@ -86,7 +86,8 @@ namespace GrammarNazi.Core.Services
                 && !match.Rule.Id.Contains("WHITESPACE")
                 && match.Rule.Id != "UPPERCASE_SENTENCE_START"
                 && match.Rule.Id != "PROFANITY"
-                && match.Rule.Id != "MORFOLOGIK_RULE_ES";
+                && match.Rule.Id != "MORFOLOGIK_RULE_ES"
+                && match.Rule.Id != "ES_QUESTION_MARK";
         }
     }
 }
