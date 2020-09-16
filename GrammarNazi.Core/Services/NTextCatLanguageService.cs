@@ -22,7 +22,7 @@ namespace GrammarNazi.Core.Services
             var languages = identifier.Identify(text).Where(v => LanguageUtils.GetSupportedLanguages().Contains(v.Item1.Iso639_3));
 
             if (!languages.Any())
-                return null;
+                return default;
 
             var (languageInfo, _) = languages.First();
 

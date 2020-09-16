@@ -44,8 +44,15 @@ namespace GrammarNazi.Core.Services
             {
                 var languageInfo = _languageService.IdentifyLanguage(text);
 
-                // Use english if language not identified
-                languageCode = languageInfo?.TwoLetterISOLanguageName ?? Defaults.LanguageCode;
+                if (languageInfo != default)
+                {
+                    // Use API language auto detection
+                    languageCode = "auto";
+                }
+                else // language not supported
+                {
+                    return new GrammarCheckResult(default);
+                }
             }
 
             var result = await _apiClient.Check(text, languageCode);
