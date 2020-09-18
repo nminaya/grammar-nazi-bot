@@ -13,14 +13,7 @@ namespace GrammarNazi.Core.Services
 
         public IEnumerable<string> GetTextFileByLine(string path)
         {
-            var fileStream = new FileStream(path, FileMode.Open);
-            using var reader = new StreamReader(fileStream);
-
-            string line;
-            while ((line = reader.ReadLine()) != null)
-            {
-                yield return line;
-            }
+            return File.ReadAllLines(path);
         }
     }
 }
