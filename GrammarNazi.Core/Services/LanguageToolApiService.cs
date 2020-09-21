@@ -57,6 +57,10 @@ namespace GrammarNazi.Core.Services
 
             var result = await _apiClient.Check(text, languageCode);
 
+            // validate if LanguageTool has detected a valid language
+            if(!IsValidLanguageDetected(result.Language.Code))
+                return new GrammarCheckResult(default);
+
             var corrections = new List<GrammarCorrection>();
 
             var matches = result
@@ -95,6 +99,13 @@ namespace GrammarNazi.Core.Services
                 && match.Rule.Id != "PROFANITY"
                 && match.Rule.Id != "MORFOLOGIK_RULE_ES"
                 && match.Rule.Id != "ES_QUESTION_MARK";
+        }
+
+        private bool IsValidLanguageDetected(string languageCode)
+        {
+            return LanguageUtils.GetSupportedLanguages()
+                .Select(LanguageUtils.GetLanguageCode)
+                .Contains(languageCode[..2]);
         }
     }
 }
