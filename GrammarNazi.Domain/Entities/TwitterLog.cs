@@ -15,5 +15,10 @@ namespace GrammarNazi.Domain.Entities
 
             return base.Equals(obj);
         }
+
+        public override int GetHashCode()
+        {
+            return TweetId.GetHashCode();
+        }
     }
 }
