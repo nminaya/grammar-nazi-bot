@@ -1,9 +1,11 @@
 ﻿using GrammarNazi.Core.Extensions;
 using GrammarNazi.Core.Utilities;
 using GrammarNazi.Domain.Constants;
+using GrammarNazi.Domain.Entities.Configs;
 using GrammarNazi.Domain.Services;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Options;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -22,15 +24,18 @@ namespace GrammarNazi.App.HostedServices
         private readonly ITwitterLogService _twitterLogService;
         private readonly IGrammarService _grammarService;
         private readonly ITwitterClient _twitterClient;
+        private readonly TwitterBotSettings _twitterBotSettings;
 
         public TwitterBotHostedService(ILogger<TwitterBotHostedService> logger,
             IEnumerable<IGrammarService> grammarServices,
             ITwitterLogService twitterLogService,
-            ITwitterClient userClient)
+            ITwitterClient userClient,
+            IOptions<TwitterBotSettings> options)
         {
             _logger = logger;
             _twitterLogService = twitterLogService;
             _twitterClient = userClient;
+            _twitterBotSettings = options.Value;
 
             // Use only DefaultAlgorithm for now
             _grammarService = grammarServices.First(v => v.GrammarAlgorith == Defaults.DefaultAlgorithm);
@@ -50,7 +55,7 @@ namespace GrammarNazi.App.HostedServices
                 {
                     var lastTweetIdTask = _twitterLogService.GetLastTweetId();
 
-                    var user = await _twitterClient.Users.GetUserAsync("GrammarNazi_Bot"); // TODO: Get bot name from config
+                    var user = await _twitterClient.Users.GetUserAsync(_twitterBotSettings.BotUsername);
 
                     long sinceTweetId = await lastTweetIdTask;
 
@@ -63,7 +68,7 @@ namespace GrammarNazi.App.HostedServices
                         var getTimeLineParameters = new GetUserTimelineParameters(follower.Id);
 
                         if (sinceTweetId == 0)
-                            getTimeLineParameters.PageSize = 5; // TODO: Get this value from config
+                            getTimeLineParameters.PageSize = _twitterBotSettings.TimelineFirstLoadPageSize;
                         else
                             getTimeLineParameters.SinceId = sinceTweetId;
 
@@ -113,9 +118,7 @@ namespace GrammarNazi.App.HostedServices
                                 await _twitterLogService.LogReply(tweet.Id, replyTweet.Id);
                             }
 
-                            // TODO: Get this value from config
-                            // Wait 15 seconds to avoid Twitter limit
-                            await Task.Delay(15_000);
+                            await Task.Delay(_twitterBotSettings.PublishTweetDelayMilliseconds);
                         }
                     }
 
@@ -132,9 +135,7 @@ namespace GrammarNazi.App.HostedServices
                     _logger.LogError(ex, ex.Message);
                 }
 
-                // TODO: Get this value from config
-                // Wait 10 minutes to execute again
-                await Task.Delay(10 * 60_000);
+                await Task.Delay(_twitterBotSettings.HostedServiceIntervalMilliseconds);
             }
         }
 

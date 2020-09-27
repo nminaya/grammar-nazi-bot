@@ -5,6 +5,7 @@ using GrammarNazi.Core.Clients;
 using GrammarNazi.Core.Repositories;
 using GrammarNazi.Core.Services;
 using GrammarNazi.Domain.Clients;
+using GrammarNazi.Domain.Entities.Configs;
 using GrammarNazi.Domain.Repositories;
 using GrammarNazi.Domain.Services;
 using Microsoft.AspNetCore.Builder;
@@ -41,8 +42,11 @@ namespace GrammarNazi.App
             ConfigureDependencies(services);
         }
 
-        private static void ConfigureDependencies(IServiceCollection services)
+        private void ConfigureDependencies(IServiceCollection services)
         {
+            // Settings
+            services.Configure<TwitterBotSettings>(Configuration.GetSection("AppSettings:TwitterBotSettings"));
+
             // Repository
             services.AddTransient(typeof(IRepository<>), typeof(FirebaseRepository<>)); // Use Firebase for now
 
