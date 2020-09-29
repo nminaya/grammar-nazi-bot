@@ -11,12 +11,10 @@ using System.Threading.Tasks;
 
 namespace GrammarNazi.Core.Services
 {
-    public class YandexSpellerApiService : IGrammarService
+    public class YandexSpellerApiService : BaseGrammarService, IGrammarService
     {
         private readonly IYandexSpellerApiClient _yandexSpellerApiClient;
         private readonly ILanguageService _languageService;
-
-        private SupportedLanguages _selectedLanguage;
 
         public GrammarAlgorithms GrammarAlgorith => GrammarAlgorithms.YandexSpellerApi;
 
@@ -29,9 +27,9 @@ namespace GrammarNazi.Core.Services
         public async Task<GrammarCheckResult> GetCorrections(string text)
         {
             string languageCode;
-            if (_selectedLanguage != SupportedLanguages.Auto)
+            if (SelectedLanguage != SupportedLanguages.Auto)
             {
-                languageCode = LanguageUtils.GetLanguageCode(_selectedLanguage.GetDescription());
+                languageCode = LanguageUtils.GetLanguageCode(SelectedLanguage.GetDescription());
             }
             else
             {
@@ -68,12 +66,7 @@ namespace GrammarNazi.Core.Services
 
             return new GrammarCheckResult(default);
         }
-
-        public void SetSelectedLanguage(SupportedLanguages supportedLanguage)
-        {
-            _selectedLanguage = supportedLanguage;
-        }
-
+        
         private string GetErrorMessage(CheckTextResponse checkTextResponse)
         {
             if (checkTextResponse.Word.Split(' ').Length > 1)

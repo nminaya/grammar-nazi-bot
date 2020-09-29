@@ -2,6 +2,7 @@
 using GrammarNazi.Core.Utilities;
 using GrammarNazi.Domain.Constants;
 using GrammarNazi.Domain.Entities.Configs;
+using GrammarNazi.Domain.Enums;
 using GrammarNazi.Domain.Services;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
@@ -39,6 +40,7 @@ namespace GrammarNazi.App.HostedServices
 
             // Use only DefaultAlgorithm for now
             _grammarService = grammarServices.First(v => v.GrammarAlgorith == Defaults.DefaultAlgorithm);
+            _grammarService.SetStrictnessLevel(CorrectionStrictnessLevels.Tolerant);
         }
 
         public override Task StartAsync(CancellationToken cancellationToken)

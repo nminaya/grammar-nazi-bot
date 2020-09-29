@@ -12,12 +12,10 @@ using System.Threading.Tasks;
 
 namespace GrammarNazi.Core.Services
 {
-    public class LanguageToolApiService : IGrammarService
+    public class LanguageToolApiService : BaseGrammarService, IGrammarService
     {
         private readonly ILanguageToolApiClient _apiClient;
         private readonly ILanguageService _languageService;
-
-        private SupportedLanguages _selectedLanguage;
 
         public GrammarAlgorithms GrammarAlgorith => GrammarAlgorithms.LanguageToolApi;
 
@@ -36,9 +34,9 @@ namespace GrammarNazi.Core.Services
             }
 
             string languageCode;
-            if (_selectedLanguage != SupportedLanguages.Auto)
+            if (SelectedLanguage != SupportedLanguages.Auto)
             {
-                languageCode = LanguageUtils.GetLanguageCode(_selectedLanguage.GetDescription());
+                languageCode = LanguageUtils.GetLanguageCode(SelectedLanguage.GetDescription());
             }
             else
             {
@@ -58,7 +56,7 @@ namespace GrammarNazi.Core.Services
             var result = await _apiClient.Check(text, languageCode);
 
             // validate if LanguageTool has detected a valid language
-            if(!IsValidLanguageDetected(result.Language.Code))
+            if (!IsValidLanguageDetected(result.Language.Code))
                 return new GrammarCheckResult(default);
 
             var corrections = new List<GrammarCorrection>();
@@ -82,13 +80,11 @@ namespace GrammarNazi.Core.Services
             return new GrammarCheckResult(corrections);
         }
 
-        public void SetSelectedLanguage(SupportedLanguages supportedLanguage)
-        {
-            _selectedLanguage = supportedLanguage;
-        }
-
         private bool RulesFilter(Match match)
         {
+            if (SelectedStrictnessLevel == CorrectionStrictnessLevels.Intolerant)
+                return true;
+
             // TODO: Create a list of default or disabled rules
             // TODO: Use the API endpoint parameter "disabledRules"
 

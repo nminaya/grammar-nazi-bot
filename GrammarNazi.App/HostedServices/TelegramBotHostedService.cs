@@ -122,6 +122,7 @@ namespace GrammarNazi.App.HostedServices
         {
             var grammarService = _grammarServices.First(v => v.GrammarAlgorith == chatConfig.GrammarAlgorithm);
             grammarService.SetSelectedLanguage(chatConfig.SelectedLanguage);
+            grammarService.SetStrictnessLevel(chatConfig.CorrectionStrictnessLevels);
 
             return grammarService;
         }
@@ -180,6 +181,8 @@ namespace GrammarNazi.App.HostedServices
                 messageBuilder.AppendLine($"{Commands.Language} <language_number> to set a language.");
                 messageBuilder.AppendLine($"{Commands.ShowDetails} Show correction details");
                 messageBuilder.AppendLine($"{Commands.HideDetails} Hide correction details");
+                messageBuilder.AppendLine($"{Commands.Tolerant} Set strictness level to {CorrectionStrictnessLevels.Tolerant.GetDescription()}");
+                messageBuilder.AppendLine($"{Commands.Intolerant} Set strictness level to {CorrectionStrictnessLevels.Intolerant.GetDescription()}");
 
                 await _client.SendTextMessageAsync(message.Chat.Id, messageBuilder.ToString());
             }
@@ -192,7 +195,8 @@ namespace GrammarNazi.App.HostedServices
                 messageBuilder.AppendLine(GetSupportedLanguages(chatConfig.SelectedLanguage));
 
                 var showCorrectionDetailsIcon = chatConfig.HideCorrectionDetails ? "❌" : "✅";
-                messageBuilder.AppendLine($"Show correction details {showCorrectionDetailsIcon}");
+                messageBuilder.AppendLine($"Show correction details {showCorrectionDetailsIcon}").AppendLine();
+                messageBuilder.AppendLine("Strictness level:").AppendLine($"{chatConfig.CorrectionStrictnessLevels.GetDescription()} ✅").AppendLine();
 
                 if (chatConfig.IsBotStopped)
                     messageBuilder.AppendLine($"The bot is currently stopped. Type {Commands.Start} to activate the Bot.");
@@ -296,6 +300,28 @@ namespace GrammarNazi.App.HostedServices
                 _ = _chatConfigurationService.Update(chatConfig);
 
                 await _client.SendTextMessageAsync(message.Chat.Id, "Show correction details ✅");
+            }
+            else if (IsCommand(Commands.Tolerant, text))
+            {
+                var chatConfig = await GetChatConfiguration(message.Chat.Id);
+
+                chatConfig.CorrectionStrictnessLevels = CorrectionStrictnessLevels.Tolerant;
+
+                // Fire and forget
+                _ = _chatConfigurationService.Update(chatConfig);
+
+                await _client.SendTextMessageAsync(message.Chat.Id, "Tolerant ✅");
+            }
+            else if (IsCommand(Commands.Intolerant, text))
+            {
+                var chatConfig = await GetChatConfiguration(message.Chat.Id);
+
+                chatConfig.CorrectionStrictnessLevels = CorrectionStrictnessLevels.Intolerant;
+
+                // Fire and forget
+                _ = _chatConfigurationService.Update(chatConfig);
+
+                await _client.SendTextMessageAsync(message.Chat.Id, "Intolerant ✅");
             }
 
             bool IsCommand(string expected, string actual)

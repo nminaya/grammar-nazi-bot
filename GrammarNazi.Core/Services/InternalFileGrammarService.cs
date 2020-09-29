@@ -6,17 +6,15 @@ using GrammarNazi.Domain.Enums;
 using GrammarNazi.Domain.Services;
 using System.Collections.Generic;
 using System.Linq;
-using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 
 namespace GrammarNazi.Core.Services
 {
-    public class InternalFileGrammarService : IGrammarService
+    public class InternalFileGrammarService : BaseGrammarService, IGrammarService
     {
         private readonly IFileService _fileService;
         private readonly IStringDiffService _stringDiffService;
         private readonly ILanguageService _languageService;
-        private SupportedLanguages _selectedLanguage;
 
         public GrammarAlgorithms GrammarAlgorith => GrammarAlgorithms.InternalAlgorithm;
 
@@ -31,7 +29,7 @@ namespace GrammarNazi.Core.Services
 
         public Task<GrammarCheckResult> GetCorrections(string text)
         {
-            if (_selectedLanguage == SupportedLanguages.Auto)
+            if (SelectedLanguage == SupportedLanguages.Auto)
             {
                 var languageInfo = _languageService.IdentifyLanguage(text);
 
@@ -78,11 +76,6 @@ namespace GrammarNazi.Core.Services
             }
 
             return Task.FromResult(new GrammarCheckResult(corrections));
-        }
-
-        public void SetSelectedLanguage(SupportedLanguages supportedLanguage)
-        {
-            _selectedLanguage = supportedLanguage;
         }
     }
 }
