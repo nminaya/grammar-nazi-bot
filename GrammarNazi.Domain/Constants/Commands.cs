@@ -10,5 +10,7 @@
         public const string Stop = "/stop";
         public const string HideDetails = "/hide_details";
         public const string ShowDetails = "/show_details";
+        public const string Tolerant = "/tolerant";
+        public const string Intolerant = "/intolerant";
     }
 }
