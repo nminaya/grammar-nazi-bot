@@ -2,6 +2,7 @@
 using GrammarNazi.Core.Utilities;
 using GrammarNazi.Domain.Clients;
 using GrammarNazi.Domain.Entities;
+using GrammarNazi.Domain.Entities.YandexSpellerAPI;
 using GrammarNazi.Domain.Enums;
 using GrammarNazi.Domain.Services;
 using System.Collections.Generic;
@@ -46,7 +47,7 @@ namespace GrammarNazi.Core.Services
 
             var response = await _yandexSpellerApiClient.CheckText(text, languageCode);
 
-            if (response.Any())
+            if (response?.Any() == true)
             {
                 var corrections = new List<GrammarCorrection>();
 
@@ -55,8 +56,8 @@ namespace GrammarNazi.Core.Services
                     var correction = new GrammarCorrection
                     {
                         WrongWord = spellResult.Word,
-                        PossibleReplacements = spellResult.S,
-                        Message = $"The word \"{spellResult.Word}\" doesn't exist or isn't in the dictionary."
+                        PossibleReplacements = spellResult.Replacements,
+                        Message = GetErrorMessage(spellResult)
                     };
 
                     corrections.Add(correction);
@@ -71,6 +72,14 @@ namespace GrammarNazi.Core.Services
         public void SetSelectedLanguage(SupportedLanguages supportedLanguage)
         {
             _selectedLanguage = supportedLanguage;
+        }
+
+        private string GetErrorMessage(CheckTextResponse checkTextResponse)
+        {
+            if (checkTextResponse.Word.Split(' ').Length > 1)
+                return $"Possible mistake found.";
+
+            return $"The word \"{checkTextResponse.Word}\" doesn't exist or isn't in the dictionary.";
         }
     }
 }

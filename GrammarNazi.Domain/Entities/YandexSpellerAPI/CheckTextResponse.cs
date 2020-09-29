@@ -8,7 +8,7 @@ namespace GrammarNazi.Domain.Entities.YandexSpellerAPI
     public class CheckTextResponse
     {
         [JsonProperty("code")]
-        public int Code { get; set; }
+        public int ErrorCode { get; set; }
 
         [JsonProperty("pos")]
         public int Pos { get; set; }
@@ -26,6 +26,6 @@ namespace GrammarNazi.Domain.Entities.YandexSpellerAPI
         public string Word { get; set; }
 
         [JsonProperty("s")]
-        public List<string> S { get; set; }
+        public List<string> Replacements { get; set; }
     }
 }

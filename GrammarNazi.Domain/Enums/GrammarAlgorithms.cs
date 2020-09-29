@@ -13,7 +13,7 @@ namespace GrammarNazi.Domain.Enums
         [Description("LanguageTool API")]
         LanguageToolApi = 2,
 
-        [Description("Yandex Speller API")]
+        [Description("YandexSpeller API")]
         YandexSpellerApi = 3
     }
 }
