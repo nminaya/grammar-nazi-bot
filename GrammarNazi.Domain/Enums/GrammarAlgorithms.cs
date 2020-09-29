@@ -7,10 +7,13 @@ namespace GrammarNazi.Domain.Enums
 {
     public enum GrammarAlgorithms
     {
-        [Description("Internal Algorithm")]
+        [Description("Internal Algorithm (BETA)")]
         InternalAlgorithm = 1,
 
         [Description("LanguageTool API")]
-        LanguageToolApi = 2
+        LanguageToolApi = 2,
+
+        [Description("Yandex Speller API")]
+        YandexSpellerApi = 3
     }
 }

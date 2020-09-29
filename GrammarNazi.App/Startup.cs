@@ -1,6 +1,5 @@
 using Firebase.Database;
 using GrammarNazi.App.HostedServices;
-using GrammarNazi.Core;
 using GrammarNazi.Core.Clients;
 using GrammarNazi.Core.Repositories;
 using GrammarNazi.Core.Services;
@@ -11,14 +10,13 @@ using GrammarNazi.Domain.Services;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Http;
-using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using System;
 using Telegram.Bot;
 using Tweetinvi;
-using Tweetinvi.Models;
+using YandexSpeller;
 
 namespace GrammarNazi.App
 {
@@ -37,7 +35,7 @@ namespace GrammarNazi.App
 
             // Hosted services
             services.AddHostedService<TelegramBotHostedService>();
-            services.AddHostedService<TwitterBotHostedService>();
+            //services.AddHostedService<TwitterBotHostedService>();
 
             ConfigureDependencies(services);
         }
@@ -58,7 +56,13 @@ namespace GrammarNazi.App
             services.AddTransient<ILanguageService, NTextCatLanguageService>();
             services.AddTransient<IGrammarService, LanguageToolApiService>();
             services.AddTransient<IGrammarService, InternalFileGrammarService>();
+            services.AddTransient<IGrammarService, YandexSpellerApiService>();
             services.AddTransient<ITwitterLogService, TwitterLogService>();
+
+            services.AddTransient<SpellServiceSoap>(_ =>
+            {
+                return new SpellServiceSoapClient(SpellServiceSoapClient.EndpointConfiguration.SpellServiceSoap);
+            });
 
             // Telegram client
             services.AddTransient<ITelegramBotClient>(_ =>
