@@ -19,8 +19,4 @@
     <ProjectReference Include="..\GrammarNazi.Domain\GrammarNazi.Domain.csproj" />
   </ItemGroup>
 
-  <ItemGroup>
-    <WCFMetadata Include="Connected Services" />
-  </ItemGroup>
-
 </Project>
