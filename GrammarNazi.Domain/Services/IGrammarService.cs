@@ -10,6 +10,8 @@ namespace GrammarNazi.Domain.Services
 
         void SetSelectedLanguage(SupportedLanguages supportedLanguage);
 
+        void SetStrictnessLevel(CorrectionStrictnessLevels correctionStrictnessLevel);
+
         Task<GrammarCheckResult> GetCorrections(string text);
     }
 }
