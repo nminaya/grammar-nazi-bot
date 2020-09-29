@@ -43,19 +43,22 @@ namespace GrammarNazi.Core.Services
                 languageCode = languageInfo.TwoLetterISOLanguageName;
             }
 
-            var checkTextRequest = new checkTextRequest
+            var checkTextRequest = new checkTextRequest1
             {
-                text = text,
-                lang = languageCode
+                CheckTextRequest = new CheckTextRequest
+                {
+                    text = text,
+                    lang = languageCode
+                }
             };
 
             var response = await _spellServiceSoap.checkTextAsync(checkTextRequest);
 
-            if (response.SpellResult.Length != 0)
+            if (response.CheckTextResponse.SpellResult.Length != 0)
             {
                 var corrections = new List<GrammarCorrection>();
 
-                foreach (var spellResult in response.SpellResult)
+                foreach (var spellResult in response.CheckTextResponse.SpellResult)
                 {
                     var correction = new GrammarCorrection
                     {
