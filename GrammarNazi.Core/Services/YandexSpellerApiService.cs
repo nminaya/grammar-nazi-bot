@@ -1,26 +1,27 @@
 ﻿using GrammarNazi.Core.Extensions;
 using GrammarNazi.Core.Utilities;
+using GrammarNazi.Domain.Clients;
 using GrammarNazi.Domain.Entities;
 using GrammarNazi.Domain.Enums;
 using GrammarNazi.Domain.Services;
 using System.Collections.Generic;
+using System.Linq;
 using System.Threading.Tasks;
-using YandexSpeller;
 
 namespace GrammarNazi.Core.Services
 {
     public class YandexSpellerApiService : IGrammarService
     {
-        private readonly SpellServiceSoap _spellServiceSoap;
+        private readonly IYandexSpellerApiClient _yandexSpellerApiClient;
         private readonly ILanguageService _languageService;
 
         private SupportedLanguages _selectedLanguage;
 
         public GrammarAlgorithms GrammarAlgorith => GrammarAlgorithms.YandexSpellerApi;
 
-        public YandexSpellerApiService(SpellServiceSoap spellServiceSoap, ILanguageService languageService)
+        public YandexSpellerApiService(IYandexSpellerApiClient yandexSpellerApiClient, ILanguageService languageService)
         {
-            _spellServiceSoap = spellServiceSoap;
+            _yandexSpellerApiClient = yandexSpellerApiClient;
             _languageService = languageService;
         }
 
@@ -43,28 +44,19 @@ namespace GrammarNazi.Core.Services
                 languageCode = languageInfo.TwoLetterISOLanguageName;
             }
 
-            var checkTextRequest = new checkTextRequest1
-            {
-                CheckTextRequest = new CheckTextRequest
-                {
-                    text = text,
-                    lang = languageCode
-                }
-            };
+            var response = await _yandexSpellerApiClient.CheckText(text, languageCode);
 
-            var response = await _spellServiceSoap.checkTextAsync(checkTextRequest);
-
-            if (response.CheckTextResponse.SpellResult.Length != 0)
+            if (response.Any())
             {
                 var corrections = new List<GrammarCorrection>();
 
-                foreach (var spellResult in response.CheckTextResponse.SpellResult)
+                foreach (var spellResult in response)
                 {
                     var correction = new GrammarCorrection
                     {
-                        WrongWord = spellResult.word,
-                        PossibleReplacements = spellResult.s,
-                        Message = $"The word \"{spellResult.word}\" doesn't exist or isn't in the dictionary."
+                        WrongWord = spellResult.Word,
+                        PossibleReplacements = spellResult.S,
+                        Message = $"The word \"{spellResult.Word}\" doesn't exist or isn't in the dictionary."
                     };
 
                     corrections.Add(correction);

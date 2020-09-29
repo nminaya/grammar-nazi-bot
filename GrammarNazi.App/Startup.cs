@@ -16,7 +16,6 @@ using Microsoft.Extensions.Hosting;
 using System;
 using Telegram.Bot;
 using Tweetinvi;
-using YandexSpeller;
 
 namespace GrammarNazi.App
 {
@@ -52,17 +51,13 @@ namespace GrammarNazi.App
             services.AddSingleton<IFileService, FileService>();
             services.AddSingleton<IStringDiffService, StringDiffService>();
             services.AddTransient<ILanguageToolApiClient, LanguageToolApiClient>();
+            services.AddTransient<IYandexSpellerApiClient, YandexSpellerApiClient>();
             services.AddTransient<IChatConfigurationService, ChatConfigurationService>();
             services.AddTransient<ILanguageService, NTextCatLanguageService>();
             services.AddTransient<IGrammarService, LanguageToolApiService>();
             services.AddTransient<IGrammarService, InternalFileGrammarService>();
             services.AddTransient<IGrammarService, YandexSpellerApiService>();
             services.AddTransient<ITwitterLogService, TwitterLogService>();
-
-            services.AddTransient<SpellServiceSoap>(_ =>
-            {
-                return new SpellServiceSoapClient(SpellServiceSoapClient.EndpointConfiguration.SpellServiceSoap);
-            });
 
             // Telegram client
             services.AddTransient<ITelegramBotClient>(_ =>
