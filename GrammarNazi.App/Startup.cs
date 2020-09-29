@@ -34,7 +34,7 @@ namespace GrammarNazi.App
 
             // Hosted services
             services.AddHostedService<TelegramBotHostedService>();
-            //services.AddHostedService<TwitterBotHostedService>();
+            services.AddHostedService<TwitterBotHostedService>();
 
             ConfigureDependencies(services);
         }
