@@ -26,6 +26,7 @@ namespace GrammarNazi.Tests.Utilities
         [InlineData("@USERTTEST this is a test", "this is a test")]
         [InlineData("this is a test @USERTTEST", "this is a test")]
         [InlineData("@USERTTEST1 @USERTTEST2 this is a test @USERTTEST", "this is a test")]
+        [InlineData("@_USERTTEST1 @USERT_TEST2 this is a test @__USE-RTTEST", "this is a test")]
         public void RemoveMentions_GivenString_Should_RemoveMentions_And_ReturnsExpectedResult(string actual, string expected)
         {
             // Arrange > Act

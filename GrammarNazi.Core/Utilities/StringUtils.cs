@@ -9,7 +9,7 @@ namespace GrammarNazi.Core.Utilities
         /// </summary>
         /// <param name="tweetText"></param>
         /// <returns>String without mentions</returns>
-        public static string RemoveMentions(string tweetText) => Regex.Replace(tweetText, @"@[0-9a-zA-Z](\.?[0-9a-zA-Z])*", "").Trim();
+        public static string RemoveMentions(string tweetText) => Regex.Replace(tweetText, @"\B@[\w\S]+", "").Trim();
 
         /// <summary>
         /// It will remove Twitter mentions from the given string

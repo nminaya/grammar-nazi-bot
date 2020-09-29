@@ -1,4 +1,5 @@
 ﻿using GrammarNazi.Core.Extensions;
+using GrammarNazi.Core.Utilities;
 using GrammarNazi.Domain.Constants;
 using GrammarNazi.Domain.Entities;
 using GrammarNazi.Domain.Enums;
@@ -76,7 +77,10 @@ namespace GrammarNazi.App.HostedServices
 
             var grammarService = GetConfiguredGrammarService(chatConfig);
 
-            var corretionResult = await grammarService.GetCorrections(message.Text);
+            // Remove emojis, hashtags and mentions
+            var text = StringUtils.RemoveEmojis(StringUtils.RemoveHashtags(StringUtils.RemoveMentions(message.Text)));
+
+            var corretionResult = await grammarService.GetCorrections(text);
 
             if (corretionResult.HasCorrections)
             {
