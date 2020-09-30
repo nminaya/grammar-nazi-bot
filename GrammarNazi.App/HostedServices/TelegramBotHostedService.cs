@@ -43,7 +43,7 @@ namespace GrammarNazi.App.HostedServices
 
         protected override async Task ExecuteAsync(CancellationToken stoppingToken)
         {
-            _logger.LogInformation("Bot Hosted Service started");
+            _logger.LogInformation("Telegram Bot Hosted Service started");
 
             _client.StartReceiving(cancellationToken: stoppingToken);
             _client.OnMessage += async (obj, eventArgs) => await OnMessageReceived(obj, eventArgs);
@@ -157,9 +157,16 @@ namespace GrammarNazi.App.HostedServices
                 {
                     if (chatConfig.IsBotStopped)
                     {
-                        chatConfig.IsBotStopped = false;
-                        await _chatConfigurationService.Update(chatConfig);
-                        messageBuilder.AppendLine("Bot started");
+                        if(!await IsUserAdmin())
+                        {
+                            messageBuilder.AppendLine("Only admins can use this command.");
+                        }
+                        else
+                        {
+                            chatConfig.IsBotStopped = false;
+                            await _chatConfigurationService.Update(chatConfig);
+                            messageBuilder.AppendLine("Bot started");
+                        }
                     }
                     else
                     {
@@ -205,12 +212,20 @@ namespace GrammarNazi.App.HostedServices
             }
             else if (IsCommand(Commands.SetAlgorithm, text))
             {
+                var messageBuilder = new StringBuilder();
+
+                if (!await IsUserAdmin())
+                {
+                    messageBuilder.AppendLine("Only admins can use this command.");
+                    await _client.SendTextMessageAsync(message.Chat.Id, messageBuilder.ToString(), replyToMessageId: message.MessageId);
+                    return;
+                }
+
                 var parameters = text.Split(" ");
                 if (parameters.Length == 1)
                 {
                     var chatConfig = await GetChatConfiguration(message.Chat.Id);
 
-                    var messageBuilder = new StringBuilder();
                     messageBuilder.AppendLine($"Parameter not received. Type {Commands.SetAlgorithm} <algorithm_numer> to set an algorithm").AppendLine();
                     messageBuilder.AppendLine(GetAvailableAlgorithms(chatConfig.GrammarAlgorithm));
                     await _client.SendTextMessageAsync(message.Chat.Id, messageBuilder.ToString());
@@ -237,13 +252,21 @@ namespace GrammarNazi.App.HostedServices
             }
             else if (IsCommand(Commands.Language, text))
             {
+                var messageBuilder = new StringBuilder();
+
+                if (!await IsUserAdmin())
+                {
+                    messageBuilder.AppendLine("Only admins can use this command.");
+                    await _client.SendTextMessageAsync(message.Chat.Id, messageBuilder.ToString(), replyToMessageId: message.MessageId);
+                    return;
+                }
+
                 var parameters = text.Split(" ");
 
                 if (parameters.Length == 1)
                 {
                     var chatConfig = await GetChatConfiguration(message.Chat.Id);
 
-                    var messageBuilder = new StringBuilder();
                     messageBuilder.AppendLine($"Parameter not received. Type {Commands.Language} <language_number> to set a language.").AppendLine();
                     messageBuilder.AppendLine(GetSupportedLanguages(chatConfig.SelectedLanguage));
                     await _client.SendTextMessageAsync(message.Chat.Id, messageBuilder.ToString());
@@ -270,6 +293,12 @@ namespace GrammarNazi.App.HostedServices
             }
             else if (IsCommand(Commands.Stop, text))
             {
+                if (!await IsUserAdmin())
+                {
+                    await _client.SendTextMessageAsync(message.Chat.Id, "Only admins can use this command.", replyToMessageId: message.MessageId);
+                    return;
+                }
+
                 var chatConfig = await GetChatConfiguration(message.Chat.Id);
 
                 chatConfig.IsBotStopped = true;
@@ -281,6 +310,12 @@ namespace GrammarNazi.App.HostedServices
             }
             else if (IsCommand(Commands.HideDetails, text))
             {
+                if (!await IsUserAdmin())
+                {
+                    await _client.SendTextMessageAsync(message.Chat.Id, "Only admins can use this command.", replyToMessageId: message.MessageId);
+                    return;
+                }
+
                 var chatConfig = await GetChatConfiguration(message.Chat.Id);
 
                 chatConfig.HideCorrectionDetails = true;
@@ -292,6 +327,12 @@ namespace GrammarNazi.App.HostedServices
             }
             else if (IsCommand(Commands.ShowDetails, text))
             {
+                if (!await IsUserAdmin())
+                {
+                    await _client.SendTextMessageAsync(message.Chat.Id, "Only admins can use this command.", replyToMessageId: message.MessageId);
+                    return;
+                }
+
                 var chatConfig = await GetChatConfiguration(message.Chat.Id);
 
                 chatConfig.HideCorrectionDetails = false;
@@ -303,6 +344,12 @@ namespace GrammarNazi.App.HostedServices
             }
             else if (IsCommand(Commands.Tolerant, text))
             {
+                if (!await IsUserAdmin())
+                {
+                    await _client.SendTextMessageAsync(message.Chat.Id, "Only admins can use this command.", replyToMessageId: message.MessageId);
+                    return;
+                }
+
                 var chatConfig = await GetChatConfiguration(message.Chat.Id);
 
                 chatConfig.CorrectionStrictnessLevels = CorrectionStrictnessLevels.Tolerant;
@@ -314,6 +361,12 @@ namespace GrammarNazi.App.HostedServices
             }
             else if (IsCommand(Commands.Intolerant, text))
             {
+                if (!await IsUserAdmin())
+                {
+                    await _client.SendTextMessageAsync(message.Chat.Id, "Only admins can use this command.", replyToMessageId: message.MessageId);
+                    return;
+                }
+
                 var chatConfig = await GetChatConfiguration(message.Chat.Id);
 
                 chatConfig.CorrectionStrictnessLevels = CorrectionStrictnessLevels.Intolerant;
@@ -335,6 +388,17 @@ namespace GrammarNazi.App.HostedServices
                 }
 
                 return actual.StartsWith(expected);
+            }
+
+            async Task<bool> IsUserAdmin()
+            {
+                if (message.Chat.Type == ChatType.Private)
+                    return true;
+
+                var chatAdministrators = await _client.GetChatAdministratorsAsync(message.Chat.Id);
+                var currentUserId = message.From.Id;
+                
+                return chatAdministrators.Any(v => v.User.Id == currentUserId);
             }
 
             static string GetAvailableAlgorithms(GrammarAlgorithms selectedAlgorith)
