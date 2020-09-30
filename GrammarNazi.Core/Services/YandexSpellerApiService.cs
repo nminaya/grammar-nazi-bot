@@ -26,6 +26,9 @@ namespace GrammarNazi.Core.Services
 
         public async Task<GrammarCheckResult> GetCorrections(string text)
         {
+            if(string.IsNullOrWhiteSpace(text))
+                return new GrammarCheckResult(default);
+
             string languageCode;
             if (SelectedLanguage != SupportedLanguages.Auto)
             {
