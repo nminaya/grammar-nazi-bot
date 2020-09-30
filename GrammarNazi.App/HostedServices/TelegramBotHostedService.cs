@@ -122,7 +122,7 @@ namespace GrammarNazi.App.HostedServices
         {
             var grammarService = _grammarServices.First(v => v.GrammarAlgorith == chatConfig.GrammarAlgorithm);
             grammarService.SetSelectedLanguage(chatConfig.SelectedLanguage);
-            grammarService.SetStrictnessLevel(chatConfig.CorrectionStrictnessLevels);
+            grammarService.SetStrictnessLevel(chatConfig.CorrectionStrictnessLevel);
 
             return grammarService;
         }
@@ -203,7 +203,7 @@ namespace GrammarNazi.App.HostedServices
 
                 var showCorrectionDetailsIcon = chatConfig.HideCorrectionDetails ? "❌" : "✅";
                 messageBuilder.AppendLine($"Show correction details {showCorrectionDetailsIcon}").AppendLine();
-                messageBuilder.AppendLine("Strictness level:").AppendLine($"{chatConfig.CorrectionStrictnessLevels.GetDescription()} ✅").AppendLine();
+                messageBuilder.AppendLine("Strictness level:").AppendLine($"{chatConfig.CorrectionStrictnessLevel.GetDescription()} ✅").AppendLine();
 
                 if (chatConfig.IsBotStopped)
                     messageBuilder.AppendLine($"The bot is currently stopped. Type {Commands.Start} to activate the Bot.");
@@ -362,7 +362,7 @@ namespace GrammarNazi.App.HostedServices
 
                 var chatConfig = await GetChatConfiguration(message.Chat.Id);
 
-                chatConfig.CorrectionStrictnessLevels = CorrectionStrictnessLevels.Tolerant;
+                chatConfig.CorrectionStrictnessLevel = CorrectionStrictnessLevels.Tolerant;
 
                 // Fire and forget
                 _ = _chatConfigurationService.Update(chatConfig);
@@ -379,7 +379,7 @@ namespace GrammarNazi.App.HostedServices
 
                 var chatConfig = await GetChatConfiguration(message.Chat.Id);
 
-                chatConfig.CorrectionStrictnessLevels = CorrectionStrictnessLevels.Intolerant;
+                chatConfig.CorrectionStrictnessLevel = CorrectionStrictnessLevels.Intolerant;
 
                 // Fire and forget
                 _ = _chatConfigurationService.Update(chatConfig);
