@@ -240,7 +240,7 @@ namespace GrammarNazi.App.HostedServices
 
                         if (selectedAlgorithm == GrammarAlgorithms.InternalAlgorithm)
                         {
-                            messageBuilder.AppendLine($"This algorithm is currently disable. Please select another.");
+                            messageBuilder.AppendLine($"This algorithm is currently disabled. Please select another.");
                             messageBuilder.AppendLine(GetAvailableAlgorithms(default));
                             await _client.SendTextMessageAsync(message.Chat.Id, messageBuilder.ToString());
                             return;
