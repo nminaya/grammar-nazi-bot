@@ -59,6 +59,9 @@ namespace GrammarNazi.App
             services.AddTransient<IGrammarService, YandexSpellerApiService>();
             services.AddTransient<ITwitterLogService, TwitterLogService>();
 
+            // HttpClient
+            services.AddHttpClient();
+
             // Telegram client
             services.AddTransient<ITelegramBotClient>(_ =>
             {
