@@ -157,7 +157,7 @@ namespace GrammarNazi.App.HostedServices
                 {
                     if (chatConfig.IsBotStopped)
                     {
-                        if(!await IsUserAdmin())
+                        if (!await IsUserAdmin())
                         {
                             messageBuilder.AppendLine("Only admins can use this command.");
                         }
@@ -236,6 +236,16 @@ namespace GrammarNazi.App.HostedServices
 
                     if (parsedOk)
                     {
+                        var selectedAlgorithm = (GrammarAlgorithms)algorithm;
+
+                        if (selectedAlgorithm == GrammarAlgorithms.InternalAlgorithm)
+                        {
+                            messageBuilder.AppendLine($"This algorithm is currently disable. Please select another.");
+                            messageBuilder.AppendLine(GetAvailableAlgorithms(default));
+                            await _client.SendTextMessageAsync(message.Chat.Id, messageBuilder.ToString());
+                            return;
+                        }
+
                         var chatConfig = await GetChatConfiguration(message.Chat.Id);
                         chatConfig.GrammarAlgorithm = (GrammarAlgorithms)algorithm;
 
@@ -397,7 +407,7 @@ namespace GrammarNazi.App.HostedServices
 
                 var chatAdministrators = await _client.GetChatAdministratorsAsync(message.Chat.Id);
                 var currentUserId = message.From.Id;
-                
+
                 return chatAdministrators.Any(v => v.User.Id == currentUserId);
             }
 
