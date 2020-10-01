@@ -8,7 +8,7 @@ namespace GrammarNazi.Domain.Entities.YandexSpellerAPI
     public class CheckTextResponse
     {
         [JsonProperty("code")]
-        public int ErrorCode { get; set; }
+        public YandexSpellerErrorCodes ErrorCode { get; set; }
 
         [JsonProperty("pos")]
         public int Pos { get; set; }

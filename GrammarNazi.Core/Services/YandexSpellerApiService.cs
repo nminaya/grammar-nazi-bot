@@ -26,7 +26,7 @@ namespace GrammarNazi.Core.Services
 
         public async Task<GrammarCheckResult> GetCorrections(string text)
         {
-            if(string.IsNullOrWhiteSpace(text))
+            if (string.IsNullOrWhiteSpace(text))
                 return new GrammarCheckResult(default);
 
             string languageCode;
@@ -69,13 +69,23 @@ namespace GrammarNazi.Core.Services
 
             return new GrammarCheckResult(default);
         }
-        
+
         private string GetErrorMessage(CheckTextResponse checkTextResponse)
         {
-            if (checkTextResponse.Word.Split(' ').Length > 1)
-                return $"Possible mistake found.";
+            return checkTextResponse.ErrorCode switch
+            {
+                YandexSpellerErrorCodes.RepeatWord => $"Repeated word.",
+                YandexSpellerErrorCodes.Capitalization => "Incorrect use of uppercase and lowercase letters.",
+                _ => GetDefaultErrorMessage(),
+            };
 
-            return $"The word \"{checkTextResponse.Word}\" doesn't exist or isn't in the dictionary.";
+            string GetDefaultErrorMessage()
+            {
+                if (checkTextResponse.Word.Split(' ').Length > 1)
+                    return $"Possible mistake found.";
+
+                return $"The word \"{checkTextResponse.Word}\" doesn't exist or isn't in the dictionary.";
+            }
         }
     }
 }
