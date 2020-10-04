@@ -37,3 +37,7 @@ To run this project locally you just need to clone the repo and run the **Gramma
 This project interacts with Twitter and Telegram, so you will need a [Telegram API Token](https://core.telegram.org/bots#6-botfather) for the Telegram Bot and [Twitter Credentials](https://developer.twitter.com/en/apply-for-access) for the Twitter Bot.
 
 Then you can set the environment variables in [launchSettings.json](https://github.com/nminaya/grammar-nazi-bot/blob/master/GrammarNazi.App/Properties/launchSettings.json).
+
+## License
+
+This project uses the following license: [MIT](<https://choosealicense.com/licenses/mit/>)
