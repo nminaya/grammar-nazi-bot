@@ -94,6 +94,7 @@ namespace GrammarNazi.Core.Services
                 && match.Rule.Id != "UPPERCASE_SENTENCE_START"
                 && match.Rule.Id != "PROFANITY"
                 && match.Rule.Id != "MORFOLOGIK_RULE_ES"
+                && match.Rule.Id != "MORFOLOGIK_RULE_EN_US"
                 && match.Rule.Id != "ES_QUESTION_MARK"
                 && match.Rule.Id != "GONNA"
                 && match.Rule.Id != "INCORRECT_SPACES";
