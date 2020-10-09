@@ -77,8 +77,8 @@ namespace GrammarNazi.App.HostedServices
 
             var grammarService = GetConfiguredGrammarService(chatConfig);
 
-            // Remove emojis, hashtags and mentions
-            var text = StringUtils.RemoveEmojis(StringUtils.RemoveHashtags(StringUtils.RemoveMentions(message.Text)));
+            // Remove emojis, hashtags, mentions and mentions of users without username
+            var text = GetCleanedText(message);
 
             var corretionResult = await grammarService.GetCorrections(text);
 
@@ -441,6 +441,31 @@ namespace GrammarNazi.App.HostedServices
                 }
 
                 return messageBuilder.ToString();
+            }
+        }
+
+        private string GetCleanedText(Message message)
+        {
+            var text = GetTextWithoutMentionsWithoutUsername();
+
+            return StringUtils.RemoveEmojis(StringUtils.RemoveHashtags(StringUtils.RemoveMentions(text)));
+
+            string GetTextWithoutMentionsWithoutUsername()
+            {
+                if (message.Entities == null)
+                    return message.Text;
+
+                var messageText = message.Text;
+
+                foreach (var entity in message.Entities.Where(v => v.Type == MessageEntityType.TextMention))
+                {
+                    var mention = message.Text.Substring(entity.Offset, entity.Length);
+                    
+                    // Remove mention from messageText
+                    messageText = messageText.Replace(mention, "");
+                }
+
+                return messageText;
             }
         }
     }
