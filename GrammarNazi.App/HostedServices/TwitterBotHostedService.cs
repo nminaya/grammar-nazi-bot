@@ -65,8 +65,6 @@ namespace GrammarNazi.App.HostedServices
 
                     await foreach (var follower in GetFollowers(user))
                     {
-                        _logger.LogInformation($"Getting TimeLine of {follower.ScreenName}");
-
                         var getTimeLineParameters = new GetUserTimelineParameters(follower.Id);
 
                         if (sinceTweetId == 0)
@@ -77,10 +75,7 @@ namespace GrammarNazi.App.HostedServices
                         var timeLine = await _twitterClient.Timelines.GetUserTimelineAsync(getTimeLineParameters);
 
                         if (timeLine.Length == 0)
-                        {
-                            _logger.LogInformation($"No new tweets for {follower.ScreenName}");
                             continue;
-                        }
 
                         // Avoid Retweets.
                         tweets.AddRange(timeLine.Where(v => !v.Text.StartsWith("RT")));
