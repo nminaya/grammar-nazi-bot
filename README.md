@@ -11,6 +11,7 @@ Bot that corrects spelling mistakes.
 #### Telegram Bot
 - Configurable grammar analyzer algorithm or provider.
 - Multiple language support (English and Spanish).
+- Strictness Level.
 #### Twitter Bot
 - Evaluates Tweets of followers.
 - Multiple language support (English and Spanish).
@@ -27,8 +28,7 @@ The solution design focuses on a basic Domain Driven Design techniques and imple
 This project is still under development, there are a lot of features to implement.
 - Accuracy percentage for possible corrections.
 - Trained ML model that improves the internal algorithm corrections.
-#### Telegram Bot
-- Configurable [Grammar rules](https://community.languagetool.org/rule/)
+
 #### Twitter Bot
 - Publish tweets with statistics based on corrected tweets.
 
