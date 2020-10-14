@@ -47,6 +47,8 @@ namespace GrammarNazi.Core.Services
 
             var words = text.Split(" ");
 
+            var dictionaryAndNames = GetDictionaryBasedOnWords(words, language);
+
             foreach (var item in words)
             {
                 if (string.IsNullOrWhiteSpace(item) || !char.IsLetter(item[0]))
@@ -61,10 +63,6 @@ namespace GrammarNazi.Core.Services
                 {
                     continue;
                 }
-
-                var names = _fileService.GetTextFileByLine($"Library/Names/{word.First()}.txt");
-
-                var dictionaryAndNames = _fileService.GetTextFileByLine($"Library/Dictionary/{language}/{word.First()}.txt").Union(names);
 
                 var wordFound = dictionaryAndNames.Contains(word);
 
@@ -86,6 +84,27 @@ namespace GrammarNazi.Core.Services
             }
 
             return Task.FromResult(new GrammarCheckResult(corrections));
+        }
+
+        private IReadOnlyList<string> GetDictionaryBasedOnWords(string[] words, string language)
+        {
+            var letters = words
+                .Where(v => !string.IsNullOrWhiteSpace(v) && char.IsLetter(v[0]))
+                .Select(v => v.ToLower()[0])
+                .Distinct();
+
+            var dictionary = new List<string>();
+
+            foreach (var letter in letters)
+            {
+                var names = _fileService.GetTextFileByLine($"Library/Names/{letter}.txt");
+                var letterWords = _fileService.GetTextFileByLine($"Library/Dictionary/{language}/{letter}.txt");
+
+                dictionary.AddRange(names);
+                dictionary.AddRange(letterWords);
+            }
+
+            return dictionary;
         }
     }
 }
