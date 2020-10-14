@@ -11,19 +11,21 @@ namespace GrammarNazi.App
             CreateHostBuilder(args).Build().Run();
         }
 
-        public static IHostBuilder CreateHostBuilder(string[] args) =>
-            Host.CreateDefaultBuilder(args)
-                .ConfigureWebHostDefaults(webBuilder =>
-                {
-                    webBuilder.UseStartup<Startup>();
-                    webBuilder.UseKestrel((_, options) =>
+        public static IHostBuilder CreateHostBuilder(string[] args)
+        {
+            return Host.CreateDefaultBuilder(args)
+                    .ConfigureWebHostDefaults(webBuilder =>
                     {
-                        var port = Environment.GetEnvironmentVariable("PORT");
-                        if (!string.IsNullOrEmpty(port))
+                        webBuilder.UseStartup<Startup>();
+                        webBuilder.UseKestrel((_, options) =>
                         {
-                            options.ListenAnyIP(int.Parse(port));
-                        }
+                            var port = Environment.GetEnvironmentVariable("PORT");
+                            if (!string.IsNullOrEmpty(port))
+                            {
+                                options.ListenAnyIP(int.Parse(port));
+                            }
+                        });
                     });
-                });
+        }
     }
 }
