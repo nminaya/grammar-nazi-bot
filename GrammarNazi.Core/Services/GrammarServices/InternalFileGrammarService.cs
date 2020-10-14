@@ -47,7 +47,7 @@ namespace GrammarNazi.Core.Services
 
             var words = text.Split(" ");
 
-            var dictionaryAndNames = GetDictionaryBasedOnWords(words, language);
+            var dictionary = GetDictionaryBasedOnWords(words, language);
 
             foreach (var item in words)
             {
@@ -64,11 +64,11 @@ namespace GrammarNazi.Core.Services
                     continue;
                 }
 
-                var wordFound = dictionaryAndNames.Contains(word);
+                var wordFound = dictionary.Contains(word);
 
                 if (!wordFound)
                 {
-                    var possibleCorrections = dictionaryAndNames.Where(v => _stringDiffService.IsInComparableRange(v, word) && _stringDiffService.ComputeDistance(v, word) < Defaults.StringComparableRange);
+                    var possibleCorrections = dictionary.Where(v => _stringDiffService.IsInComparableRange(v, word) && _stringDiffService.ComputeDistance(v, word) < Defaults.StringComparableRange);
 
                     if (possibleCorrections.Any())
                     {
