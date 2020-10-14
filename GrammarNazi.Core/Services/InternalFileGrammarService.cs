@@ -30,18 +30,20 @@ namespace GrammarNazi.Core.Services
 
         public Task<GrammarCheckResult> GetCorrections(string text)
         {
+            string language;
+
             if (SelectedLanguage == SupportedLanguages.Auto)
             {
                 var languageInfo = _languageService.IdentifyLanguage(text);
 
-                // TODO: Implement spanish corrections
-                if (languageInfo.ThreeLetterISOLanguageName == SupportedLanguages.Spanish.GetDescription())
-                    return Task.FromResult(new GrammarCheckResult(null));
+                language = languageInfo.TwoLetterISOLanguageName;
+            }
+            else
+            {
+                language = LanguageUtils.GetLanguageCode(SelectedLanguage.GetDescription());
             }
 
-            var dictionary = _fileService.GetTextFileByLine("Library/words_en-US.txt");
             var names = _fileService.GetTextFileByLine("Library/names.txt");
-            var dictionaryAndNames = dictionary.Union(names.Select(v => v.ToLower())).ToArray();
 
             var corrections = new List<GrammarCorrection>();
 
@@ -49,6 +51,11 @@ namespace GrammarNazi.Core.Services
 
             foreach (var item in words)
             {
+                if (string.IsNullOrWhiteSpace(item) || !char.IsLetter(item[0]))
+                {
+                    continue;
+                }
+
                 // Remove special characters
                 var word = StringUtils.RemoveSpecialCharacters(item).ToLower();
 
@@ -56,6 +63,8 @@ namespace GrammarNazi.Core.Services
                 {
                     continue;
                 }
+
+                var dictionaryAndNames = _fileService.GetTextFileByLine($"Library/Dictionary/{language}/{word.First()}.txt").Union(names);
 
                 var wordFound = dictionaryAndNames.Contains(word);
 
