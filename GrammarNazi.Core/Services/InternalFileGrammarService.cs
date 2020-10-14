@@ -43,8 +43,6 @@ namespace GrammarNazi.Core.Services
                 language = LanguageUtils.GetLanguageCode(SelectedLanguage.GetDescription());
             }
 
-            var names = _fileService.GetTextFileByLine("Library/names.txt");
-
             var corrections = new List<GrammarCorrection>();
 
             var words = text.Split(" ");
@@ -63,6 +61,8 @@ namespace GrammarNazi.Core.Services
                 {
                     continue;
                 }
+
+                var names = _fileService.GetTextFileByLine($"Library/Names/{word.First()}.txt");
 
                 var dictionaryAndNames = _fileService.GetTextFileByLine($"Library/Dictionary/{language}/{word.First()}.txt").Union(names);
 
