@@ -76,7 +76,7 @@ namespace GrammarNazi.Core.Services
                         {
                             WrongWord = item,
                             PossibleReplacements = possibleCorrections,
-                            Message = $"The word \"{item}\" doesn't exist or isn't in the internal dictionary."
+                            Message = GetCorrectionMessage(item, language)
                         };
                         corrections.Add(correction);
                     }
@@ -105,6 +105,14 @@ namespace GrammarNazi.Core.Services
             }
 
             return dictionary;
+        }
+
+        private string GetCorrectionMessage(string word, string language)
+        {
+            if (language == LanguageUtils.GetLanguageCode(SupportedLanguages.English.GetDescription()))
+                return $"The word \"{word}\" doesn't exist or isn't in the internal dictionary.";
+
+            return $"La palabra \"{word}\" no existe o no está en el diccionario interno.";
         }
     }
 }
