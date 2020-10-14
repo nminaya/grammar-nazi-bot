@@ -38,7 +38,6 @@ namespace GrammarNazi.App.HostedServices
             _twitterClient = userClient;
             _twitterBotSettings = options.Value;
 
-            // Use only DefaultAlgorithm for now
             _grammarService = grammarServices.First(v => v.GrammarAlgorith == Defaults.DefaultAlgorithm);
             _grammarService.SetStrictnessLevel(CorrectionStrictnessLevels.Tolerant);
         }

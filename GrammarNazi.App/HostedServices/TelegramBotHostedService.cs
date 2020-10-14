@@ -236,16 +236,6 @@ namespace GrammarNazi.App.HostedServices
 
                     if (parsedOk)
                     {
-                        var selectedAlgorithm = (GrammarAlgorithms)algorithm;
-
-                        if (selectedAlgorithm == GrammarAlgorithms.InternalAlgorithm)
-                        {
-                            messageBuilder.AppendLine($"This algorithm is currently disabled. Please select another.");
-                            messageBuilder.AppendLine(GetAvailableAlgorithms(default));
-                            await _client.SendTextMessageAsync(message.Chat.Id, messageBuilder.ToString());
-                            return;
-                        }
-
                         var chatConfig = await GetChatConfiguration(message.Chat.Id);
                         chatConfig.GrammarAlgorithm = (GrammarAlgorithms)algorithm;
 

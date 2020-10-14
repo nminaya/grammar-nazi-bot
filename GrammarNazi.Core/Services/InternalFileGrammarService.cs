@@ -4,6 +4,7 @@ using GrammarNazi.Domain.Constants;
 using GrammarNazi.Domain.Entities;
 using GrammarNazi.Domain.Enums;
 using GrammarNazi.Domain.Services;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
@@ -40,7 +41,7 @@ namespace GrammarNazi.Core.Services
 
             var dictionary = _fileService.GetTextFileByLine("Library/words_en-US.txt");
             var names = _fileService.GetTextFileByLine("Library/names.txt");
-            var dictionaryAndNames = dictionary.Union(names.Select(v => v.ToLower()));
+            var dictionaryAndNames = dictionary.Union(names.Select(v => v.ToLower())).ToArray();
 
             var corrections = new List<GrammarCorrection>();
 
@@ -51,12 +52,12 @@ namespace GrammarNazi.Core.Services
                 // Remove special characters
                 var word = StringUtils.RemoveSpecialCharacters(item).ToLower();
 
-                if (string.IsNullOrEmpty(word))
+                if (string.IsNullOrWhiteSpace(word))
                 {
                     continue;
                 }
 
-                var wordFound = dictionaryAndNames.Any(v => v == word);
+                var wordFound = dictionaryAndNames.Contains(word);
 
                 if (!wordFound)
                 {
