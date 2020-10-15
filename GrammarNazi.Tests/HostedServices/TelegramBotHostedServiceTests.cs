@@ -5,7 +5,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using Telegram.Bot;
 
-namespace GrammarNazi.Tests.HostingServices
+namespace GrammarNazi.Tests.HostedServices
 {
     public class TelegramBotHostedServiceTests
     {
