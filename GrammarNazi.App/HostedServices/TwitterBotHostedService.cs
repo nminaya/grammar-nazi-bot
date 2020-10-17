@@ -62,9 +62,9 @@ namespace GrammarNazi.App.HostedServices
 
                     var tweets = new List<ITweet>();
 
-                    await foreach (var follower in GetFollowers(user))
+                    await foreach (var followerId in GetFollowersIds(user))
                     {
-                        var getTimeLineParameters = new GetUserTimelineParameters(follower.Id);
+                        var getTimeLineParameters = new GetUserTimelineParameters(followerId);
 
                         if (sinceTweetId == 0)
                             getTimeLineParameters.PageSize = _twitterBotSettings.TimelineFirstLoadPageSize;
@@ -135,7 +135,7 @@ namespace GrammarNazi.App.HostedServices
             }
         }
 
-        private async IAsyncEnumerable<IUser> GetFollowers(IUser user)
+        private async IAsyncEnumerable<long> GetFollowersIds(IUser user)
         {
             var followerIdsIterator = user.GetFollowerIds();
 
@@ -145,7 +145,7 @@ namespace GrammarNazi.App.HostedServices
 
                 foreach (var followerId in page)
                 {
-                    yield return await _twitterClient.Users.GetUserAsync(followerId);
+                    yield return followerId;
                 }
             }
         }
