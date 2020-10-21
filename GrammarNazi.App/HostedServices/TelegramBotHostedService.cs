@@ -49,7 +49,7 @@ namespace GrammarNazi.App.HostedServices
             _client.OnMessage += async (obj, eventArgs) => await OnMessageReceived(obj, eventArgs);
 
             // Keep hosted service alive while receiving messages
-            await Task.Delay(int.MaxValue, stoppingToken);
+            await Task.Delay(Timeout.Infinite, stoppingToken);
         }
 
         private async Task OnMessageReceived(object sender, MessageEventArgs messageEvent)
