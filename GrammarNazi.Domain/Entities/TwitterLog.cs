@@ -13,7 +13,7 @@ namespace GrammarNazi.Domain.Entities
             if (obj is TwitterLog twitterLog)
                 return TweetId == twitterLog.TweetId;
 
-            return base.Equals(obj);
+            return false;
         }
 
         public override int GetHashCode()
