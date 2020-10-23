@@ -16,14 +16,14 @@ namespace GrammarNazi.Core.Utilities
         /// </summary>
         /// <param name="tweetText"></param>
         /// <returns>String without mentions</returns>
-        public static string RemoveHashtags(string tweetText) => Regex.Replace(tweetText, @"#[0-9a-zA-Z](\.?[0-9a-zA-Z])*", "").Trim();
+        public static string RemoveHashtags(string tweetText) => Regex.Replace(tweetText, @"#[0-9a-zñA-ZÑ](\.?[0-9a-zñA-ZÑ])*", "").Trim();
 
         /// <summary>
         /// It will remove special characters from the given string
         /// </summary>
         /// <param name="str"></param>
         /// <returns>String without special characters</returns>
-        public static string RemoveSpecialCharacters(string str) => Regex.Replace(str, "[^0-9a-zA-Z]+", "");
+        public static string RemoveSpecialCharacters(string str) => Regex.Replace(str, "[^0-9a-zñA-ZÑ]+", "");
 
         /// <summary>
         /// Remove emojis from a string
