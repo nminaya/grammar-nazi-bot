@@ -11,6 +11,7 @@ namespace GrammarNazi.Tests.Utilities
         [Theory]
         [InlineData("Test", "Test")]
         [InlineData("Test's","Tests")]
+        [InlineData("Ñoño's", "Ñoños")]
         [InlineData("!@#$%^&*[]_", "")]
         public void RemoveSpecialCharacters_GivenString_Should_ReturnsExpectedResult(string actual, string expected)
         {
@@ -41,6 +42,7 @@ namespace GrammarNazi.Tests.Utilities
         [InlineData("#HASHTAG this is a test", "this is a test")]
         [InlineData("this is a test #HashTaG", "this is a test")]
         [InlineData("#Ht1 #ht2 this is a test #HTT33", "this is a test")]
+        [InlineData("#ñ1 #ht2 this is a test #Ñ123", "this is a test")]
         public void RemoveHashtags_GivenString_Should_RemoveHashtags_And_ReturnsExpectedResult(string actual, string expected)
         {
             // Arrange > Act
