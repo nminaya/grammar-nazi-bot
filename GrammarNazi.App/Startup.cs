@@ -1,6 +1,7 @@
 using Firebase.Database;
 using GrammarNazi.App.HostedServices;
 using GrammarNazi.Core.Clients;
+using GrammarNazi.Core.Extensions;
 using GrammarNazi.Core.Repositories;
 using GrammarNazi.Core.Services;
 using GrammarNazi.Domain.Clients;
@@ -61,6 +62,9 @@ namespace GrammarNazi.App
 
             // HttpClient
             services.AddHttpClient();
+
+            // NTextCatLanguageService
+            services.AddNTextCatLanguageService();
 
             // Telegram client
             services.AddTransient<ITelegramBotClient>(_ =>
