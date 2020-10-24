@@ -9,11 +9,11 @@ namespace GrammarNazi.Core.Services
 {
     public class NTextCatLanguageService : ILanguageService
     {
-        private readonly RankedLanguageIdentifierFactory _rankedLanguageIdentifierFactory;
+        private readonly BasicProfileFactoryBase<RankedLanguageIdentifier> _rankedLanguageIdentifierFactory;
 
-        public NTextCatLanguageService()
+        public NTextCatLanguageService(BasicProfileFactoryBase<RankedLanguageIdentifier> basicProfileFactory)
         {
-            _rankedLanguageIdentifierFactory = new RankedLanguageIdentifierFactory();
+            _rankedLanguageIdentifierFactory = basicProfileFactory;
         }
 
         public LanguageInformation IdentifyLanguage(string text)
