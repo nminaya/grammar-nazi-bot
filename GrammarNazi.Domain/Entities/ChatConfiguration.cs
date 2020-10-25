@@ -21,7 +21,7 @@ namespace GrammarNazi.Domain.Entities
             if (obj is ChatConfiguration chatConfiguration)
                 return ChatId == chatConfiguration.ChatId;
 
-            return base.Equals(obj);
+            return false;
         }
 
         public override int GetHashCode()
