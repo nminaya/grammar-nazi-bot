@@ -1,7 +1,6 @@
 ﻿using GrammarNazi.Domain.Services;
 using System.Collections.Generic;
 using System.IO;
-using System.Linq;
 
 namespace GrammarNazi.Core.Services
 {
@@ -9,18 +8,14 @@ namespace GrammarNazi.Core.Services
     {
         public string GetTextFile(string path)
         {
-            if (!File.Exists(path))
-                return string.Empty;
-
             return File.ReadAllText(path);
         }
 
         public IEnumerable<string> GetTextFileByLine(string path)
         {
-            if (!File.Exists(path))
-                return Enumerable.Empty<string>();
-
             return File.ReadAllLines(path);
         }
+
+        public bool FileExist(string path) => File.Exists(path);
     }
 }

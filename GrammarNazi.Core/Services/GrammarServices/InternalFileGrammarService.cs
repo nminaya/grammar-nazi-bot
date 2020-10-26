@@ -97,8 +97,16 @@ namespace GrammarNazi.Core.Services
 
             foreach (var letter in letters)
             {
-                var names = _fileService.GetTextFileByLine($"Library/Names/{letter}.txt");
-                var letterWords = _fileService.GetTextFileByLine($"Library/Dictionary/{language}/{letter}.txt");
+                var pathNames = $"Library/Names/{letter}.txt";
+                var pathLetterWords = $"Library/Dictionary/{language}/{letter}.txt";
+                var names  = Enumerable.Empty<string>();
+                var letterWords = Enumerable.Empty<string>();
+
+                if (_fileService.FileExist(pathNames))
+                    names = _fileService.GetTextFileByLine(pathNames);
+
+                if (_fileService.FileExist(pathLetterWords))
+                    letterWords = _fileService.GetTextFileByLine(pathLetterWords);
 
                 dictionary.AddRange(names);
                 dictionary.AddRange(letterWords);
