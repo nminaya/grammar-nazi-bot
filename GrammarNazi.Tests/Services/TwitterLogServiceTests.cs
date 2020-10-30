@@ -54,5 +54,43 @@ namespace GrammarNazi.Tests.Services
             // Assert
             Assert.Equal(maxTweetId, result);
         }
+
+        [Fact]
+        public async Task LogTweet_TweetExistInRepository_Should_Not_AddTweet()
+        {
+            // Arrange
+            var repositoryMock = new Mock<IRepository<TwitterLog>>();
+
+            // Returns true when Any is called
+            repositoryMock.Setup(v => v.Any(It.IsAny<Expression<Func<TwitterLog, bool>>>()))
+                .ReturnsAsync(true);
+
+            var service = new TwitterLogService(repositoryMock.Object);
+
+            // Act
+            await service.LogTweet(123456);
+
+            // Assert
+            repositoryMock.Verify(v => v.Add(It.IsAny<TwitterLog>()), Times.Never);
+        }
+
+        [Fact]
+        public async Task LogTweet_NoTweetExistInRepository_Should_AddTweet()
+        {
+            // Arrange
+            var repositoryMock = new Mock<IRepository<TwitterLog>>();
+
+            // Returns false when Any is called
+            repositoryMock.Setup(v => v.Any(It.IsAny<Expression<Func<TwitterLog, bool>>>()))
+                .ReturnsAsync(false);
+
+            var service = new TwitterLogService(repositoryMock.Object);
+
+            // Act
+            await service.LogTweet(123456);
+
+            // Assert
+            repositoryMock.Verify(v => v.Add(It.IsAny<TwitterLog>()), Times.Once);
+        }
     }
 }
