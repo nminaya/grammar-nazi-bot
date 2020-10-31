@@ -104,7 +104,7 @@ namespace GrammarNazi.App.HostedServices
                             _logger.LogInformation($"Sending reply to: {tweet.CreatedBy.ScreenName}");
                             var publishTweetParameters = new PublishTweetParameters(correctionString)
                             {
-                                InReplyToTweetId = tweet.Id,
+                                InReplyToTweetId = tweet.Id
                             };
                             var replyTweet = await _twitterClient.Tweets.PublishTweetAsync(publishTweetParameters);
 

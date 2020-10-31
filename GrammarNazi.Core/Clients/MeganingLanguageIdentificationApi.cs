@@ -21,9 +21,9 @@ namespace GrammarNazi.Core.Clients
             _meaningCloudSettings = options.Value;
         }
 
-        public async Task<LanguageDetectionResult> CheckLanguage(string text)
+        public async Task<LanguageDetectionResult> GetLanguage(string text)
         {
-            var url = $"{_meaningCloudSettings.MeaningCloudHostUrl}/key={_meaningCloudSettings.Key}&txt={HttpUtility.UrlEncode(text)}";
+            var url = $"{_meaningCloudSettings.MeaningCloudHostUrl}?key={_meaningCloudSettings.Key}&txt={HttpUtility.UrlEncode(text)}";
 
             var httpClient = _httpClientFactory.CreateClient();
             var response = await httpClient.PostAsync(url, null);
