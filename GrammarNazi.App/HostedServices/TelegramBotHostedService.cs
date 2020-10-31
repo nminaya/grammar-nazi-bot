@@ -46,7 +46,17 @@ namespace GrammarNazi.App.HostedServices
             _logger.LogInformation("Telegram Bot Hosted Service started");
 
             _client.StartReceiving(cancellationToken: stoppingToken);
-            _client.OnMessage += async (obj, eventArgs) => await OnMessageReceived(obj, eventArgs);
+            _client.OnMessage += async (obj, eventArgs) =>
+            {
+                try
+                {
+                    await OnMessageReceived(obj, eventArgs);
+                }
+                catch (Exception ex)
+                {
+                    _logger.LogError(ex, ex.Message);
+                }
+            };
 
             // Keep hosted service alive while receiving messages
             await Task.Delay(Timeout.Infinite, stoppingToken);
