@@ -6,6 +6,7 @@ using GrammarNazi.Core.Repositories;
 using GrammarNazi.Core.Services;
 using GrammarNazi.Domain.Clients;
 using GrammarNazi.Domain.Entities.Configs;
+using GrammarNazi.Domain.Entities.Settings;
 using GrammarNazi.Domain.Repositories;
 using GrammarNazi.Domain.Services;
 using Microsoft.AspNetCore.Builder;
@@ -44,6 +45,11 @@ namespace GrammarNazi.App
         {
             // Settings
             services.Configure<TwitterBotSettings>(Configuration.GetSection("AppSettings:TwitterBotSettings"));
+            services.Configure<MeaningCloudSettings>(m => 
+            {
+                m.MeaningCloudHostUrl = Configuration.GetSection("AppSettings:MeaningCloudSettings:MeaningCloudHostUrl").Value;
+                m.Key = Environment.GetEnvironmentVariable("MEANING_CLOUD_API_KEY");
+            });
 
             // Repository
             services.AddTransient(typeof(IRepository<>), typeof(FirebaseRepository<>)); // Use Firebase for now
@@ -52,6 +58,7 @@ namespace GrammarNazi.App
             services.AddSingleton<IFileService, FileService>();
             services.AddSingleton<IStringDiffService, StringDiffService>();
             services.AddTransient<ILanguageToolApiClient, LanguageToolApiClient>();
+            services.AddTransient<IMeganingLanguageIdentificationApi, MeganingLanguageIdentificationApi>();
             services.AddTransient<IYandexSpellerApiClient, YandexSpellerApiClient>();
             services.AddTransient<IChatConfigurationService, ChatConfigurationService>();
             services.AddTransient<ILanguageService, NTextCatLanguageService>();
