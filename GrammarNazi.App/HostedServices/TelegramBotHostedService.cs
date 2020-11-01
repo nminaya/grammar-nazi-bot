@@ -460,7 +460,7 @@ namespace GrammarNazi.App.HostedServices
                 foreach (var entity in message.Entities.Where(v => v.Type == MessageEntityType.TextMention))
                 {
                     var mention = message.Text.Substring(entity.Offset, entity.Length);
-                    
+
                     // Remove mention from messageText
                     messageText = messageText.Replace(mention, "");
                 }

@@ -1,8 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Text;
-
-namespace GrammarNazi.Domain.Entities.YandexSpellerAPI
+﻿namespace GrammarNazi.Domain.Entities.YandexSpellerAPI
 {
     /// <summary>
     /// YandexSpeller error codes https://yandex.ru/dev/speller/doc/dg/reference/error-codes.html

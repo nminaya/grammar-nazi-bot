@@ -1,8 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Text;
-
-namespace GrammarNazi.Domain.Entities
+﻿namespace GrammarNazi.Domain.Entities
 {
     public class LanguageInformation
     {

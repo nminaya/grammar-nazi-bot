@@ -1,7 +1,4 @@
 ﻿using GrammarNazi.Core.Utilities;
-using System;
-using System.Collections.Generic;
-using System.Text;
 using Xunit;
 
 namespace GrammarNazi.Tests.Utilities
@@ -10,7 +7,7 @@ namespace GrammarNazi.Tests.Utilities
     {
         [Theory]
         [InlineData("Test", "Test")]
-        [InlineData("Test's","Tests")]
+        [InlineData("Test's", "Tests")]
         [InlineData("Ñoño's", "Ñoños")]
         [InlineData("!@#$%^&*[]_", "")]
         public void RemoveSpecialCharacters_GivenString_Should_ReturnsExpectedResult(string actual, string expected)
@@ -18,7 +15,7 @@ namespace GrammarNazi.Tests.Utilities
             // Arrange > Act
             var result = StringUtils.RemoveSpecialCharacters(actual);
 
-            // Assert 
+            // Assert
             Assert.Equal(expected, result);
         }
 
@@ -33,7 +30,7 @@ namespace GrammarNazi.Tests.Utilities
             // Arrange > Act
             var result = StringUtils.RemoveMentions(actual);
 
-            // Assert 
+            // Assert
             Assert.Equal(expected, result);
         }
 
@@ -48,7 +45,7 @@ namespace GrammarNazi.Tests.Utilities
             // Arrange > Act
             var result = StringUtils.RemoveHashtags(actual);
 
-            // Assert 
+            // Assert
             Assert.Equal(expected, result);
         }
 
@@ -62,7 +59,7 @@ namespace GrammarNazi.Tests.Utilities
             // Arrange > Act
             var result = StringUtils.RemoveEmojis(actual);
 
-            // Assert 
+            // Assert
             Assert.Equal(expected, result);
         }
     }
