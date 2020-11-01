@@ -58,7 +58,7 @@ namespace GrammarNazi.App
             services.AddSingleton<IFileService, FileService>();
             services.AddSingleton<IStringDiffService, StringDiffService>();
             services.AddTransient<ILanguageToolApiClient, LanguageToolApiClient>();
-            services.AddTransient<IMeganingLanguageIdentificationApi, MeganingLanguageIdentificationApi>();
+            services.AddTransient<IMeganingCloudLangApiClient, MeganingCloudLangApiClient>();
             services.AddTransient<IYandexSpellerApiClient, YandexSpellerApiClient>();
             services.AddTransient<IChatConfigurationService, ChatConfigurationService>();
             services.AddTransient<ILanguageService, NTextCatLanguageService>();

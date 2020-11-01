@@ -9,12 +9,12 @@ using System.Web;
 
 namespace GrammarNazi.Core.Clients
 {
-    public class MeganingLanguageIdentificationApi : IMeganingLanguageIdentificationApi
+    public class MeganingCloudLangApiClient : IMeganingCloudLangApiClient
     {
         private readonly IHttpClientFactory _httpClientFactory;
         private readonly MeaningCloudSettings _meaningCloudSettings;
 
-        public MeganingLanguageIdentificationApi(IHttpClientFactory httpClientFactory,
+        public MeganingCloudLangApiClient(IHttpClientFactory httpClientFactory,
             IOptions<MeaningCloudSettings> options)
         {
             _httpClientFactory = httpClientFactory;

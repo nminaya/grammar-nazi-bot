@@ -3,7 +3,7 @@ using System.Threading.Tasks;
 
 namespace GrammarNazi.Domain.Clients
 {
-    public interface IMeganingLanguageIdentificationApi
+    public interface IMeganingCloudLangApiClient
     {
         Task<LanguageDetectionResult> GetLanguage(string text);
     }

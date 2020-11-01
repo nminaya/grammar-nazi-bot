@@ -8,9 +8,9 @@ namespace GrammarNazi.Core.Services
 {
     public class MeaningCloudLanguageApiService : ILanguageService
     {
-        private readonly IMeganingLanguageIdentificationApi _meganingLanguageIdentificationApi;
+        private readonly IMeganingCloudLangApiClient _meganingLanguageIdentificationApi;
 
-        public MeaningCloudLanguageApiService(IMeganingLanguageIdentificationApi meganingLanguageIdentificationApi)
+        public MeaningCloudLanguageApiService(IMeganingCloudLangApiClient meganingLanguageIdentificationApi)
         {
             _meganingLanguageIdentificationApi = meganingLanguageIdentificationApi;
         }
