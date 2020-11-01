@@ -20,7 +20,7 @@ namespace GrammarNazi.Core.Services
             //TODO: Make ILanguageService.IdentifyLanguage async
             var languageResult = _meganingLanguageIdentificationApi.GetLanguage(text).GetAwaiter().GetResult();
 
-            if (!languageResult.LanguageList.Any())
+            if (languageResult.Status.RemainingCredits == 0 || !languageResult.LanguageList.Any())
                 return default;
 
             var languages = languageResult.LanguageList.Where(v => LanguageUtils.GetSupportedLanguages().Contains(v.Iso6393));

@@ -14,6 +14,6 @@ namespace GrammarNazi.Domain.Entities.LanguageIdentificationAPI
         public string Credits { get; set; }
 
         [JsonProperty("remaining_credits")]
-        public string RemainingCredits { get; set; }
+        public int RemainingCredits { get; set; }
     }
 }
