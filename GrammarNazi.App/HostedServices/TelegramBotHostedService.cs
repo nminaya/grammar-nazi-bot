@@ -1,5 +1,4 @@
-﻿using GrammarNazi.Core.Extensions;
-using GrammarNazi.Core.Utilities;
+﻿using GrammarNazi.Core.Utilities;
 using GrammarNazi.Domain.Constants;
 using GrammarNazi.Domain.Entities;
 using GrammarNazi.Domain.Enums;
