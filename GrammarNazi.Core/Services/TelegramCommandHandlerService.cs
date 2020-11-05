@@ -15,7 +15,7 @@ using Telegram.Bot.Types.Enums;
 
 namespace GrammarNazi.Core.Services
 {
-    class TelegramCommandHandlerService : ITelegramCommandHandlerService
+    public class TelegramCommandHandlerService : ITelegramCommandHandlerService
     {
         private readonly IChatConfigurationService _chatConfigurationService;
         private readonly IWebHostEnvironment _webHostEnvironment;
