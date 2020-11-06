@@ -2,7 +2,7 @@
 
 namespace GrammarNazi.Core.Services
 {
-    public class BaseGrammarService
+    public abstract class BaseGrammarService
     {
         protected SupportedLanguages SelectedLanguage;
         protected CorrectionStrictnessLevels SelectedStrictnessLevel;
