@@ -1,4 +1,6 @@
-﻿using GrammarNazi.Domain.Services;
+﻿using GrammarNazi.Domain.Entities.Settings;
+using GrammarNazi.Domain.Services;
+using Microsoft.Extensions.Options;
 using Octokit;
 using System;
 using System.Text;
@@ -9,10 +11,12 @@ namespace GrammarNazi.Core.Services
     public class GithubService : IGithubService
     {
         private readonly IGitHubClient _githubClient;
+        private readonly GithubSettings _githubSettings;
 
-        public GithubService(IGitHubClient githubClient)
+        public GithubService(IGitHubClient githubClient, IOptions<GithubSettings> options)
         {
             _githubClient = githubClient;
+            _githubSettings = options.Value;
         }
 
         public async Task CreateBugIssue(string title, Exception exception)
@@ -28,8 +32,7 @@ namespace GrammarNazi.Core.Services
             };
             issue.Labels.Add("bug");
 
-            // TODO: get owner and name from config
-            await _githubClient.Issue.Create("nminaya", "grammar-nazi-bot", issue);
+            await _githubClient.Issue.Create(_githubSettings.Username, _githubSettings.RepositoryName, issue);
         }
     }
 }
