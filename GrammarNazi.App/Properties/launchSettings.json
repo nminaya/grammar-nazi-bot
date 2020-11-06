@@ -25,6 +25,7 @@
         "TWITTER_ACCESS_TOKEN_SECRET": "",
         "FIREBASE_DATABASE_URL": "",
         "MEANING_CLOUD_API_KEY": "",
+        "GITHUB_ACCESS_TOKEN": "",
         "ASPNETCORE_ENVIRONMENT": "Development"
       },
       "applicationUrl": "http://localhost:5000"

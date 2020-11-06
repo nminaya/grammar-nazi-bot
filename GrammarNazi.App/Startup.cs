@@ -15,6 +15,7 @@ using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
+using Octokit;
 using System;
 using Telegram.Bot;
 using Tweetinvi;
@@ -45,6 +46,7 @@ namespace GrammarNazi.App
         {
             // Settings
             services.Configure<TwitterBotSettings>(Configuration.GetSection("AppSettings:TwitterBotSettings"));
+            services.Configure<GithubSettings>(Configuration.GetSection("AppSettings:GithubSettings"));
             services.Configure<MeaningCloudSettings>(m => 
             {
                 m.MeaningCloudHostUrl = Configuration.GetSection("AppSettings:MeaningCloudSettings:MeaningCloudHostUrl").Value;
@@ -66,6 +68,7 @@ namespace GrammarNazi.App
             services.AddTransient<IGrammarService, InternalFileGrammarService>();
             services.AddTransient<IGrammarService, YandexSpellerApiService>();
             services.AddTransient<ITwitterLogService, TwitterLogService>();
+            services.AddTransient<IGithubService, GithubService>();
             services.AddTransient<ITelegramCommandHandlerService, TelegramCommandHandlerService>();
 
             // HttpClient
@@ -102,6 +105,18 @@ namespace GrammarNazi.App
                 var databaseUrl = Environment.GetEnvironmentVariable("FIREBASE_DATABASE_URL");
 
                 return new FirebaseClient(databaseUrl);
+            });
+
+            // Github Client
+            services.AddSingleton<IGitHubClient>(_ =>
+            {
+                var githubToken = Environment.GetEnvironmentVariable("GITHUB_ACCESS_TOKEN");
+
+                var client = new GitHubClient(new ProductHeaderValue("nminaya"));
+                var tokenAuth = new Credentials(githubToken);
+                client.Credentials = tokenAuth;
+
+                return client;
             });
         }
 
