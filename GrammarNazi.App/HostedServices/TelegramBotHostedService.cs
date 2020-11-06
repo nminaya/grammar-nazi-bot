@@ -27,13 +27,15 @@ namespace GrammarNazi.App.HostedServices
         private readonly IWebHostEnvironment _webHostEnvironment;
         private readonly ITelegramBotClient _client;
         private readonly ITelegramCommandHandlerService _telegramCommandHandlerService;
+        private readonly IGithubService _githubService;
 
         public TelegramBotHostedService(ILogger<TelegramBotHostedService> logger,
             ITelegramBotClient telegramBotClient,
             IEnumerable<IGrammarService> grammarServices,
             IChatConfigurationService chatConfigurationService,
             IWebHostEnvironment webHostEnvironment,
-            ITelegramCommandHandlerService telegramCommandHandlerService)
+            ITelegramCommandHandlerService telegramCommandHandlerService,
+            IGithubService githubService)
         {
             _logger = logger;
             _grammarServices = grammarServices;
@@ -41,6 +43,7 @@ namespace GrammarNazi.App.HostedServices
             _webHostEnvironment = webHostEnvironment;
             _client = telegramBotClient;
             _telegramCommandHandlerService = telegramCommandHandlerService;
+            _githubService = githubService;
         }
 
         protected override async Task ExecuteAsync(CancellationToken stoppingToken)
@@ -57,6 +60,9 @@ namespace GrammarNazi.App.HostedServices
                 catch (Exception ex)
                 {
                     _logger.LogError(ex, ex.Message);
+
+                    // fire and forget
+                    _ = _githubService.CreateBugIssue($"Application Bug: {ex.Message}", ex);
                 }
             };
 

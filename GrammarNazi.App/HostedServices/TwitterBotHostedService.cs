@@ -25,17 +25,20 @@ namespace GrammarNazi.App.HostedServices
         private readonly ITwitterLogService _twitterLogService;
         private readonly IGrammarService _grammarService;
         private readonly ITwitterClient _twitterClient;
+        private readonly IGithubService _githubService;
         private readonly TwitterBotSettings _twitterBotSettings;
 
         public TwitterBotHostedService(ILogger<TwitterBotHostedService> logger,
             IEnumerable<IGrammarService> grammarServices,
             ITwitterLogService twitterLogService,
             ITwitterClient userClient,
-            IOptions<TwitterBotSettings> options)
+            IOptions<TwitterBotSettings> options,
+            IGithubService githubService)
         {
             _logger = logger;
             _twitterLogService = twitterLogService;
             _twitterClient = userClient;
+            _githubService = githubService;
             _twitterBotSettings = options.Value;
 
             _grammarService = grammarServices.First(v => v.GrammarAlgorith == Defaults.DefaultAlgorithm);
@@ -129,6 +132,9 @@ namespace GrammarNazi.App.HostedServices
                 catch (Exception ex)
                 {
                     _logger.LogError(ex, ex.Message);
+                    
+                    // fire and forget
+                    _ = _githubService.CreateBugIssue($"Application Bug: {ex.Message}", ex);
                 }
 
                 await Task.Delay(_twitterBotSettings.HostedServiceIntervalMilliseconds);
