@@ -1,6 +1,7 @@
 ﻿using GrammarNazi.Domain.Services;
 using Octokit;
 using System;
+using System.Text;
 using System.Threading.Tasks;
 
 namespace GrammarNazi.Core.Services
@@ -16,9 +17,14 @@ namespace GrammarNazi.Core.Services
 
         public async Task CreateBugIssue(string title, Exception exception)
         {
+            var bodyBuilder = new StringBuilder();
+            bodyBuilder.Append("This is an automated issue created by GrammarNazi when an exception was captured.");
+            bodyBuilder.AppendLine($"Date (UTC): {DateTime.UtcNow}");
+            bodyBuilder.AppendLine("Exception:").AppendLine(exception.StackTrace);
+
             var issue = new NewIssue(title)
             {
-                Body = $"This is an automated issue created by GrammarNazi when an exception was captured.\n {exception.StackTrace}"
+                Body = bodyBuilder.ToString()
             };
             issue.Labels.Add("bug");
 
