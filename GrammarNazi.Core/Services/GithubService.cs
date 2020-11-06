@@ -29,7 +29,7 @@ namespace GrammarNazi.Core.Services
             var bodyBuilder = new StringBuilder();
             bodyBuilder.Append("This is an automated issue created by GrammarNazi when an exception was captured.\n\n");
             bodyBuilder.AppendLine($"Date (UTC): {DateTime.UtcNow}\n\n");
-            bodyBuilder.AppendLine("Exception:\n\n").AppendLine(exception.StackTrace);
+            bodyBuilder.AppendLine("Exception:\n\n").AppendLine(exception.ToString());
 
             var issue = new NewIssue(title)
             {
