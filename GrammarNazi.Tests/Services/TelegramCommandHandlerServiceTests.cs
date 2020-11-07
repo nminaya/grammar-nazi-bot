@@ -3,6 +3,7 @@ using GrammarNazi.Domain.Constants;
 using GrammarNazi.Domain.Entities;
 using GrammarNazi.Domain.Services;
 using Moq;
+using System.Threading;
 using System.Threading.Tasks;
 using Telegram.Bot;
 using Telegram.Bot.Types;
@@ -55,8 +56,8 @@ namespace GrammarNazi.Tests.Services
             var service = new TelegramCommandHandlerService(chatConfigurationServiceMock.Object, telegramBotClientMock.Object);
             const string replyMessage = "Bot is already started";
 
-            var chatConfig = new ChatConfiguration 
-            { 
+            var chatConfig = new ChatConfiguration
+            {
                 IsBotStopped = false
             };
 
@@ -116,6 +117,48 @@ namespace GrammarNazi.Tests.Services
             await service.HandleCommand(message);
 
             // Assert
+            telegramBotClientMock.Verify(v => v.SendTextMessageAsync(It.IsAny<ChatId>(), It.Is<string>(s => s.Contains(replyMessage)), ParseMode.Default, false, false, 0, null, default));
+        }
+
+        [Theory]
+        [InlineData("/start")]
+        [InlineData("/start@" + Defaults.TelegramBotUser)]
+        public async Task Start_BotStoppedAndUserAdmin_Should_ChangeChatConfigAndReplyMessage(string command)
+        {
+            // Arrange
+            var chatConfigurationServiceMock = new Mock<IChatConfigurationService>();
+            var telegramBotClientMock = new Mock<ITelegramBotClient>();
+            var service = new TelegramCommandHandlerService(chatConfigurationServiceMock.Object, telegramBotClientMock.Object);
+            const string replyMessage = "Bot started";
+
+            var chatConfig = new ChatConfiguration
+            {
+                IsBotStopped = true
+            };
+
+            var message = new Message
+            {
+                Text = command,
+                From = new User { Id = 2 },
+                Chat = new Chat
+                {
+                    Id = 1,
+                    Type = ChatType.Group
+                }
+            };
+
+            telegramBotClientMock.Setup(v => v.GetChatAdministratorsAsync(It.IsAny<ChatId>(), default))
+                .ReturnsAsync(new[] { new ChatMember { User = new User { Id = message.From.Id } } });
+
+            chatConfigurationServiceMock.Setup(v => v.GetConfigurationByChatId(message.Chat.Id))
+                .ReturnsAsync(chatConfig);
+
+            // Act
+            await service.HandleCommand(message);
+
+            // Assert
+            Assert.False(chatConfig.IsBotStopped);
+            chatConfigurationServiceMock.Verify(v => v.Update(chatConfig));
             telegramBotClientMock.Verify(v => v.SendTextMessageAsync(It.IsAny<ChatId>(), It.Is<string>(s => s.Contains(replyMessage)), ParseMode.Default, false, false, 0, null, default));
         }
     }
