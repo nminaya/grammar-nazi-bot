@@ -3,8 +3,6 @@ using GrammarNazi.Domain.Constants;
 using GrammarNazi.Domain.Entities;
 using GrammarNazi.Domain.Enums;
 using GrammarNazi.Domain.Services;
-using Microsoft.AspNetCore.Hosting;
-using Microsoft.Extensions.Hosting;
 using System;
 using System.Linq;
 using System.Text;
@@ -18,15 +16,12 @@ namespace GrammarNazi.Core.Services
     public class TelegramCommandHandlerService : ITelegramCommandHandlerService
     {
         private readonly IChatConfigurationService _chatConfigurationService;
-        private readonly IWebHostEnvironment _webHostEnvironment;
         private readonly ITelegramBotClient _client;
 
         public TelegramCommandHandlerService(IChatConfigurationService chatConfigurationService, 
-            IWebHostEnvironment webHostEnvironment,
             ITelegramBotClient telegramBotClient)
         {
             _chatConfigurationService = chatConfigurationService;
-            _webHostEnvironment = webHostEnvironment;
             _client = telegramBotClient;
         }
         public async Task HandleCommand(Message message)
@@ -282,10 +277,9 @@ namespace GrammarNazi.Core.Services
         {
             if (actual.Contains("@"))
             {
-                // TODO: Get bot name from config
-                return _webHostEnvironment.IsDevelopment()
-                    ? actual.StartsWith($"{expected}@grammarNaziTest_Bot")
-                    : actual.StartsWith($"{expected}@grammarNz_Bot");
+                return actual.StartsWith($"{expected}@{Defaults.TelegramBotUser}") 
+                    // For test enviroment
+                    || actual.StartsWith($"{expected}@grammarNaziTest_Bot");
             }
 
             return actual.StartsWith(expected);
