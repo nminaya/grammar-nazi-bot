@@ -52,7 +52,7 @@ namespace GrammarNazi.Core.Services
             {
                 var corrections = new List<GrammarCorrection>();
 
-                foreach (var spellResult in response)
+                foreach (var spellResult in response.Where(ErrorFIlter))
                 {
                     var correction = new GrammarCorrection
                     {
@@ -86,6 +86,14 @@ namespace GrammarNazi.Core.Services
 
                 return $"The word \"{checkTextResponse.Word}\" doesn't exist or isn't in the dictionary.";
             }
+        }
+
+        private bool ErrorFIlter(CheckTextResponse response)
+        {
+            if (SelectedStrictnessLevel == CorrectionStrictnessLevels.Intolerant)
+                return true;
+
+            return response.ErrorCode != YandexSpellerErrorCodes.UnknownWord;
         }
     }
 }
