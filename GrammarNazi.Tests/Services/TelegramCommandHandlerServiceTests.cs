@@ -16,7 +16,7 @@ namespace GrammarNazi.Tests.Services
         [Theory]
         [InlineData("/start")]
         [InlineData("/start@" + Defaults.TelegramBotUser)]
-        public async Task Start_NotChatCongfigured_Should_CreateChatConfigAndReplyWelcomeMessage(string command)
+        public async Task Start_NotChatCongfigured_Should_CreateChatConfig_And_ReplyWelcomeMessage(string command)
         {
             // Arrange
             var chatConfigurationServiceMock = new Mock<IChatConfigurationService>();
@@ -122,7 +122,7 @@ namespace GrammarNazi.Tests.Services
         [Theory]
         [InlineData("/start")]
         [InlineData("/start@" + Defaults.TelegramBotUser)]
-        public async Task Start_BotStoppedAndUserAdmin_Should_ChangeChatConfigAndReplyMessage(string command)
+        public async Task Start_BotStoppedAndUserAdmin_Should_ChangeChatConfig_And_ReplyMessage(string command)
         {
             // Arrange
             var chatConfigurationServiceMock = new Mock<IChatConfigurationService>();
@@ -196,7 +196,7 @@ namespace GrammarNazi.Tests.Services
         [Theory]
         [InlineData("/stop")]
         [InlineData("/stop@" + Defaults.TelegramBotUser)]
-        public async Task Stop_UserIsAdmin_Should_ChangeChatConfigAndReplyMessage(string command)
+        public async Task Stop_UserIsAdmin_Should_ChangeChatConfig_And_ReplyMessage(string command)
         {
             // Arrange
             var chatConfigurationServiceMock = new Mock<IChatConfigurationService>();
