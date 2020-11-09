@@ -93,7 +93,7 @@ namespace GrammarNazi.Core.Services
             if (SelectedStrictnessLevel == CorrectionStrictnessLevels.Intolerant)
                 return true;
 
-            return response.ErrorCode != YandexSpellerErrorCodes.UnknownWord;
+            return response.ErrorCode == YandexSpellerErrorCodes.UnknownWord;
         }
     }
 }
