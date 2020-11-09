@@ -52,7 +52,7 @@ namespace GrammarNazi.Core.Services
             {
                 var corrections = new List<GrammarCorrection>();
 
-                foreach (var spellResult in response.Where(ErrorFIlter))
+                foreach (var spellResult in response.Where(ErrorCodeFIlter))
                 {
                     var correction = new GrammarCorrection
                     {
@@ -88,7 +88,7 @@ namespace GrammarNazi.Core.Services
             }
         }
 
-        private bool ErrorFIlter(CheckTextResponse response)
+        private bool ErrorCodeFIlter(CheckTextResponse response)
         {
             if (SelectedStrictnessLevel == CorrectionStrictnessLevels.Intolerant)
                 return true;
