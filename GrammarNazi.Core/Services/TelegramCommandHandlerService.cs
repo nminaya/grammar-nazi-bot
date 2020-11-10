@@ -43,6 +43,7 @@ namespace GrammarNazi.Core.Services
                     {
                         ChatId = message.Chat.Id,
                         GrammarAlgorithm = Defaults.DefaultAlgorithm,
+                        CorrectionStrictnessLevel = CorrectionStrictnessLevels.Intolerant,
                         SelectedLanguage = SupportedLanguages.Auto
                     };
 
