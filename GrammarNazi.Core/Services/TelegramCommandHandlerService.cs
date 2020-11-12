@@ -130,7 +130,7 @@ namespace GrammarNazi.Core.Services
                 {
                     bool parsedOk = int.TryParse(parameters[1], out int algorithm);
 
-                    if (parsedOk)
+                    if (parsedOk && algorithm.IsAssignableToEnum<GrammarAlgorithms>())
                     {
                         var chatConfig = await _chatConfigurationService.GetConfigurationByChatId(message.Chat.Id);
                         chatConfig.GrammarAlgorithm = (GrammarAlgorithms)algorithm;
@@ -171,7 +171,7 @@ namespace GrammarNazi.Core.Services
                 {
                     bool parsedOk = int.TryParse(parameters[1], out int language);
 
-                    if (parsedOk)
+                    if (parsedOk && language.IsAssignableToEnum<SupportedLanguages>())
                     {
                         var chatConfig = await _chatConfigurationService.GetConfigurationByChatId(message.Chat.Id);
                         chatConfig.SelectedLanguage = (SupportedLanguages)language;
