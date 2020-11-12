@@ -41,6 +41,10 @@ namespace GrammarNazi.Tests.Services
 
             // Assert
             chatConfigurationServiceMock.Verify(v => v.AddConfiguration(It.IsAny<ChatConfiguration>()), Times.Once);
+
+            // Using It.IsAny<ChatId>() due to an issue with ChatId.Equals method.
+            // We should be able to especify ChatId's after this PR gets merged https://github.com/TelegramBots/Telegram.Bot/pull/940 
+            // and the Telegram.Bot nuget package updated.
             telegramBotClientMock.Verify(v => v.SendTextMessageAsync(It.IsAny<ChatId>(), It.Is<string>(s => s.Contains(welcomeMessage)), ParseMode.Default, false, false, 0, null, default));
         }
 
