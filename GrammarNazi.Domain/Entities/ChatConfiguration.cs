@@ -10,7 +10,7 @@ namespace GrammarNazi.Domain.Entities
 
         public SupportedLanguages SelectedLanguage { get; set; }
 
-        public CorrectionStrictnessLevels CorrectionStrictnessLevel { get; set; } = CorrectionStrictnessLevels.Tolerant;
+        public CorrectionStrictnessLevels CorrectionStrictnessLevel { get; set; } = CorrectionStrictnessLevels.Intolerant;
 
         public bool IsBotStopped { get; set; }
 
