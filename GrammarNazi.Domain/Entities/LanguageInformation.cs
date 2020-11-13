@@ -6,12 +6,12 @@
     public class LanguageInformation
     {
         /// <summary>
-        /// The ISO 639-2 two-letter code for the language
+        /// The ISO 639-2 two-letter language code
         /// </summary>
         public string TwoLetterISOLanguageName { get; set; }
 
         /// <summary>
-        /// The ISO 639-3 three-letter code for the language
+        /// The ISO 639-3 three-letter language code
         /// </summary>
         public string ThreeLetterISOLanguageName { get; set; }
     }
