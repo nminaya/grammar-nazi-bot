@@ -14,8 +14,8 @@ namespace GrammarNazi.Tests.Services
     public class TelegramCommandHandlerServiceTests
     {
         [Theory]
-        [InlineData("/start")]
-        [InlineData("/start@" + Defaults.TelegramBotUser)]
+        [InlineData(Commands.Start)]
+        [InlineData(Commands.Start + "@" + Defaults.TelegramBotUser)]
         public async Task Start_NotChatCongfigured_Should_CreateChatConfig_And_ReplyWelcomeMessage(string command)
         {
             // Arrange
@@ -49,8 +49,8 @@ namespace GrammarNazi.Tests.Services
         }
 
         [Theory]
-        [InlineData("/start")]
-        [InlineData("/start@" + Defaults.TelegramBotUser)]
+        [InlineData(Commands.Start)]
+        [InlineData(Commands.Start + "@" + Defaults.TelegramBotUser)]
         public async Task Start_BotNotStopped_Should_ReplyBotStartedMessage(string command)
         {
             // Arrange
@@ -88,8 +88,8 @@ namespace GrammarNazi.Tests.Services
         }
 
         [Theory]
-        [InlineData("/start")]
-        [InlineData("/start@" + Defaults.TelegramBotUser)]
+        [InlineData(Commands.Start)]
+        [InlineData(Commands.Start + "@" + Defaults.TelegramBotUser)]
         public async Task Start_BotStoppedAndUserNotAdmin_Should_ReplyNotAdminMessage(string command)
         {
             // Arrange
@@ -128,8 +128,8 @@ namespace GrammarNazi.Tests.Services
         }
 
         [Theory]
-        [InlineData("/start")]
-        [InlineData("/start@" + Defaults.TelegramBotUser)]
+        [InlineData(Commands.Start)]
+        [InlineData(Commands.Start + "@" + Defaults.TelegramBotUser)]
         public async Task Start_BotStoppedAndUserAdmin_Should_ChangeChatConfig_And_ReplyMessage(string command)
         {
             // Arrange
@@ -170,8 +170,8 @@ namespace GrammarNazi.Tests.Services
         }
 
         [Theory]
-        [InlineData("/stop")]
-        [InlineData("/stop@" + Defaults.TelegramBotUser)]
+        [InlineData(Commands.Stop)]
+        [InlineData(Commands.Stop + "@" + Defaults.TelegramBotUser)]
         public async Task Stop_UserNotAdmin_Should_ReplyMessage(string command)
         {
             // Arrange
@@ -202,8 +202,8 @@ namespace GrammarNazi.Tests.Services
         }
 
         [Theory]
-        [InlineData("/stop")]
-        [InlineData("/stop@" + Defaults.TelegramBotUser)]
+        [InlineData(Commands.Stop)]
+        [InlineData(Commands.Stop + "@" + Defaults.TelegramBotUser)]
         public async Task Stop_UserIsAdmin_Should_ChangeChatConfig_And_ReplyMessage(string command)
         {
             // Arrange
