@@ -242,5 +242,79 @@ namespace GrammarNazi.Tests.Services
             chatConfigurationServiceMock.Verify(v => v.Update(chatConfig));
             telegramBotClientMock.Verify(v => v.SendTextMessageAsync(It.IsAny<ChatId>(), It.Is<string>(s => s.Contains(replyMessage)), ParseMode.Default, false, false, 0, null, default));
         }
+
+        [Theory]
+        [InlineData(Commands.HideDetails)]
+        [InlineData(Commands.HideDetails + "@" + Defaults.TelegramBotUser)]
+        public async Task HideDetails_UserIsNotAdmin_Should_ReplyMessage(string command)
+        {
+            // Arrange
+            var chatConfigurationServiceMock = new Mock<IChatConfigurationService>();
+            var telegramBotClientMock = new Mock<ITelegramBotClient>();
+            var service = new TelegramCommandHandlerService(chatConfigurationServiceMock.Object, telegramBotClientMock.Object);
+            const string replyMessage = "Only admins can use this command.";
+
+            var message = new Message
+            {
+                Text = command,
+                From = new User { Id = 2 },
+                Chat = new Chat
+                {
+                    Id = 1,
+                    Type = ChatType.Group
+                }
+            };
+
+            telegramBotClientMock.Setup(v => v.GetChatAdministratorsAsync(It.IsAny<ChatId>(), default))
+                .ReturnsAsync(new ChatMember[0]);
+
+            // Act
+            await service.HandleCommand(message);
+
+            // Assert
+            telegramBotClientMock.Verify(v => v.SendTextMessageAsync(It.IsAny<ChatId>(), It.Is<string>(s => s.Contains(replyMessage)), ParseMode.Default, false, false, 0, null, default));
+        }
+
+        [Theory]
+        [InlineData(Commands.HideDetails)]
+        [InlineData(Commands.HideDetails + "@" + Defaults.TelegramBotUser)]
+        public async Task HideDetails_UserIsAdmin_Should_ChangeChatConfig_And_ReplyMessage(string command)
+        {
+            // Arrange
+            var chatConfigurationServiceMock = new Mock<IChatConfigurationService>();
+            var telegramBotClientMock = new Mock<ITelegramBotClient>();
+            var service = new TelegramCommandHandlerService(chatConfigurationServiceMock.Object, telegramBotClientMock.Object);
+            const string replyMessage = "Correction details hidden";
+
+            var chatConfig = new ChatConfiguration
+            {
+                HideCorrectionDetails = false
+            };
+
+            var message = new Message
+            {
+                Text = command,
+                From = new User { Id = 2 },
+                Chat = new Chat
+                {
+                    Id = 1,
+                    Type = ChatType.Group
+                }
+            };
+
+            telegramBotClientMock.Setup(v => v.GetChatAdministratorsAsync(It.IsAny<ChatId>(), default))
+                .ReturnsAsync(new[] { new ChatMember { User = new User { Id = message.From.Id } } });
+
+            chatConfigurationServiceMock.Setup(v => v.GetConfigurationByChatId(message.Chat.Id))
+                .ReturnsAsync(chatConfig);
+
+            // Act
+            await service.HandleCommand(message);
+
+            // Assert
+            Assert.True(chatConfig.HideCorrectionDetails);
+            chatConfigurationServiceMock.Verify(v => v.Update(chatConfig));
+            telegramBotClientMock.Verify(v => v.SendTextMessageAsync(It.IsAny<ChatId>(), It.Is<string>(s => s.Contains(replyMessage)), ParseMode.Default, false, false, 0, null, default));
+        }
     }
 }
