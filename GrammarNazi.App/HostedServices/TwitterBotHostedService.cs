@@ -59,13 +59,13 @@ namespace GrammarNazi.App.HostedServices
                 {
                     var lastTweetIdTask = _twitterLogService.GetLastTweetId();
 
-                    var user = await _twitterClient.Users.GetUserAsync(_twitterBotSettings.BotUsername);
+                    var followerIds = await _twitterClient.Users.GetFollowerIdsAsync(_twitterBotSettings.BotUsername);
 
                     long sinceTweetId = await lastTweetIdTask;
 
                     var tweets = new List<ITweet>();
 
-                    await foreach (var followerId in GetFollowersIds(user))
+                    foreach (var followerId in followerIds)
                     {
                         var getTimeLineParameters = new GetUserTimelineParameters(followerId);
 
@@ -121,6 +121,8 @@ namespace GrammarNazi.App.HostedServices
                         }
                     }
 
+                    var followBackUsersTask = FollowBackUsers(followerIds);
+
                     if (tweets.Any())
                     {
                         var lastTweet = tweets.OrderByDescending(v => v.Id).First();
@@ -128,11 +130,13 @@ namespace GrammarNazi.App.HostedServices
                         // Save last Tweet Id
                         await _twitterLogService.LogTweet(lastTweet.Id);
                     }
+
+                    await followBackUsersTask;
                 }
                 catch (Exception ex)
                 {
                     _logger.LogError(ex, ex.Message);
-                    
+
                     // fire and forget
                     _ = _githubService.CreateBugIssue($"Application Exception: {ex.Message}", ex);
                 }
@@ -141,18 +145,15 @@ namespace GrammarNazi.App.HostedServices
             }
         }
 
-        private async IAsyncEnumerable<long> GetFollowersIds(IUser user)
+        private async Task FollowBackUsers(IEnumerable<long> followerdIds)
         {
-            var followerIdsIterator = user.GetFollowerIds();
+            var friendIds = await _twitterClient.Users.GetFriendIdsAsync(_twitterBotSettings.BotUsername);
 
-            while (!followerIdsIterator.Completed)
+            var userIdsToFollow = followerdIds.Except(friendIds);
+
+            foreach (var userId in userIdsToFollow)
             {
-                var page = await followerIdsIterator.NextPageAsync();
-
-                foreach (var followerId in page)
-                {
-                    yield return followerId;
-                }
+                await _twitterClient.Users.FollowUserAsync(userId);
             }
         }
     }
