@@ -44,7 +44,7 @@ namespace GrammarNazi.Tests.Services
             chatConfigurationServiceMock.Verify(v => v.AddConfiguration(It.IsAny<ChatConfiguration>()), Times.Once);
 
             // Using It.IsAny<ChatId>() due to an issue with ChatId.Equals method.
-            // We should be able to especify ChatId's after this PR gets merged https://github.com/TelegramBots/Telegram.Bot/pull/940 
+            // We should be able to especify ChatId's after this PR gets merged https://github.com/TelegramBots/Telegram.Bot/pull/940
             // and the Telegram.Bot nuget package updated.
             telegramBotClientMock.Verify(v => v.SendTextMessageAsync(It.IsAny<ChatId>(), It.Is<string>(s => s.Contains(welcomeMessage)), ParseMode.Default, false, false, 0, null, default));
         }
@@ -83,7 +83,7 @@ namespace GrammarNazi.Tests.Services
             // Assert
 
             // Using It.IsAny<ChatId>() due to an issue with ChatId.Equals method.
-            // We should be able to especify ChatId's after this PR gets merged https://github.com/TelegramBots/Telegram.Bot/pull/940 
+            // We should be able to especify ChatId's after this PR gets merged https://github.com/TelegramBots/Telegram.Bot/pull/940
             // and the Telegram.Bot nuget package updated.
             telegramBotClientMock.Verify(v => v.SendTextMessageAsync(It.IsAny<ChatId>(), It.Is<string>(s => s.Contains(replyMessage)), ParseMode.Default, false, false, 0, null, default));
         }
@@ -465,9 +465,11 @@ namespace GrammarNazi.Tests.Services
         }
 
         [Theory]
-        [InlineData(Commands.Language + " Test")]
-        [InlineData(Commands.Language + "@" + Defaults.TelegramBotUser + " Test")]
-        public async Task Language_ParameterIsNotNumber_Should_ReplyMessage(string command)
+        [InlineData(Commands.Language, "Test")]
+        [InlineData(Commands.Language + "@" + Defaults.TelegramBotUser, "Test")]
+        [InlineData(Commands.Language, "fjkafdk324")]
+        [InlineData(Commands.Language + "@" + Defaults.TelegramBotUser, "flkjsdf234")]
+        public async Task Language_ParameterIsNotNumber_Should_ReplyMessage(string command, string parameter)
         {
             // Arrange
             var chatConfigurationServiceMock = new Mock<IChatConfigurationService>();
@@ -482,7 +484,7 @@ namespace GrammarNazi.Tests.Services
 
             var message = new Message
             {
-                Text = command,
+                Text = $"{command} {parameter}",
                 From = new User { Id = 2 },
                 Chat = new Chat
                 {
@@ -505,9 +507,11 @@ namespace GrammarNazi.Tests.Services
         }
 
         [Theory]
-        [InlineData(Commands.Language + " 500")]
-        [InlineData(Commands.Language + "@" + Defaults.TelegramBotUser + " 500")]
-        public async Task Language_InvalidParameter_Should_ReplyMessage(string command)
+        [InlineData(Commands.Language, "500")]
+        [InlineData(Commands.Language + "@" + Defaults.TelegramBotUser, "500")]
+        [InlineData(Commands.Language, "123456")]
+        [InlineData(Commands.Language + "@" + Defaults.TelegramBotUser, "123456")]
+        public async Task Language_InvalidParameter_Should_ReplyMessage(string command, string parameter)
         {
             // Arrange
             var chatConfigurationServiceMock = new Mock<IChatConfigurationService>();
@@ -522,7 +526,7 @@ namespace GrammarNazi.Tests.Services
 
             var message = new Message
             {
-                Text = command,
+                Text = $"{command} {parameter}",
                 From = new User { Id = 2 },
                 Chat = new Chat
                 {
@@ -545,9 +549,11 @@ namespace GrammarNazi.Tests.Services
         }
 
         [Theory]
-        [InlineData(Commands.Language + " 1")]
-        [InlineData(Commands.Language + "@" + Defaults.TelegramBotUser + " 1")]
-        public async Task Language_ValidParameter_Should_ChangeChatConfig_And_ReplyMessage(string command)
+        [InlineData(Commands.Language, SupportedLanguages.English)]
+        [InlineData(Commands.Language + "@" + Defaults.TelegramBotUser, SupportedLanguages.English)]
+        [InlineData(Commands.Language, SupportedLanguages.Spanish)]
+        [InlineData(Commands.Language + "@" + Defaults.TelegramBotUser, SupportedLanguages.Spanish)]
+        public async Task Language_ValidParameter_Should_ChangeChatConfig_And_ReplyMessage(string command, SupportedLanguages languageParameter)
         {
             // Arrange
             var chatConfigurationServiceMock = new Mock<IChatConfigurationService>();
@@ -562,7 +568,7 @@ namespace GrammarNazi.Tests.Services
 
             var message = new Message
             {
-                Text = command,
+                Text = $"{command} {(int)languageParameter}",
                 From = new User { Id = 2 },
                 Chat = new Chat
                 {
@@ -581,7 +587,7 @@ namespace GrammarNazi.Tests.Services
             await service.HandleCommand(message);
 
             // Assert
-            Assert.Equal(SupportedLanguages.English, chatConfig.SelectedLanguage);
+            Assert.Equal(languageParameter, chatConfig.SelectedLanguage);
             telegramBotClientMock.Verify(v => v.SendTextMessageAsync(It.IsAny<ChatId>(), It.Is<string>(s => s.Contains(replyMessage)), ParseMode.Default, false, false, 0, null, default));
         }
     }
