@@ -274,11 +274,11 @@ namespace GrammarNazi.Core.Services
             }
         }
 
-        private bool IsCommand(string expected, string actual)
+        private static bool IsCommand(string expected, string actual)
         {
             if (actual.Contains("@"))
             {
-                return actual.StartsWith($"{expected}@{Defaults.TelegramBotUser}") 
+                return actual.StartsWith($"{expected}@{Defaults.TelegramBotUser}")
                     // For test enviroment
                     || actual.StartsWith($"{expected}@grammarNaziTest_Bot");
             }
