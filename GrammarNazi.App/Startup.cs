@@ -47,7 +47,7 @@ namespace GrammarNazi.App
             // Settings
             services.Configure<TwitterBotSettings>(Configuration.GetSection("AppSettings:TwitterBotSettings"));
             services.Configure<GithubSettings>(Configuration.GetSection("AppSettings:GithubSettings"));
-            services.Configure<MeaningCloudSettings>(m => 
+            services.Configure<MeaningCloudSettings>(m =>
             {
                 m.MeaningCloudHostUrl = Configuration.GetSection("AppSettings:MeaningCloudSettings:MeaningCloudHostUrl").Value;
                 m.Key = Environment.GetEnvironmentVariable("MEANING_CLOUD_API_KEY");
@@ -112,10 +112,10 @@ namespace GrammarNazi.App
             {
                 var githubToken = Environment.GetEnvironmentVariable("GITHUB_ACCESS_TOKEN");
 
-                var client = new GitHubClient(new ProductHeaderValue("nminaya"));
-                client.Credentials = new Credentials(githubToken);
-
-                return client;
+                return new GitHubClient(new ProductHeaderValue("nminaya"))
+                {
+                    Credentials = new Credentials(githubToken)
+                };
             });
         }
 
