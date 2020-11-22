@@ -113,8 +113,7 @@ namespace GrammarNazi.App
                 var githubToken = Environment.GetEnvironmentVariable("GITHUB_ACCESS_TOKEN");
 
                 var client = new GitHubClient(new ProductHeaderValue("nminaya"));
-                var tokenAuth = new Credentials(githubToken);
-                client.Credentials = tokenAuth;
+                client.Credentials = new Credentials(githubToken);
 
                 return client;
             });
