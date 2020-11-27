@@ -670,6 +670,106 @@ namespace GrammarNazi.Tests.Services
             telegramBotClientMock.Verify(v => v.SendTextMessageAsync(It.IsAny<ChatId>(), It.Is<string>(s => s.Contains(replyMessage)), ParseMode.Default, false, false, 0, null, default));
         }
 
+        [Theory]
+        [InlineData(Commands.Tolerant)]
+        [InlineData(Commands.Tolerant + "@" + Defaults.TelegramBotUser)]
+        public async Task Tolerant_UserIsNotAdmin_Should_ReplyMessage(string command)
+        {
+            await TestNotAdminUser(command);
+        }
+
+        [Theory]
+        [InlineData(Commands.Tolerant)]
+        [InlineData(Commands.Tolerant + "@" + Defaults.TelegramBotUser)]
+        public async Task Tolerant_UserIsAdmin_Should_ChangeChatConfig_And_ReplyMessage(string command)
+        {
+            // Arrange
+            var chatConfigurationServiceMock = new Mock<IChatConfigurationService>();
+            var telegramBotClientMock = new Mock<ITelegramBotClient>();
+            var service = new TelegramCommandHandlerService(chatConfigurationServiceMock.Object, telegramBotClientMock.Object);
+            const string replyMessage = "Tolerant ✅";
+
+            var chatConfig = new ChatConfiguration
+            {
+                CorrectionStrictnessLevel = CorrectionStrictnessLevels.Intolerant
+            };
+
+            var message = new Message
+            {
+                Text = command,
+                From = new User { Id = 2 },
+                Chat = new Chat
+                {
+                    Id = 1,
+                    Type = ChatType.Group
+                }
+            };
+
+            telegramBotClientMock.Setup(v => v.GetChatAdministratorsAsync(It.IsAny<ChatId>(), default))
+                .ReturnsAsync(new[] { new ChatMember { User = new User { Id = message.From.Id } } });
+
+            chatConfigurationServiceMock.Setup(v => v.GetConfigurationByChatId(message.Chat.Id))
+                .ReturnsAsync(chatConfig);
+
+            // Act
+            await service.HandleCommand(message);
+
+            // Assert
+            Assert.Equal(CorrectionStrictnessLevels.Tolerant, chatConfig.CorrectionStrictnessLevel);
+            chatConfigurationServiceMock.Verify(v => v.Update(chatConfig));
+            telegramBotClientMock.Verify(v => v.SendTextMessageAsync(It.IsAny<ChatId>(), It.Is<string>(s => s.Contains(replyMessage)), ParseMode.Default, false, false, 0, null, default));
+        }
+
+        [Theory]
+        [InlineData(Commands.Intolerant)]
+        [InlineData(Commands.Intolerant + "@" + Defaults.TelegramBotUser)]
+        public async Task Intolerant_UserIsNotAdmin_Should_ReplyMessage(string command)
+        {
+            await TestNotAdminUser(command);
+        }
+
+        [Theory]
+        [InlineData(Commands.Intolerant)]
+        [InlineData(Commands.Intolerant + "@" + Defaults.TelegramBotUser)]
+        public async Task Intolerant_UserIsAdmin_Should_ChangeChatConfig_And_ReplyMessage(string command)
+        {
+            // Arrange
+            var chatConfigurationServiceMock = new Mock<IChatConfigurationService>();
+            var telegramBotClientMock = new Mock<ITelegramBotClient>();
+            var service = new TelegramCommandHandlerService(chatConfigurationServiceMock.Object, telegramBotClientMock.Object);
+            const string replyMessage = "Intolerant ✅";
+
+            var chatConfig = new ChatConfiguration
+            {
+                CorrectionStrictnessLevel = CorrectionStrictnessLevels.Tolerant
+            };
+
+            var message = new Message
+            {
+                Text = command,
+                From = new User { Id = 2 },
+                Chat = new Chat
+                {
+                    Id = 1,
+                    Type = ChatType.Group
+                }
+            };
+
+            telegramBotClientMock.Setup(v => v.GetChatAdministratorsAsync(It.IsAny<ChatId>(), default))
+                .ReturnsAsync(new[] { new ChatMember { User = new User { Id = message.From.Id } } });
+
+            chatConfigurationServiceMock.Setup(v => v.GetConfigurationByChatId(message.Chat.Id))
+                .ReturnsAsync(chatConfig);
+
+            // Act
+            await service.HandleCommand(message);
+
+            // Assert
+            Assert.Equal(CorrectionStrictnessLevels.Intolerant, chatConfig.CorrectionStrictnessLevel);
+            chatConfigurationServiceMock.Verify(v => v.Update(chatConfig));
+            telegramBotClientMock.Verify(v => v.SendTextMessageAsync(It.IsAny<ChatId>(), It.Is<string>(s => s.Contains(replyMessage)), ParseMode.Default, false, false, 0, null, default));
+        }
+
         private static async Task TestNotAdminUser(string command)
         {
             // Arrange
