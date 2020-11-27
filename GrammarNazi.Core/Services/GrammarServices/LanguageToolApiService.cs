@@ -96,6 +96,7 @@ namespace GrammarNazi.Core.Services
                 && match.Rule.Id != "MORFOLOGIK_RULE_ES"
                 && match.Rule.Id != "MORFOLOGIK_RULE_EN_US"
                 && match.Rule.Id != "EN_QUOTES"
+                && match.Rule.Id != "SPANISH_WORD_REPEAT_RULE"
                 && match.Rule.Id != "ES_QUESTION_MARK"
                 && match.Rule.Id != "GONNA"
                 && match.Rule.Id != "INCORRECT_SPACES";
