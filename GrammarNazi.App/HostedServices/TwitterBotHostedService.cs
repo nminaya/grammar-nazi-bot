@@ -85,7 +85,7 @@ namespace GrammarNazi.App.HostedServices
 
                     foreach (var tweet in tweets)
                     {
-                        var tweetText = StringUtils.RemoveHashtags(StringUtils.RemoveMentions(tweet.Text));
+                        var tweetText = StringUtils.RemoveHashtags(StringUtils.RemoveMentions(StringUtils.RemoveEmojis(tweet.Text)));
 
                         var correctionsResult = await _grammarService.GetCorrections(tweetText);
 
