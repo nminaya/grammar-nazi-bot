@@ -41,7 +41,7 @@ namespace GrammarNazi.Domain.Entities
         /// <summary>
         /// List of ignored words
         /// </summary>
-        public IEnumerable<string> WhiteListWords { get; set; }
+        public List<string> WhiteListWords { get; set; } = new();
 
         public override bool Equals(object obj)
         {
