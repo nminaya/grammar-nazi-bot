@@ -1,5 +1,7 @@
 ﻿using GrammarNazi.Domain.Enums;
+using System;
 using System.Collections.Generic;
+using System.Linq;
 
 namespace GrammarNazi.Core.Services
 {
@@ -23,6 +25,11 @@ namespace GrammarNazi.Core.Services
         {
             WhiteListWords.Clear();
             WhiteListWords.AddRange(whiteListWords);
+        }
+
+        protected bool IsWhiteListWord(string word)
+        {
+            return WhiteListWords.Any(w => w.Contains(word, StringComparison.InvariantCultureIgnoreCase));
         }
     }
 }

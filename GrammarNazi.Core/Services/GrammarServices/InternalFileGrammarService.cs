@@ -45,7 +45,7 @@ namespace GrammarNazi.Core.Services
 
             var corrections = new List<GrammarCorrection>();
 
-            var words = text.Split(" ");
+            var words = text.Split(" ").Where(v => !IsWhiteListWord(v));
 
             var dictionary = GetDictionaryBasedOnWords(words, language);
 
@@ -86,7 +86,7 @@ namespace GrammarNazi.Core.Services
             return Task.FromResult(new GrammarCheckResult(corrections));
         }
 
-        private IReadOnlyList<string> GetDictionaryBasedOnWords(string[] words, string language)
+        private IReadOnlyList<string> GetDictionaryBasedOnWords(IEnumerable<string> words, string language)
         {
             var letters = words
                 .Where(v => !string.IsNullOrWhiteSpace(v) && char.IsLetter(v[0]))

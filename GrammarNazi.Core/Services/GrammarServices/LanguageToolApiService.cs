@@ -67,9 +67,14 @@ namespace GrammarNazi.Core.Services
 
             foreach (var match in matches)
             {
+                var wrongWord = match.Context.Text.Substring(match.Context.Offset, match.Context.Length);
+
+                if (IsWhiteListWord(wrongWord))
+                    continue;
+
                 var correction = new GrammarCorrection
                 {
-                    WrongWord = match.Context.Text.Substring(match.Context.Offset, match.Context.Length),
+                    WrongWord = wrongWord,
                     PossibleReplacements = match.Replacements.Select(v => v.Value),
                     Message = match.Message
                 };

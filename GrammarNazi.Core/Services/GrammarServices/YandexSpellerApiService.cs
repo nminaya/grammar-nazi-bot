@@ -54,6 +54,9 @@ namespace GrammarNazi.Core.Services
 
                 foreach (var spellResult in response.Where(ErrorCodeFIlter))
                 {
+                    if (IsWhiteListWord(spellResult.Word))
+                        continue;
+
                     var correction = new GrammarCorrection
                     {
                         WrongWord = spellResult.Word,
@@ -74,7 +77,7 @@ namespace GrammarNazi.Core.Services
         {
             return checkTextResponse.ErrorCode switch
             {
-                YandexSpellerErrorCodes.RepeatWord => $"Repeated word.",
+                YandexSpellerErrorCodes.RepeatWord => "Repeated word.",
                 YandexSpellerErrorCodes.Capitalization => "Incorrect use of uppercase and lowercase letters.",
                 _ => GetDefaultErrorMessage(),
             };
