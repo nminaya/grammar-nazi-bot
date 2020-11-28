@@ -24,7 +24,11 @@ namespace GrammarNazi.Core.Services
         public void SetWhiteListWords(IEnumerable<string> whiteListWords)
         {
             WhiteListWords.Clear();
-            WhiteListWords.AddRange(whiteListWords);
+
+            if (whiteListWords?.Any() == true)
+            {
+                WhiteListWords.AddRange(whiteListWords);
+            }
         }
 
         protected bool IsWhiteListWord(string word)
