@@ -141,6 +141,7 @@ namespace GrammarNazi.App.HostedServices
             var grammarService = _grammarServices.First(v => v.GrammarAlgorith == chatConfig.GrammarAlgorithm);
             grammarService.SetSelectedLanguage(chatConfig.SelectedLanguage);
             grammarService.SetStrictnessLevel(chatConfig.CorrectionStrictnessLevel);
+            grammarService.SetWhiteListWords(chatConfig.WhiteListWords);
 
             return grammarService;
         }

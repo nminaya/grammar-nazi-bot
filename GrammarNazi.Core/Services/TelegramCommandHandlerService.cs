@@ -18,12 +18,13 @@ namespace GrammarNazi.Core.Services
         private readonly IChatConfigurationService _chatConfigurationService;
         private readonly ITelegramBotClient _client;
 
-        public TelegramCommandHandlerService(IChatConfigurationService chatConfigurationService, 
+        public TelegramCommandHandlerService(IChatConfigurationService chatConfigurationService,
             ITelegramBotClient telegramBotClient)
         {
             _chatConfigurationService = chatConfigurationService;
             _client = telegramBotClient;
         }
+
         public async Task HandleCommand(Message message)
         {
             var text = message.Text;
@@ -84,6 +85,9 @@ namespace GrammarNazi.Core.Services
                 messageBuilder.AppendLine($"{Commands.Language} <language_number> to set a language.");
                 messageBuilder.AppendLine($"{Commands.ShowDetails} Show correction details");
                 messageBuilder.AppendLine($"{Commands.HideDetails} Hide correction details");
+                messageBuilder.AppendLine($"{Commands.WhiteList} See list of ignored words.");
+                messageBuilder.AppendLine($"{Commands.AddWhiteList} <word> to add a WhiteList word.");
+                messageBuilder.AppendLine($"{Commands.RemoveWhiteList} <word> to remove a WhiteList word.");
                 messageBuilder.AppendLine($"{Commands.Tolerant} Set strictness level to {CorrectionStrictnessLevels.Tolerant.GetDescription()}");
                 messageBuilder.AppendLine($"{Commands.Intolerant} Set strictness level to {CorrectionStrictnessLevels.Intolerant.GetDescription()}");
 
@@ -96,6 +100,7 @@ namespace GrammarNazi.Core.Services
                 var messageBuilder = new StringBuilder();
                 messageBuilder.AppendLine(GetAvailableAlgorithms(chatConfig.GrammarAlgorithm));
                 messageBuilder.AppendLine(GetSupportedLanguages(chatConfig.SelectedLanguage));
+                messageBuilder.AppendLine($"WhiteList words:").AppendLine($"Type {Commands.WhiteList} to see WhiteList words configured.").AppendLine();
 
                 var showCorrectionDetailsIcon = chatConfig.HideCorrectionDetails ? "❌" : "✅";
                 messageBuilder.AppendLine($"Show correction details {showCorrectionDetailsIcon}").AppendLine();
@@ -271,6 +276,93 @@ namespace GrammarNazi.Core.Services
                 _ = _chatConfigurationService.Update(chatConfig);
 
                 await _client.SendTextMessageAsync(message.Chat.Id, "Intolerant ✅");
+            }
+            else if (IsCommand(Commands.WhiteList, text))
+            {
+                var chatConfig = await _chatConfigurationService.GetConfigurationByChatId(message.Chat.Id);
+
+                if (chatConfig.WhiteListWords?.Any() == true)
+                {
+                    var messageBuilder = new StringBuilder();
+                    messageBuilder.AppendLine("WhiteList words:\n");
+
+                    foreach (var word in chatConfig.WhiteListWords)
+                    {
+                        messageBuilder.AppendLine($"- {word}");
+                    }
+
+                    await _client.SendTextMessageAsync(message.Chat.Id, messageBuilder.ToString(), replyToMessageId: message.MessageId);
+
+                    return;
+                }
+
+                await _client.SendTextMessageAsync(message.Chat.Id, $"You don't have WhiteList words configured. Use {Commands.AddWhiteList} to add words to the WhiteList.", replyToMessageId: message.MessageId);
+            }
+            else if (IsCommand(Commands.AddWhiteList, text))
+            {
+                if (!await IsUserAdmin(message))
+                {
+                    await _client.SendTextMessageAsync(message.Chat.Id, "Only admins can use this command.", replyToMessageId: message.MessageId);
+                    return;
+                }
+
+                var parameters = text.Split(" ");
+
+                if (parameters.Length == 1)
+                {
+                    await _client.SendTextMessageAsync(message.Chat.Id, $"Parameter not received. Type {Commands.AddWhiteList} <word> to add a WhiteList word.");
+                }
+                else
+                {
+                    var chatConfig = await _chatConfigurationService.GetConfigurationByChatId(message.Chat.Id);
+
+                    var word = parameters[1].Trim();
+
+                    if (chatConfig.WhiteListWords.Contains(word))
+                    {
+                        await _client.SendTextMessageAsync(message.Chat.Id, $"The word '{word}' is already on the WhiteList");
+                        return;
+                    }
+
+                    chatConfig.WhiteListWords.Add(word);
+
+                    _ = _chatConfigurationService.Update(chatConfig);
+
+                    await _client.SendTextMessageAsync(message.Chat.Id, $"Word '{word}' added to the WhiteList.");
+                }
+            }
+            else if (IsCommand(Commands.RemoveWhiteList, text))
+            {
+                if (!await IsUserAdmin(message))
+                {
+                    await _client.SendTextMessageAsync(message.Chat.Id, "Only admins can use this command.", replyToMessageId: message.MessageId);
+                    return;
+                }
+
+                var parameters = text.Split(" ");
+
+                if (parameters.Length == 1)
+                {
+                    await _client.SendTextMessageAsync(message.Chat.Id, $"Parameter not received. Type {Commands.RemoveWhiteList} <word> to remove a WhiteList word.");
+                }
+                else
+                {
+                    var chatConfig = await _chatConfigurationService.GetConfigurationByChatId(message.Chat.Id);
+
+                    var word = parameters[1].Trim();
+
+                    if (!chatConfig.WhiteListWords.Contains(word))
+                    {
+                        await _client.SendTextMessageAsync(message.Chat.Id, $"The word '{word}' is not on the WhiteList.");
+                        return;
+                    }
+
+                    chatConfig.WhiteListWords.Remove(word);
+
+                    _ = _chatConfigurationService.Update(chatConfig);
+
+                    await _client.SendTextMessageAsync(message.Chat.Id, $"Word '{word}' removed from the WhiteList.");
+                }
             }
         }
 
