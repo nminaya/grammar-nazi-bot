@@ -12,5 +12,8 @@
         public const string ShowDetails = "/show_details";
         public const string Tolerant = "/tolerant";
         public const string Intolerant = "/intolerant";
+        public const string WhiteList = "/whitelist";
+        public const string AddWhiteList = "/add_whitelist";
+        public const string RemoveWhiteList = "/remove_whitelist";
     }
 }
