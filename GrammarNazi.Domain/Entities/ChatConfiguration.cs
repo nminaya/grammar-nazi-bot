@@ -1,4 +1,5 @@
 ﻿using GrammarNazi.Domain.Enums;
+using System.Collections.Generic;
 
 namespace GrammarNazi.Domain.Entities
 {
@@ -36,6 +37,11 @@ namespace GrammarNazi.Domain.Entities
         /// True if correction details hidden
         /// </summary>
         public bool HideCorrectionDetails { get; set; }
+
+        /// <summary>
+        /// List of ignored words
+        /// </summary>
+        public IEnumerable<string> WhiteListWords { get; set; }
 
         public override bool Equals(object obj)
         {
