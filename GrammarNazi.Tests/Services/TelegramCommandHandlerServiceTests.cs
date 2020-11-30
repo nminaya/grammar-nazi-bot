@@ -770,6 +770,344 @@ namespace GrammarNazi.Tests.Services
             telegramBotClientMock.Verify(v => v.SendTextMessageAsync(It.IsAny<ChatId>(), It.Is<string>(s => s.Contains(replyMessage)), ParseMode.Default, false, false, 0, null, default));
         }
 
+        [Theory]
+        [InlineData(Commands.WhiteList)]
+        [InlineData(Commands.WhiteList + "@" + Defaults.TelegramBotUser)]
+        public async Task WhiteList_NoWhiteListsConfigured_Should_ReplyMessage(string command)
+        {
+            // Arrange
+            var chatConfigurationServiceMock = new Mock<IChatConfigurationService>();
+            var telegramBotClientMock = new Mock<ITelegramBotClient>();
+            var service = new TelegramCommandHandlerService(chatConfigurationServiceMock.Object, telegramBotClientMock.Object);
+            const string replyMessage = "You don't have WhiteList words configured";
+
+            var chatConfig = new ChatConfiguration
+            {
+                WhiteListWords = null
+            };
+
+            var message = new Message
+            {
+                Text = command,
+                From = new User { Id = 2 },
+                Chat = new Chat
+                {
+                    Id = 1,
+                    Type = ChatType.Group
+                }
+            };
+
+            telegramBotClientMock.Setup(v => v.GetChatAdministratorsAsync(It.IsAny<ChatId>(), default))
+                .ReturnsAsync(new[] { new ChatMember { User = new User { Id = message.From.Id } } });
+
+            chatConfigurationServiceMock.Setup(v => v.GetConfigurationByChatId(message.Chat.Id))
+                .ReturnsAsync(chatConfig);
+
+            // Act
+            await service.HandleCommand(message);
+
+            // Assert
+            telegramBotClientMock.Verify(v => v.SendTextMessageAsync(It.IsAny<ChatId>(), It.Is<string>(s => s.Contains(replyMessage)), ParseMode.Default, false, false, 0, null, default));
+        }
+
+        [Theory]
+        [InlineData(Commands.WhiteList)]
+        [InlineData(Commands.WhiteList + "@" + Defaults.TelegramBotUser)]
+        public async Task WhiteList_WhiteListsConfigured_Should_ReplyMessageWithWhiteList(string command)
+        {
+            // Arrange
+            var chatConfigurationServiceMock = new Mock<IChatConfigurationService>();
+            var telegramBotClientMock = new Mock<ITelegramBotClient>();
+            var service = new TelegramCommandHandlerService(chatConfigurationServiceMock.Object, telegramBotClientMock.Object);
+            const string replyMessage = "WhiteList Words";
+
+            var chatConfig = new ChatConfiguration
+            {
+                WhiteListWords = new() { "Word" }
+            };
+
+            var message = new Message
+            {
+                Text = command,
+                From = new User { Id = 2 },
+                Chat = new Chat
+                {
+                    Id = 1,
+                    Type = ChatType.Group
+                }
+            };
+
+            telegramBotClientMock.Setup(v => v.GetChatAdministratorsAsync(It.IsAny<ChatId>(), default))
+                .ReturnsAsync(new[] { new ChatMember { User = new User { Id = message.From.Id } } });
+
+            chatConfigurationServiceMock.Setup(v => v.GetConfigurationByChatId(message.Chat.Id))
+                .ReturnsAsync(chatConfig);
+
+            // Act
+            await service.HandleCommand(message);
+
+            // Assert
+            telegramBotClientMock.Verify(v => v.SendTextMessageAsync(It.IsAny<ChatId>(), It.Is<string>(s => s.Contains(replyMessage)), ParseMode.Default, false, false, 0, null, default));
+        }
+
+        [Theory]
+        [InlineData(Commands.AddWhiteList)]
+        [InlineData(Commands.AddWhiteList + "@" + Defaults.TelegramBotUser)]
+        public async Task AddWhiteList_UserIsNotAdmin_Should_ReplyMessage(string command)
+        {
+            await TestNotAdminUser(command);
+        }
+
+        [Theory]
+        [InlineData(Commands.AddWhiteList)]
+        [InlineData(Commands.AddWhiteList + "@" + Defaults.TelegramBotUser)]
+        public async Task AddWhiteList_NoParameter_Should_ReplyMessage(string command)
+        {
+            // Arrange
+            var chatConfigurationServiceMock = new Mock<IChatConfigurationService>();
+            var telegramBotClientMock = new Mock<ITelegramBotClient>();
+            var service = new TelegramCommandHandlerService(chatConfigurationServiceMock.Object, telegramBotClientMock.Object);
+            const string replyMessage = "Parameter not received";
+
+            var chatConfig = new ChatConfiguration
+            {
+                WhiteListWords = null
+            };
+
+            var message = new Message
+            {
+                Text = command,
+                From = new User { Id = 2 },
+                Chat = new Chat
+                {
+                    Id = 1,
+                    Type = ChatType.Group
+                }
+            };
+
+            telegramBotClientMock.Setup(v => v.GetChatAdministratorsAsync(It.IsAny<ChatId>(), default))
+                .ReturnsAsync(new[] { new ChatMember { User = new User { Id = message.From.Id } } });
+
+            chatConfigurationServiceMock.Setup(v => v.GetConfigurationByChatId(message.Chat.Id))
+                .ReturnsAsync(chatConfig);
+
+            // Act
+            await service.HandleCommand(message);
+
+            // Assert
+            telegramBotClientMock.Verify(v => v.SendTextMessageAsync(It.IsAny<ChatId>(), It.Is<string>(s => s.Contains(replyMessage)), ParseMode.Default, false, false, 0, null, default));
+        }
+
+        [Theory]
+        [InlineData(Commands.AddWhiteList, "Word")]
+        [InlineData(Commands.AddWhiteList + "@" + Defaults.TelegramBotUser, "Word")]
+        public async Task AddWhiteList_WordExist_Should_ReplyMessage(string command, string parameter)
+        {
+            // Arrange
+            var chatConfigurationServiceMock = new Mock<IChatConfigurationService>();
+            var telegramBotClientMock = new Mock<ITelegramBotClient>();
+            var service = new TelegramCommandHandlerService(chatConfigurationServiceMock.Object, telegramBotClientMock.Object);
+            const string replyMessage = "is already on the WhiteList";
+
+            var chatConfig = new ChatConfiguration
+            {
+                WhiteListWords = new() { parameter }
+            };
+
+            var message = new Message
+            {
+                Text = $"{command} {parameter}",
+                From = new User { Id = 2 },
+                Chat = new Chat
+                {
+                    Id = 1,
+                    Type = ChatType.Group
+                }
+            };
+
+            telegramBotClientMock.Setup(v => v.GetChatAdministratorsAsync(It.IsAny<ChatId>(), default))
+                .ReturnsAsync(new[] { new ChatMember { User = new User { Id = message.From.Id } } });
+
+            chatConfigurationServiceMock.Setup(v => v.GetConfigurationByChatId(message.Chat.Id))
+                .ReturnsAsync(chatConfig);
+
+            // Act
+            await service.HandleCommand(message);
+
+            // Assert
+            telegramBotClientMock.Verify(v => v.SendTextMessageAsync(It.IsAny<ChatId>(), It.Is<string>(s => s.Contains(replyMessage)), ParseMode.Default, false, false, 0, null, default));
+        }
+
+        [Theory]
+        [InlineData(Commands.AddWhiteList, "Word")]
+        [InlineData(Commands.AddWhiteList + "@" + Defaults.TelegramBotUser, "Word")]
+        public async Task AddWhiteList_NoWordExist_Should_ChangeChatConfig_And_ReplyMessage(string command, string parameter)
+        {
+            // Arrange
+            var chatConfigurationServiceMock = new Mock<IChatConfigurationService>();
+            var telegramBotClientMock = new Mock<ITelegramBotClient>();
+            var service = new TelegramCommandHandlerService(chatConfigurationServiceMock.Object, telegramBotClientMock.Object);
+            const string replyMessage = "added to the WhiteList";
+
+            var chatConfig = new ChatConfiguration
+            {
+                WhiteListWords = new() { "Word1" }
+            };
+
+            var message = new Message
+            {
+                Text = $"{command} {parameter}",
+                From = new User { Id = 2 },
+                Chat = new Chat
+                {
+                    Id = 1,
+                    Type = ChatType.Group
+                }
+            };
+
+            telegramBotClientMock.Setup(v => v.GetChatAdministratorsAsync(It.IsAny<ChatId>(), default))
+                .ReturnsAsync(new[] { new ChatMember { User = new User { Id = message.From.Id } } });
+
+            chatConfigurationServiceMock.Setup(v => v.GetConfigurationByChatId(message.Chat.Id))
+                .ReturnsAsync(chatConfig);
+
+            // Act
+            await service.HandleCommand(message);
+
+            // Assert
+            Assert.Equal(2, chatConfig.WhiteListWords.Count);
+            telegramBotClientMock.Verify(v => v.SendTextMessageAsync(It.IsAny<ChatId>(), It.Is<string>(s => s.Contains(replyMessage)), ParseMode.Default, false, false, 0, null, default));
+        }
+
+        [Theory]
+        [InlineData(Commands.RemoveWhiteList)]
+        [InlineData(Commands.RemoveWhiteList + "@" + Defaults.TelegramBotUser)]
+        public async Task RemoveWhiteList_UserIsNotAdmin_Should_ReplyMessage(string command)
+        {
+            await TestNotAdminUser(command);
+        }
+
+        [Theory]
+        [InlineData(Commands.RemoveWhiteList)]
+        [InlineData(Commands.RemoveWhiteList + "@" + Defaults.TelegramBotUser)]
+        public async Task RemoveWhiteList_NoParameter_Should_ReplyMessage(string command)
+        {
+            // Arrange
+            var chatConfigurationServiceMock = new Mock<IChatConfigurationService>();
+            var telegramBotClientMock = new Mock<ITelegramBotClient>();
+            var service = new TelegramCommandHandlerService(chatConfigurationServiceMock.Object, telegramBotClientMock.Object);
+            const string replyMessage = "Parameter not received";
+
+            var chatConfig = new ChatConfiguration
+            {
+                WhiteListWords = null
+            };
+
+            var message = new Message
+            {
+                Text = command,
+                From = new User { Id = 2 },
+                Chat = new Chat
+                {
+                    Id = 1,
+                    Type = ChatType.Group
+                }
+            };
+
+            telegramBotClientMock.Setup(v => v.GetChatAdministratorsAsync(It.IsAny<ChatId>(), default))
+                .ReturnsAsync(new[] { new ChatMember { User = new User { Id = message.From.Id } } });
+
+            chatConfigurationServiceMock.Setup(v => v.GetConfigurationByChatId(message.Chat.Id))
+                .ReturnsAsync(chatConfig);
+
+            // Act
+            await service.HandleCommand(message);
+
+            // Assert
+            telegramBotClientMock.Verify(v => v.SendTextMessageAsync(It.IsAny<ChatId>(), It.Is<string>(s => s.Contains(replyMessage)), ParseMode.Default, false, false, 0, null, default));
+        }
+
+        [Theory]
+        [InlineData(Commands.RemoveWhiteList, "Word")]
+        [InlineData(Commands.RemoveWhiteList + "@" + Defaults.TelegramBotUser, "Word")]
+        public async Task RemoveWhiteList_NoWordExist_Should_ReplyMessage(string command, string parameter)
+        {
+            // Arrange
+            var chatConfigurationServiceMock = new Mock<IChatConfigurationService>();
+            var telegramBotClientMock = new Mock<ITelegramBotClient>();
+            var service = new TelegramCommandHandlerService(chatConfigurationServiceMock.Object, telegramBotClientMock.Object);
+            const string replyMessage = "is not on the WhiteList";
+
+            var chatConfig = new ChatConfiguration
+            {
+                WhiteListWords = new() { "Word1" }
+            };
+
+            var message = new Message
+            {
+                Text = $"{command} {parameter}",
+                From = new User { Id = 2 },
+                Chat = new Chat
+                {
+                    Id = 1,
+                    Type = ChatType.Group
+                }
+            };
+
+            telegramBotClientMock.Setup(v => v.GetChatAdministratorsAsync(It.IsAny<ChatId>(), default))
+                .ReturnsAsync(new[] { new ChatMember { User = new User { Id = message.From.Id } } });
+
+            chatConfigurationServiceMock.Setup(v => v.GetConfigurationByChatId(message.Chat.Id))
+                .ReturnsAsync(chatConfig);
+
+            // Act
+            await service.HandleCommand(message);
+
+            // Assert
+            telegramBotClientMock.Verify(v => v.SendTextMessageAsync(It.IsAny<ChatId>(), It.Is<string>(s => s.Contains(replyMessage)), ParseMode.Default, false, false, 0, null, default));
+        }
+
+        [Theory]
+        [InlineData(Commands.RemoveWhiteList, "Word")]
+        [InlineData(Commands.RemoveWhiteList + "@" + Defaults.TelegramBotUser, "Word")]
+        public async Task RemoveWhiteList_WordExist_Should_RemoveWordFromWhiteList_And_ReplyMessage(string command, string parameter)
+        {
+            // Arrange
+            var chatConfigurationServiceMock = new Mock<IChatConfigurationService>();
+            var telegramBotClientMock = new Mock<ITelegramBotClient>();
+            var service = new TelegramCommandHandlerService(chatConfigurationServiceMock.Object, telegramBotClientMock.Object);
+            const string replyMessage = "removed from the WhiteList";
+
+            var chatConfig = new ChatConfiguration
+            {
+                WhiteListWords = new() { parameter }
+            };
+
+            var message = new Message
+            {
+                Text = $"{command} {parameter}",
+                From = new User { Id = 2 },
+                Chat = new Chat
+                {
+                    Id = 1,
+                    Type = ChatType.Group
+                }
+            };
+
+            telegramBotClientMock.Setup(v => v.GetChatAdministratorsAsync(It.IsAny<ChatId>(), default))
+                .ReturnsAsync(new[] { new ChatMember { User = new User { Id = message.From.Id } } });
+
+            chatConfigurationServiceMock.Setup(v => v.GetConfigurationByChatId(message.Chat.Id))
+                .ReturnsAsync(chatConfig);
+
+            // Act
+            await service.HandleCommand(message);
+
+            // Assert
+            Assert.Empty(chatConfig.WhiteListWords);
+            telegramBotClientMock.Verify(v => v.SendTextMessageAsync(It.IsAny<ChatId>(), It.Is<string>(s => s.Contains(replyMessage)), ParseMode.Default, false, false, 0, null, default));
+        }
+
         private static async Task TestNotAdminUser(string command)
         {
             // Arrange
