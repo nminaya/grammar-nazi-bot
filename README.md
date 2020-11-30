@@ -12,6 +12,7 @@ Bot that corrects spelling mistakes.
 - Configurable grammar analyzer algorithm or provider.
 - Multiple language support (English and Spanish).
 - Strictness Level.
+- Whitelist Words.
 #### Twitter Bot
 - Evaluates Tweets of followers.
 - Multiple language support (English and Spanish).
