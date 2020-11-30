@@ -284,7 +284,7 @@ namespace GrammarNazi.Core.Services
                 if (chatConfig.WhiteListWords?.Any() == true)
                 {
                     var messageBuilder = new StringBuilder();
-                    messageBuilder.AppendLine("WhiteList words:\n");
+                    messageBuilder.AppendLine("WhiteList Words:\n");
 
                     foreach (var word in chatConfig.WhiteListWords)
                     {
