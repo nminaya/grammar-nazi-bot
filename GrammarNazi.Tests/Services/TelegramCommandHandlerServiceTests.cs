@@ -779,7 +779,7 @@ namespace GrammarNazi.Tests.Services
             var chatConfigurationServiceMock = new Mock<IChatConfigurationService>();
             var telegramBotClientMock = new Mock<ITelegramBotClient>();
             var service = new TelegramCommandHandlerService(chatConfigurationServiceMock.Object, telegramBotClientMock.Object);
-            const string replyMessage = "You don't have WhiteList words configured";
+            const string replyMessage = "You don't have Whitelist words configured";
 
             var chatConfig = new ChatConfiguration
             {

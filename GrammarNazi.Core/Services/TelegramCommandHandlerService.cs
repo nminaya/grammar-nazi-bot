@@ -86,8 +86,8 @@ namespace GrammarNazi.Core.Services
                 messageBuilder.AppendLine($"{Commands.ShowDetails} Show correction details");
                 messageBuilder.AppendLine($"{Commands.HideDetails} Hide correction details");
                 messageBuilder.AppendLine($"{Commands.WhiteList} See list of ignored words.");
-                messageBuilder.AppendLine($"{Commands.AddWhiteList} <word> to add a WhiteList word.");
-                messageBuilder.AppendLine($"{Commands.RemoveWhiteList} <word> to remove a WhiteList word.");
+                messageBuilder.AppendLine($"{Commands.AddWhiteList} <word> to add a Whitelist word.");
+                messageBuilder.AppendLine($"{Commands.RemoveWhiteList} <word> to remove a Whitelist word.");
                 messageBuilder.AppendLine($"{Commands.Tolerant} Set strictness level to {CorrectionStrictnessLevels.Tolerant.GetDescription()}");
                 messageBuilder.AppendLine($"{Commands.Intolerant} Set strictness level to {CorrectionStrictnessLevels.Intolerant.GetDescription()}");
 
@@ -100,7 +100,7 @@ namespace GrammarNazi.Core.Services
                 var messageBuilder = new StringBuilder();
                 messageBuilder.AppendLine(GetAvailableAlgorithms(chatConfig.GrammarAlgorithm));
                 messageBuilder.AppendLine(GetSupportedLanguages(chatConfig.SelectedLanguage));
-                messageBuilder.AppendLine($"WhiteList words:").AppendLine($"Type {Commands.WhiteList} to see WhiteList words configured.").AppendLine();
+                messageBuilder.AppendLine($"WhiteList words:").AppendLine($"Type {Commands.WhiteList} to see Whitelist words configured.").AppendLine();
 
                 var showCorrectionDetailsIcon = chatConfig.HideCorrectionDetails ? "❌" : "✅";
                 messageBuilder.AppendLine($"Show correction details {showCorrectionDetailsIcon}").AppendLine();
@@ -296,7 +296,7 @@ namespace GrammarNazi.Core.Services
                     return;
                 }
 
-                await _client.SendTextMessageAsync(message.Chat.Id, $"You don't have WhiteList words configured. Use {Commands.AddWhiteList} to add words to the WhiteList.");
+                await _client.SendTextMessageAsync(message.Chat.Id, $"You don't have Whitelist words configured. Use {Commands.AddWhiteList} to add words to the WhiteList.");
             }
             else if (IsCommand(Commands.AddWhiteList, text))
             {
@@ -310,7 +310,7 @@ namespace GrammarNazi.Core.Services
 
                 if (parameters.Length == 1)
                 {
-                    await _client.SendTextMessageAsync(message.Chat.Id, $"Parameter not received. Type {Commands.AddWhiteList} <word> to add a WhiteList word.");
+                    await _client.SendTextMessageAsync(message.Chat.Id, $"Parameter not received. Type {Commands.AddWhiteList} <word> to add a Whitelist word.");
                 }
                 else
                 {
@@ -343,7 +343,7 @@ namespace GrammarNazi.Core.Services
 
                 if (parameters.Length == 1)
                 {
-                    await _client.SendTextMessageAsync(message.Chat.Id, $"Parameter not received. Type {Commands.RemoveWhiteList} <word> to remove a WhiteList word.");
+                    await _client.SendTextMessageAsync(message.Chat.Id, $"Parameter not received. Type {Commands.RemoveWhiteList} <word> to remove a Whitelist word.");
                 }
                 else
                 {
