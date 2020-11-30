@@ -291,12 +291,12 @@ namespace GrammarNazi.Core.Services
                         messageBuilder.AppendLine($"- {word}");
                     }
 
-                    await _client.SendTextMessageAsync(message.Chat.Id, messageBuilder.ToString(), replyToMessageId: message.MessageId);
+                    await _client.SendTextMessageAsync(message.Chat.Id, messageBuilder.ToString());
 
                     return;
                 }
 
-                await _client.SendTextMessageAsync(message.Chat.Id, $"You don't have WhiteList words configured. Use {Commands.AddWhiteList} to add words to the WhiteList.", replyToMessageId: message.MessageId);
+                await _client.SendTextMessageAsync(message.Chat.Id, $"You don't have WhiteList words configured. Use {Commands.AddWhiteList} to add words to the WhiteList.");
             }
             else if (IsCommand(Commands.AddWhiteList, text))
             {
@@ -353,7 +353,7 @@ namespace GrammarNazi.Core.Services
 
                     if (!chatConfig.WhiteListWords.Contains(word))
                     {
-                        await _client.SendTextMessageAsync(message.Chat.Id, $"The word '{word}' is not on the WhiteList.");
+                        await _client.SendTextMessageAsync(message.Chat.Id, $"The word '{word}' is not in the WhiteList.");
                         return;
                     }
 
