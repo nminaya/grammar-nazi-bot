@@ -819,7 +819,7 @@ namespace GrammarNazi.Tests.Services
             var chatConfigurationServiceMock = new Mock<IChatConfigurationService>();
             var telegramBotClientMock = new Mock<ITelegramBotClient>();
             var service = new TelegramCommandHandlerService(chatConfigurationServiceMock.Object, telegramBotClientMock.Object);
-            const string replyMessage = "WhiteList Words";
+            const string replyMessage = "Whitelist Words";
 
             var chatConfig = new ChatConfiguration
             {
