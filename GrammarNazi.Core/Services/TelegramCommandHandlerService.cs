@@ -100,7 +100,7 @@ namespace GrammarNazi.Core.Services
                 var messageBuilder = new StringBuilder();
                 messageBuilder.AppendLine(GetAvailableAlgorithms(chatConfig.GrammarAlgorithm));
                 messageBuilder.AppendLine(GetSupportedLanguages(chatConfig.SelectedLanguage));
-                messageBuilder.AppendLine($"WhiteList words:").AppendLine($"Type {Commands.WhiteList} to see Whitelist words configured.").AppendLine();
+                messageBuilder.AppendLine($"Whitelist Words:").AppendLine($"Type {Commands.WhiteList} to see Whitelist words configured.").AppendLine();
 
                 var showCorrectionDetailsIcon = chatConfig.HideCorrectionDetails ? "❌" : "✅";
                 messageBuilder.AppendLine($"Show correction details {showCorrectionDetailsIcon}").AppendLine();
