@@ -78,7 +78,7 @@ namespace GrammarNazi.App
             services.AddNTextCatLanguageService();
 
             // Telegram client
-            services.AddTransient<ITelegramBotClient>(_ =>
+            services.AddSingleton<ITelegramBotClient>(_ =>
             {
                 var apiKey = Environment.GetEnvironmentVariable("TELEGRAM_API_KEY");
 
