@@ -15,6 +15,7 @@ using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
+using Microsoft.Extensions.Options;
 using Octokit;
 using System;
 using Telegram.Bot;
@@ -108,11 +109,12 @@ namespace GrammarNazi.App
             });
 
             // Github Client
-            services.AddSingleton<IGitHubClient>(_ =>
+            services.AddSingleton<IGitHubClient>(s =>
             {
                 var githubToken = Environment.GetEnvironmentVariable("GITHUB_ACCESS_TOKEN");
+                var githubSettings = s.GetService<IOptions<GithubSettings>>().Value;
 
-                return new GitHubClient(new ProductHeaderValue("nminaya"))
+                return new GitHubClient(new ProductHeaderValue(githubSettings.Username))
                 {
                     Credentials = new Credentials(githubToken)
                 };
