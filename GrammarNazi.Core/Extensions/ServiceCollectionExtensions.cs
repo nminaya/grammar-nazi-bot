@@ -1,4 +1,5 @@
-﻿using Microsoft.Extensions.DependencyInjection;
+﻿using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.DependencyInjection;
 using NTextCat;
 
 namespace GrammarNazi.Core.Extensions
@@ -8,6 +9,21 @@ namespace GrammarNazi.Core.Extensions
         public static IServiceCollection AddNTextCatLanguageService(this IServiceCollection serviceCollection)
         {
             return serviceCollection.AddTransient<BasicProfileFactoryBase<RankedLanguageIdentifier>, RankedLanguageIdentifierFactory>();
+        }
+
+        public static IServiceCollection AddSqliteDbContext(this IServiceCollection serviceCollection, string connectionString)
+        {
+            serviceCollection.AddDbContext<GrammarNaziContext>(options => options.UseSqlite(connectionString));
+            serviceCollection.AddTransient<DbContext, GrammarNaziContext>();
+
+            return serviceCollection;
+        }
+
+        public static void EnsureDatabaseCreated(this IServiceCollection serviceCollection)
+        {
+            using var scope = serviceCollection.BuildServiceProvider().CreateScope();
+            var context = scope.ServiceProvider.GetService<DbContext>();
+            context.Database.EnsureCreated();
         }
     }
 }
