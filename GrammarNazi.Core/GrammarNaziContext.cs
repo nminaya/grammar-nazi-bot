@@ -1,5 +1,8 @@
-﻿using GrammarNazi.Domain.Entities;
+﻿using GrammarNazi.Core.Extensions;
+using GrammarNazi.Domain.Entities;
 using Microsoft.EntityFrameworkCore;
+using System;
+using System.Linq;
 
 namespace GrammarNazi.Core
 {
@@ -17,6 +20,10 @@ namespace GrammarNazi.Core
 
             modelBuilder.Entity<TwitterLog>()
                 .HasKey(v => v.TweetId);
+
+            modelBuilder.Entity<ChatConfiguration>()
+                .Property(e => e.WhiteListWords)
+                .HasConversion(v => v.Join(","), v => v.Split(',', StringSplitOptions.RemoveEmptyEntries).ToList());
         }
     }
 }
