@@ -1141,6 +1141,40 @@ namespace GrammarNazi.Tests.Services
             telegramBotClientMock.Verify(v => v.SendTextMessageAsync(It.IsAny<ChatId>(), It.IsAny<string>(), ParseMode.Default, false, false, 0, null, default), Times.Never);
         }
 
+        [Theory]
+        [InlineData("/test_command")]
+        [InlineData("/command")]
+        [InlineData("/bot_command")]
+        [InlineData("/another_command")]
+        public async Task UnknownCommand_Should_Not_DoAnything(string command)
+        {
+            // Arrange
+            var telegramBotClientMock = new Mock<ITelegramBotClient>();
+            var service = new TelegramCommandHandlerService(null, telegramBotClientMock.Object);
+
+            var message = new Message
+            {
+                Text = command,
+                From = new User { Id = 2 },
+                Chat = new Chat
+                {
+                    Id = 1,
+                    Type = ChatType.Group
+                }
+            };
+
+            telegramBotClientMock.Setup(v => v.GetChatAdministratorsAsync(It.IsAny<ChatId>(), default))
+                .ReturnsAsync(new[] { new ChatMember { User = new User { Id = message.From.Id } } });
+
+            // Act
+            await service.HandleCommand(message);
+
+            // Assert
+
+            // Make sure SendTextMessageAsync method was never called
+            telegramBotClientMock.Verify(v => v.SendTextMessageAsync(It.IsAny<ChatId>(), It.IsAny<string>(), ParseMode.Default, false, false, 0, null, default), Times.Never);
+        }
+
         private static async Task TestNotAdminUser(string command)
         {
             // Arrange
