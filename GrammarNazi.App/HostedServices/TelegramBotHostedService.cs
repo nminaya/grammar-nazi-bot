@@ -14,6 +14,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using Telegram.Bot;
 using Telegram.Bot.Args;
+using Telegram.Bot.Exceptions;
 using Telegram.Bot.Types;
 using Telegram.Bot.Types.Enums;
 
@@ -56,6 +57,10 @@ namespace GrammarNazi.App.HostedServices
                 try
                 {
                     await OnMessageReceived(obj, eventArgs);
+                }
+                catch (ApiRequestException ex) when (ex.Message.Contains("bot was blocked by the user"))
+                {
+                    _logger.LogWarning(ex, "User has blocked the Bot");
                 }
                 catch (Exception ex)
                 {
