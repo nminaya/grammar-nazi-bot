@@ -99,14 +99,9 @@ namespace GrammarNazi.Core.Services
             {
                 var pathNames = $"Library/Names/{letter}.txt";
                 var pathLetterWords = $"Library/Dictionary/{language}/{letter}.txt";
-                var names  = Enumerable.Empty<string>();
-                var letterWords = Enumerable.Empty<string>();
 
-                if (_fileService.FileExist(pathNames))
-                    names = _fileService.GetTextFileByLine(pathNames);
-
-                if (_fileService.FileExist(pathLetterWords))
-                    letterWords = _fileService.GetTextFileByLine(pathLetterWords);
+                var names = _fileService.FileExist(pathNames) ? _fileService.GetTextFileByLine(pathNames) : Enumerable.Empty<string>();
+                var letterWords = _fileService.FileExist(pathLetterWords) ? _fileService.GetTextFileByLine(pathLetterWords) : Enumerable.Empty<string>();
 
                 dictionary.AddRange(names);
                 dictionary.AddRange(letterWords);
@@ -115,7 +110,7 @@ namespace GrammarNazi.Core.Services
             return dictionary;
         }
 
-        private string GetCorrectionMessage(string word, string language)
+        private static string GetCorrectionMessage(string word, string language)
         {
             if (language == LanguageUtils.GetLanguageCode(SupportedLanguages.English.GetDescription()))
                 return $"The word \"{word}\" doesn't exist or isn't in the internal dictionary.";
