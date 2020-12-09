@@ -23,7 +23,7 @@ namespace GrammarNazi.Core.Utilities
         /// </summary>
         /// <param name="str"></param>
         /// <returns>String without special characters</returns>
-        public static string RemoveSpecialCharacters(string str) => Regex.Replace(str, "[^0-9a-zñA-ZÑ]+", "");
+        public static string RemoveSpecialCharacters(string str) => Regex.Replace(str, "[^0-9a-zñA-ZÑÀ-ÿ]+", "");
 
         /// <summary>
         /// Remove emojis from a string

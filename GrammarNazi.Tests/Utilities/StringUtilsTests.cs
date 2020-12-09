@@ -10,6 +10,7 @@ namespace GrammarNazi.Tests.Utilities
         [InlineData("Test's", "Tests")]
         [InlineData("Ñoño's", "Ñoños")]
         [InlineData("!@#$%^&*[]_", "")]
+        [InlineData("papá", "papá")]
         public void RemoveSpecialCharacters_GivenString_Should_ReturnsExpectedResult(string actual, string expected)
         {
             // Arrange > Act
