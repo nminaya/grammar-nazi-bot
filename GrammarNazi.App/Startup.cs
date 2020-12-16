@@ -63,11 +63,13 @@ namespace GrammarNazi.App
             services.AddTransient<ILanguageToolApiClient, LanguageToolApiClient>();
             services.AddTransient<IMeganingCloudLangApiClient, MeganingCloudLangApiClient>();
             services.AddTransient<IYandexSpellerApiClient, YandexSpellerApiClient>();
+            services.AddTransient<IDatamuseApiClient, DatamuseApiClient>();
             services.AddTransient<IChatConfigurationService, ChatConfigurationService>();
             services.AddTransient<ILanguageService, NTextCatLanguageService>();
             services.AddTransient<IGrammarService, LanguageToolApiService>();
             services.AddTransient<IGrammarService, InternalFileGrammarService>();
             services.AddTransient<IGrammarService, YandexSpellerApiService>();
+            services.AddTransient<IGrammarService, DatamuseApiService>();
             services.AddTransient<ITwitterLogService, TwitterLogService>();
             services.AddTransient<IGithubService, GithubService>();
             services.AddTransient<ITelegramCommandHandlerService, TelegramCommandHandlerService>();
