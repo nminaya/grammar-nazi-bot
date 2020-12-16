@@ -17,14 +17,23 @@ namespace GrammarNazi.Core.Clients
             _httpClientFactory = httpClientFactory;
         }
 
-        public async Task<IEnumerable<WordCheck>> CheckWord(string word, string language)
+        public async Task<WordCheckResult> CheckWord(string word, string language)
         {
-            var url = $"https://api.datamuse.com/words?={HttpUtility.UrlEncode(word)}&v={language}";
+            //TODO: Validate language
+            var url = $"https://api.datamuse.com/words?sp={HttpUtility.UrlEncode(word)}";
 
             var httpClient = _httpClientFactory.CreateClient();
             var response = await httpClient.GetAsync(url);
 
-            return JsonConvert.DeserializeObject<IEnumerable<WordCheck>>(await response.Content.ReadAsStringAsync());
+            var content = await response.Content.ReadAsStringAsync();
+
+            var result = JsonConvert.DeserializeObject<IEnumerable<WordCheck>>(content);
+
+            return new()
+            {
+                Word = word,
+                Words = result
+            };
         }
     }
 }
