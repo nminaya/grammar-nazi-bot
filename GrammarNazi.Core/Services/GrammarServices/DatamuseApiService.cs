@@ -1,4 +1,6 @@
-﻿using GrammarNazi.Domain.Clients;
+﻿using GrammarNazi.Core.Extensions;
+using GrammarNazi.Core.Utilities;
+using GrammarNazi.Domain.Clients;
 using GrammarNazi.Domain.Entities;
 using GrammarNazi.Domain.Enums;
 using GrammarNazi.Domain.Services;
@@ -14,20 +16,35 @@ namespace GrammarNazi.Core.Services
         public GrammarAlgorithms GrammarAlgorith => GrammarAlgorithms.DatamuseApi;
 
         private readonly IDatamuseApiClient _datamuseApiClient;
+        private readonly ILanguageService _languageService;
 
-        public DatamuseApiService(IDatamuseApiClient datamuseApiClient)
+        public DatamuseApiService(IDatamuseApiClient datamuseApiClient,
+            ILanguageService languageService)
         {
             _datamuseApiClient = datamuseApiClient;
+            _languageService = languageService;
         }
 
         public async Task<GrammarCheckResult> GetCorrections(string text)
         {
-            //TODO: Validate language
-            var language = "";
+            string language;
 
-            var words = text.Split(" ").Where(v => !IsWhiteListWord(v));
+            if (SelectedLanguage == SupportedLanguages.Auto)
+            {
+                var languageInfo = _languageService.IdentifyLanguage(text);
 
-            var wordsCheckTasks = words.Select(v => _datamuseApiClient.CheckWord(v, "en"));
+                language = languageInfo.TwoLetterISOLanguageName;
+            }
+            else
+            {
+                language = LanguageUtils.GetLanguageCode(SelectedLanguage.GetDescription());
+            }
+
+            var words = text.Split(" ")
+                .Select(StringUtils.RemoveSpecialCharacters)
+                .Where(v => !char.IsNumber(v[0]) && !IsWhiteListWord(v));
+
+            var wordsCheckTasks = words.Select(v => _datamuseApiClient.CheckWord(v, language));
 
             var corrections = new List<GrammarCorrection>();
 

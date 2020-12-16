@@ -1,5 +1,8 @@
-﻿using GrammarNazi.Domain.Clients;
+﻿using GrammarNazi.Core.Extensions;
+using GrammarNazi.Core.Utilities;
+using GrammarNazi.Domain.Clients;
 using GrammarNazi.Domain.Entities.DatamuseAPI;
+using GrammarNazi.Domain.Enums;
 using Newtonsoft.Json;
 using System.Collections.Generic;
 using System.Net.Http;
@@ -19,8 +22,14 @@ namespace GrammarNazi.Core.Clients
 
         public async Task<WordCheckResult> CheckWord(string word, string language)
         {
-            //TODO: Validate language
-            var url = $"https://api.datamuse.com/words?sp={HttpUtility.UrlEncode(word)}";
+            string languageParam = "";
+
+            if (language == LanguageUtils.GetLanguageCode(SupportedLanguages.Spanish.GetDescription()))
+            {
+                languageParam = "&v=es";
+            }
+
+            var url = $"https://api.datamuse.com/words?sp={HttpUtility.UrlEncode(word)}{languageParam}";
 
             var httpClient = _httpClientFactory.CreateClient();
             var response = await httpClient.GetAsync(url);
