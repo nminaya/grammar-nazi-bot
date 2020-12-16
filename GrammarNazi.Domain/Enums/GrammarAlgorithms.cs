@@ -11,6 +11,9 @@ namespace GrammarNazi.Domain.Enums
         LanguageToolApi = 2,
 
         [Description("YandexSpeller API")]
-        YandexSpellerApi = 3
+        YandexSpellerApi = 3,
+
+        [Description("Datamuse API")]
+        DatamuseApi = 4
     }
 }
