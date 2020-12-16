@@ -100,11 +100,12 @@ namespace GrammarNazi.Core.Services
                 var messageBuilder = new StringBuilder();
                 messageBuilder.AppendLine(GetAvailableAlgorithms(chatConfig.GrammarAlgorithm));
                 messageBuilder.AppendLine(GetSupportedLanguages(chatConfig.SelectedLanguage));
-                messageBuilder.AppendLine($"Whitelist Words:").AppendLine($"Type {Commands.WhiteList} to see Whitelist words configured.").AppendLine();
 
                 var showCorrectionDetailsIcon = chatConfig.HideCorrectionDetails ? "❌" : "✅";
                 messageBuilder.AppendLine($"Show correction details {showCorrectionDetailsIcon}").AppendLine();
                 messageBuilder.AppendLine("Strictness level:").AppendLine($"{chatConfig.CorrectionStrictnessLevel.GetDescription()} ✅").AppendLine();
+
+                messageBuilder.AppendLine($"Whitelist Words:").AppendLine($"Type {Commands.WhiteList} to see Whitelist words configured.").AppendLine();
 
                 if (chatConfig.IsBotStopped)
                     messageBuilder.AppendLine($"The bot is currently stopped. Type {Commands.Start} to activate the Bot.");

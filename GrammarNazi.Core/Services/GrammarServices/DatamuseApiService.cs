@@ -4,7 +4,6 @@ using GrammarNazi.Domain.Clients;
 using GrammarNazi.Domain.Entities;
 using GrammarNazi.Domain.Enums;
 using GrammarNazi.Domain.Services;
-using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
@@ -57,7 +56,7 @@ namespace GrammarNazi.Core.Services
             {
                 var wordCheckResult = await wordCheckResultTask;
 
-                if (wordCheckResult.Words.Any() && wordCheckResult.Words.All(v => !v.Word.Equals(wordCheckResult.Word, StringComparison.OrdinalIgnoreCase)))
+                if (wordCheckResult.HasCorrections)
                 {
                     corrections.Add(new()
                     {
