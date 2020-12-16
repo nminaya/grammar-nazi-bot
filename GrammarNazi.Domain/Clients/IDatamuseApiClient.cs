@@ -6,6 +6,6 @@ namespace GrammarNazi.Domain.Clients
 {
     public interface IDatamuseApiClient
     {
-        Task<IEnumerable<WordCheck>> CheckWord(string word, string language);
+        Task<WordCheckResult> CheckWord(string word, string language);
     }
 }
