@@ -109,13 +109,5 @@ namespace GrammarNazi.Core.Services
 
             return dictionary;
         }
-
-        private static string GetCorrectionMessage(string word, string language)
-        {
-            if (language == LanguageUtils.GetLanguageCode(SupportedLanguages.English.GetDescription()))
-                return $"The word \"{word}\" doesn't exist or isn't in the internal dictionary.";
-
-            return $"La palabra \"{word}\" no existe o no está en el diccionario interno.";
-        }
     }
 }

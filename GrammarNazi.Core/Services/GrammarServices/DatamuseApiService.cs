@@ -23,6 +23,7 @@ namespace GrammarNazi.Core.Services
         public async Task<GrammarCheckResult> GetCorrections(string text)
         {
             //TODO: Validate language
+            var language = "";
 
             var words = text.Split(" ").Where(v => !IsWhiteListWord(v));
 
@@ -40,7 +41,7 @@ namespace GrammarNazi.Core.Services
                     {
                         WrongWord = wordCheckResult.Word,
                         PossibleReplacements = wordCheckResult.Words.Select(v => v.Word),
-                        Message = "Wrong word"
+                        Message = GetCorrectionMessage(wordCheckResult.Word, language)
                     });
                 }
             }
