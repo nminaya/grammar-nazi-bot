@@ -36,6 +36,11 @@ namespace GrammarNazi.Core.Services
             {
                 var languageInfo = _languageService.IdentifyLanguage(text);
 
+                if (languageInfo == default)
+                {
+                    return Task.FromResult(new GrammarCheckResult(default));
+                }
+
                 language = languageInfo.TwoLetterISOLanguageName;
             }
             else
