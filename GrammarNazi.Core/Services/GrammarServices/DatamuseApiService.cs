@@ -56,12 +56,12 @@ namespace GrammarNazi.Core.Services
             {
                 var wordCheckResult = await wordCheckResultTask;
 
-                if (wordCheckResult.HasCorrections)
+                if (wordCheckResult.IsWrongWord)
                 {
                     corrections.Add(new()
                     {
                         WrongWord = wordCheckResult.Word,
-                        PossibleReplacements = wordCheckResult.Words.Select(v => v.Word),
+                        PossibleReplacements = wordCheckResult.SimilarWords.Select(v => v.Word),
                         Message = GetCorrectionMessage(wordCheckResult.Word, language)
                     });
                 }

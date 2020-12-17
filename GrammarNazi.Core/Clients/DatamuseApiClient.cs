@@ -36,12 +36,12 @@ namespace GrammarNazi.Core.Clients
 
             var content = await response.Content.ReadAsStringAsync();
 
-            var result = JsonConvert.DeserializeObject<IEnumerable<WordCheck>>(content);
+            var result = JsonConvert.DeserializeObject<IEnumerable<WordSimilarity>>(content);
 
             return new()
             {
                 Word = word,
-                Words = result
+                SimilarWords = result
             };
         }
     }

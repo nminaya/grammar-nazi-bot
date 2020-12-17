@@ -2,7 +2,7 @@
 
 namespace GrammarNazi.Domain.Entities.DatamuseAPI
 {
-    public class WordCheck
+    public class WordSimilarity
     {
         [JsonProperty("word")]
         public string Word { get; set; }
