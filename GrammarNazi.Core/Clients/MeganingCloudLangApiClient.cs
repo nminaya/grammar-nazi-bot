@@ -28,9 +28,7 @@ namespace GrammarNazi.Core.Clients
             var httpClient = _httpClientFactory.CreateClient();
             var response = await httpClient.PostAsync(url, null);
 
-            var result = JsonConvert.DeserializeObject<LanguageDetectionResult>(await response.Content.ReadAsStringAsync());
-
-            return result;
+            return JsonConvert.DeserializeObject<LanguageDetectionResult>(await response.Content.ReadAsStringAsync());
         }
     }
 }

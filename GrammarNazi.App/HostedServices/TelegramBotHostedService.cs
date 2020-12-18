@@ -151,7 +151,7 @@ namespace GrammarNazi.App.HostedServices
             return grammarService;
         }
 
-        private string GetCleanedText(Message message)
+        private static string GetCleanedText(Message message)
         {
             var text = GetTextWithoutMentionsWithoutUsername();
 

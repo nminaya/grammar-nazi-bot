@@ -32,6 +32,7 @@ namespace GrammarNazi.Core.Services
             {
                 var languageInfo = _languageService.IdentifyLanguage(text);
 
+                // Language not supported
                 if (languageInfo == default)
                 {
                     return new(default);
@@ -46,13 +47,13 @@ namespace GrammarNazi.Core.Services
 
             var words = text.Split(" ")
                 .Select(StringUtils.RemoveSpecialCharacters)
-                .Where(v => !char.IsNumber(v[0]) && !IsWhiteListWord(v));
+                .Where(v => char.IsLetter(v[0]) && !IsWhiteListWord(v));
 
-            var wordsCheckTasks = words.Select(v => _datamuseApiClient.CheckWord(v, language));
+            var wordCheckTasks = words.Select(v => _datamuseApiClient.CheckWord(v, language));
 
             var corrections = new List<GrammarCorrection>();
 
-            foreach (var wordCheckResultTask in wordsCheckTasks)
+            foreach (var wordCheckResultTask in wordCheckTasks)
             {
                 var wordCheckResult = await wordCheckResultTask;
 

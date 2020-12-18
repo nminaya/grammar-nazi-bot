@@ -30,7 +30,7 @@ namespace GrammarNazi.Core.Services
             // Do not evalulate long texts or empty texts
             if (string.IsNullOrWhiteSpace(text) || text.Length >= Defaults.MaxLengthText)
             {
-                return new GrammarCheckResult(default);
+                return new(default);
             }
 
             string languageCode;
@@ -49,7 +49,7 @@ namespace GrammarNazi.Core.Services
                 }
                 else // language not supported
                 {
-                    return new GrammarCheckResult(default);
+                    return new(default);
                 }
             }
 
@@ -57,7 +57,7 @@ namespace GrammarNazi.Core.Services
 
             // validate if LanguageTool has detected a valid language
             if (!IsValidLanguageDetected(result.Language.Code))
-                return new GrammarCheckResult(default);
+                return new(default);
 
             var corrections = new List<GrammarCorrection>();
 
@@ -82,7 +82,7 @@ namespace GrammarNazi.Core.Services
                 corrections.Add(correction);
             }
 
-            return new GrammarCheckResult(corrections);
+            return new(corrections);
         }
 
         private bool RulesFilter(Match match)

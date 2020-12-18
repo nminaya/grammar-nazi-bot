@@ -40,7 +40,7 @@ namespace GrammarNazi.Core.Services
 
                 if (languageInfo == default)
                 {
-                    return new GrammarCheckResult(default);
+                    return new(default);
                 }
 
                 languageCode = languageInfo.TwoLetterISOLanguageName;
@@ -67,10 +67,10 @@ namespace GrammarNazi.Core.Services
                     corrections.Add(correction);
                 }
 
-                return new GrammarCheckResult(corrections);
+                return new(corrections);
             }
 
-            return new GrammarCheckResult(default);
+            return new(default);
         }
 
         private string GetErrorMessage(CheckTextResponse checkTextResponse)

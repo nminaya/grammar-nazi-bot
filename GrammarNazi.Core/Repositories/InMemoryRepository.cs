@@ -9,7 +9,7 @@ namespace GrammarNazi.Core.Repositories
 {
     public class InMemoryRepository<T> : IRepository<T> where T : class
     {
-        private static readonly List<T> _list = new List<T>();
+        private static readonly List<T> _list = new();
 
         public Task Add(T entity)
         {

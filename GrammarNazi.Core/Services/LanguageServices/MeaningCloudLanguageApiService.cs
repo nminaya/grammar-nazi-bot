@@ -30,7 +30,7 @@ namespace GrammarNazi.Core.Services
 
             var language = languages.First();
 
-            return new LanguageInformation
+            return new()
             {
                 ThreeLetterISOLanguageName = language.Iso6393,
                 TwoLetterISOLanguageName = language.Iso6392

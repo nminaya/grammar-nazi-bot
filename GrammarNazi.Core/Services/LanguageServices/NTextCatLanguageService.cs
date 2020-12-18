@@ -26,7 +26,7 @@ namespace GrammarNazi.Core.Services
 
             var (languageInfo, _) = languages.First();
 
-            return new LanguageInformation
+            return new()
             {
                 ThreeLetterISOLanguageName = languageInfo.Iso639_3,
                 TwoLetterISOLanguageName = LanguageUtils.GetLanguageCode(languageInfo.Iso639_3)

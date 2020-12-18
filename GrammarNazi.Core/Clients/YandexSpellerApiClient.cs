@@ -26,9 +26,7 @@ namespace GrammarNazi.Core.Clients
             var response = await httpClient.GetAsync(url);
             var jsonString = await response.Content.ReadAsStringAsync();
 
-            var result = JsonConvert.DeserializeObject<IEnumerable<CheckTextResponse>>(jsonString);
-
-            return result;
+            return JsonConvert.DeserializeObject<IEnumerable<CheckTextResponse>>(jsonString);
         }
     }
 }

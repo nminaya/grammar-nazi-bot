@@ -36,6 +36,7 @@ namespace GrammarNazi.Core.Services
             {
                 var languageInfo = _languageService.IdentifyLanguage(text);
 
+                // Language not supported
                 if (languageInfo == default)
                 {
                     return Task.FromResult(new GrammarCheckResult(default));
