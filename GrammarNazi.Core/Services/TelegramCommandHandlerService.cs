@@ -141,8 +141,7 @@ namespace GrammarNazi.Core.Services
                         var chatConfig = await _chatConfigurationService.GetConfigurationByChatId(message.Chat.Id);
                         chatConfig.GrammarAlgorithm = (GrammarAlgorithms)algorithm;
 
-                        // Fire and forget
-                        _ = _chatConfigurationService.Update(chatConfig);
+                        await _chatConfigurationService.Update(chatConfig);
 
                         await _client.SendTextMessageAsync(message.Chat.Id, "Algorithm updated.");
                     }
@@ -182,8 +181,7 @@ namespace GrammarNazi.Core.Services
                         var chatConfig = await _chatConfigurationService.GetConfigurationByChatId(message.Chat.Id);
                         chatConfig.SelectedLanguage = (SupportedLanguages)language;
 
-                        // Fire and forget
-                        _ = _chatConfigurationService.Update(chatConfig);
+                        await _chatConfigurationService.Update(chatConfig);
 
                         await _client.SendTextMessageAsync(message.Chat.Id, "Language updated.");
                     }
@@ -205,8 +203,7 @@ namespace GrammarNazi.Core.Services
 
                 chatConfig.IsBotStopped = true;
 
-                // Fire and forget
-                _ = _chatConfigurationService.Update(chatConfig);
+                await _chatConfigurationService.Update(chatConfig);
 
                 await _client.SendTextMessageAsync(message.Chat.Id, $"Bot stopped");
             }
@@ -222,8 +219,7 @@ namespace GrammarNazi.Core.Services
 
                 chatConfig.HideCorrectionDetails = true;
 
-                // Fire and forget
-                _ = _chatConfigurationService.Update(chatConfig);
+                await _chatConfigurationService.Update(chatConfig);
 
                 await _client.SendTextMessageAsync(message.Chat.Id, "Correction details hidden ✅");
             }
@@ -239,8 +235,7 @@ namespace GrammarNazi.Core.Services
 
                 chatConfig.HideCorrectionDetails = false;
 
-                // Fire and forget
-                _ = _chatConfigurationService.Update(chatConfig);
+                await _chatConfigurationService.Update(chatConfig);
 
                 await _client.SendTextMessageAsync(message.Chat.Id, "Show correction details ✅");
             }
@@ -256,8 +251,7 @@ namespace GrammarNazi.Core.Services
 
                 chatConfig.CorrectionStrictnessLevel = CorrectionStrictnessLevels.Tolerant;
 
-                // Fire and forget
-                _ = _chatConfigurationService.Update(chatConfig);
+                await _chatConfigurationService.Update(chatConfig);
 
                 await _client.SendTextMessageAsync(message.Chat.Id, "Tolerant ✅");
             }
@@ -273,8 +267,7 @@ namespace GrammarNazi.Core.Services
 
                 chatConfig.CorrectionStrictnessLevel = CorrectionStrictnessLevels.Intolerant;
 
-                // Fire and forget
-                _ = _chatConfigurationService.Update(chatConfig);
+                await _chatConfigurationService.Update(chatConfig);
 
                 await _client.SendTextMessageAsync(message.Chat.Id, "Intolerant ✅");
             }
@@ -327,7 +320,7 @@ namespace GrammarNazi.Core.Services
 
                     chatConfig.WhiteListWords.Add(word);
 
-                    _ = _chatConfigurationService.Update(chatConfig);
+                    await _chatConfigurationService.Update(chatConfig);
 
                     await _client.SendTextMessageAsync(message.Chat.Id, $"Word '{word}' added to the WhiteList.");
                 }
@@ -360,7 +353,7 @@ namespace GrammarNazi.Core.Services
 
                     chatConfig.WhiteListWords.Remove(word);
 
-                    _ = _chatConfigurationService.Update(chatConfig);
+                    await _chatConfigurationService.Update(chatConfig);
 
                     await _client.SendTextMessageAsync(message.Chat.Id, $"Word '{word}' removed from the WhiteList.");
                 }
