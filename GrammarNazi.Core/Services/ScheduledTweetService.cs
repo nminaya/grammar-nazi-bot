@@ -7,28 +7,28 @@ using System.Threading.Tasks;
 
 namespace GrammarNazi.Core.Services
 {
-	public class ScheduledTweetService : IScheduledTweetService
-	{
-		private readonly IRepository<ScheduledTweet> _repository;
+    public class ScheduledTweetService : IScheduledTweetService
+    {
+        private readonly IRepository<ScheduledTweet> _repository;
 
-		public ScheduledTweetService(IRepository<ScheduledTweet> repository)
-		{
-			_repository = repository;
-		}
+        public ScheduledTweetService(IRepository<ScheduledTweet> repository)
+        {
+            _repository = repository;
+        }
 
-		public Task Add(ScheduledTweet scheduledTweet)
-		{
-			return _repository.Add(scheduledTweet);
-		}
+        public Task Add(ScheduledTweet scheduledTweet)
+        {
+            return _repository.Add(scheduledTweet);
+        }
 
-		public Task<IEnumerable<ScheduledTweet>> GetPendingScheduledTweets()
-		{
-			return _repository.GetAll(v => v.PublishAfter < DateTime.Now && !v.IsPublished);
-		}
+        public Task<IEnumerable<ScheduledTweet>> GetPendingScheduledTweets()
+        {
+            return _repository.GetAll(v => v.PublishAfter < DateTime.Now && !v.IsPublished);
+        }
 
-		public Task Update(ScheduledTweet scheduledTweet)
-		{
-			return _repository.Update(scheduledTweet, v => v.Id == scheduledTweet.Id);
-		}
-	}
+        public Task Update(ScheduledTweet scheduledTweet)
+        {
+            return _repository.Update(scheduledTweet, v => v.Id == scheduledTweet.Id);
+        }
+    }
 }

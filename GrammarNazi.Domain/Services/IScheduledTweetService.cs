@@ -4,12 +4,12 @@ using System.Threading.Tasks;
 
 namespace GrammarNazi.Domain.Services
 {
-	public interface IScheduledTweetService
-	{
-		Task<IEnumerable<ScheduledTweet>> GetPendingScheduledTweets();
+    public interface IScheduledTweetService
+    {
+        Task<IEnumerable<ScheduledTweet>> GetPendingScheduledTweets();
 
-		Task Update(ScheduledTweet scheduledTweet);
+        Task Update(ScheduledTweet scheduledTweet);
 
-		Task Add(ScheduledTweet scheduledTweet);
-	}
+        Task Add(ScheduledTweet scheduledTweet);
+    }
 }
