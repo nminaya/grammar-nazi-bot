@@ -168,7 +168,7 @@ namespace GrammarNazi.App.HostedServices
 
             foreach (var scheduledTweet in scheduledTweets)
             {
-                var tweet = _twitterClient.Tweets.PublishTweetAsync(scheduledTweet.TweetText);
+                var tweet = await _twitterClient.Tweets.PublishTweetAsync(scheduledTweet.TweetText);
 
                 if (tweet != null)
                 {
