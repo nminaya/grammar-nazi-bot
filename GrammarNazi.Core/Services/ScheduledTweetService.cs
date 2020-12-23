@@ -23,7 +23,7 @@ namespace GrammarNazi.Core.Services
 
 		public Task<IEnumerable<ScheduledTweet>> GetPendingScheduledTweets()
 		{
-			return _repository.GetAll(v => v.PublishAfter < DateTime.Now);
+			return _repository.GetAll(v => v.PublishAfter < DateTime.Now && !v.IsPublished);
 		}
 
 		public Task Update(ScheduledTweet scheduledTweet)
