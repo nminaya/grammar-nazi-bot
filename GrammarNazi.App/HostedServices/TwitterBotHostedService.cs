@@ -135,8 +135,7 @@ namespace GrammarNazi.App.HostedServices
                         await _twitterLogService.LogTweet(lastTweet.Id);
                     }
 
-                    await followBackUsersTask;
-                    await publishScheduledTweetsTask;
+                    await Task.WhenAll(followBackUsersTask, publishScheduledTweetsTask);
                 }
                 catch (Exception ex)
                 {
