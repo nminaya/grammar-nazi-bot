@@ -7,51 +7,56 @@ using System.Threading.Tasks;
 
 namespace GrammarNazi.Core.Repositories
 {
-    public class InMemoryRepository<T> : IRepository<T> where T : class
-    {
-        private static readonly List<T> _list = new();
+	public class InMemoryRepository<T> : IRepository<T> where T : class
+	{
+		private static readonly List<T> _list = new();
 
-        public Task Add(T entity)
-        {
-            _list.Add(entity);
-            return Task.CompletedTask;
-        }
+		public Task Add(T entity)
+		{
+			_list.Add(entity);
+			return Task.CompletedTask;
+		}
 
-        public Task<bool> Any(Expression<Func<T, bool>> filter = default)
-        {
-            if (filter == default)
-                return Task.FromResult(_list.Count > 0);
+		public Task<bool> Any(Expression<Func<T, bool>> filter = default)
+		{
+			if (filter == default)
+				return Task.FromResult(_list.Count > 0);
 
-            return Task.FromResult(_list.Any(filter.Compile()));
-        }
+			return Task.FromResult(_list.Any(filter.Compile()));
+		}
 
-        public Task Delete(T entity)
-        {
-            _list.Remove(entity);
-            return Task.CompletedTask;
-        }
+		public Task Delete(T entity)
+		{
+			_list.Remove(entity);
+			return Task.CompletedTask;
+		}
 
-        public Task<T> GetFirst(Expression<Func<T, bool>> filter)
-        {
-            var item = _list.FirstOrDefault(filter.Compile());
-            return Task.FromResult(item);
-        }
+		public Task<IEnumerable<T>> GetAll(Expression<Func<T, bool>> filter)
+		{
+			return Task.FromResult(_list.Where(filter.Compile()));
+		}
 
-        public Task<TResult> Max<TResult>(Expression<Func<T, TResult>> selector)
-        {
-            return Task.FromResult(_list.Max(selector.Compile()));
-        }
+		public Task<T> GetFirst(Expression<Func<T, bool>> filter)
+		{
+			var item = _list.FirstOrDefault(filter.Compile());
+			return Task.FromResult(item);
+		}
 
-        public Task Update(T entity, Expression<Func<T, bool>> identifier)
-        {
-            var obj = _list.FirstOrDefault(identifier.Compile());
+		public Task<TResult> Max<TResult>(Expression<Func<T, TResult>> selector)
+		{
+			return Task.FromResult(_list.Max(selector.Compile()));
+		}
 
-            if (obj != default)
-                _list.Remove(obj);
+		public Task Update(T entity, Expression<Func<T, bool>> identifier)
+		{
+			var obj = _list.FirstOrDefault(identifier.Compile());
 
-            _list.Add(entity);
+			if (obj != default)
+				_list.Remove(obj);
 
-            return Task.CompletedTask;
-        }
-    }
+			_list.Add(entity);
+
+			return Task.CompletedTask;
+		}
+	}
 }
