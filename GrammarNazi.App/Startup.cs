@@ -65,6 +65,7 @@ namespace GrammarNazi.App
             services.AddTransient<IYandexSpellerApiClient, YandexSpellerApiClient>();
             services.AddTransient<IDatamuseApiClient, DatamuseApiClient>();
             services.AddTransient<IChatConfigurationService, ChatConfigurationService>();
+            services.AddTransient<IScheduledTweetService, ScheduledTweetService>();
             services.AddTransient<ILanguageService, NTextCatLanguageService>();
             services.AddTransient<IGrammarService, LanguageToolApiService>();
             services.AddTransient<IGrammarService, InternalFileGrammarService>();
