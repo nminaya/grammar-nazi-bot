@@ -10,7 +10,7 @@ namespace GrammarNazi.Domain.Entities
         /// <summary>
         /// Identifier
         /// </summary>
-        public int Id { get; set; }
+        public Guid Id { get; set; }
 
         /// <summary>
         /// True if tweet is published
@@ -36,6 +36,11 @@ namespace GrammarNazi.Domain.Entities
         /// Date of tweet published
         /// </summary>
         public DateTime? PublishDate { get; set; }
+
+        public ScheduledTweet()
+        {
+            Id = Guid.NewGuid();
+        }
 
         public override bool Equals(object obj)
         {
