@@ -27,13 +27,15 @@ namespace GrammarNazi.App.HostedServices
         private readonly ITwitterClient _twitterClient;
         private readonly IGithubService _githubService;
         private readonly TwitterBotSettings _twitterBotSettings;
+        private readonly IScheduledTweetService _scheduledTweetService;
 
         public TwitterBotHostedService(ILogger<TwitterBotHostedService> logger,
             IEnumerable<IGrammarService> grammarServices,
             ITwitterLogService twitterLogService,
             ITwitterClient userClient,
             IOptions<TwitterBotSettings> options,
-            IGithubService githubService)
+            IGithubService githubService,
+            IScheduledTweetService scheduledTweetService)
         {
             _logger = logger;
             _twitterLogService = twitterLogService;
@@ -43,6 +45,7 @@ namespace GrammarNazi.App.HostedServices
 
             _grammarService = grammarServices.First(v => v.GrammarAlgorith == Defaults.DefaultAlgorithm);
             _grammarService.SetStrictnessLevel(CorrectionStrictnessLevels.Tolerant);
+            _scheduledTweetService = scheduledTweetService;
         }
 
         public override Task StartAsync(CancellationToken cancellationToken)
@@ -89,39 +92,40 @@ namespace GrammarNazi.App.HostedServices
 
                         var correctionsResult = await _grammarService.GetCorrections(tweetText);
 
-                        if (correctionsResult.HasCorrections)
+                        if (!correctionsResult.HasCorrections)
+                            continue;
+
+                        var messageBuilder = new StringBuilder();
+
+                        var mentionedUsers = tweet.UserMentions.Select(v => v.ToString()).Join(" "); // Other users mentioned in the tweet
+                        messageBuilder.Append($"@{tweet.CreatedBy.ScreenName} {mentionedUsers}");
+
+                        foreach (var correction in correctionsResult.Corrections)
                         {
-                            var messageBuilder = new StringBuilder();
-
-                            var mentionedUsers = tweet.UserMentions.Select(v => v.ToString()).Join(" "); // Other users mentioned in the tweet
-                            messageBuilder.Append($"@{tweet.CreatedBy.ScreenName} {mentionedUsers}");
-
-                            foreach (var correction in correctionsResult.Corrections)
-                            {
-                                // Only suggest the first possible replacement for now
-                                messageBuilder.AppendLine($"*{correction.PossibleReplacements.First()} [{correction.Message}]");
-                            }
-
-                            var correctionString = messageBuilder.ToString();
-
-                            _logger.LogInformation($"Sending reply to: {tweet.CreatedBy.ScreenName}");
-                            var publishTweetParameters = new PublishTweetParameters(correctionString)
-                            {
-                                InReplyToTweetId = tweet.Id
-                            };
-                            var replyTweet = await _twitterClient.Tweets.PublishTweetAsync(publishTweetParameters);
-
-                            if (replyTweet != null)
-                            {
-                                _logger.LogInformation("Reply sent successfuly");
-                                await _twitterLogService.LogReply(tweet.Id, replyTweet.Id);
-                            }
-
-                            await Task.Delay(_twitterBotSettings.PublishTweetDelayMilliseconds);
+                            // Only suggest the first possible replacement
+                            messageBuilder.AppendLine($"*{correction.PossibleReplacements.First()} [{correction.Message}]");
                         }
+
+                        var correctionString = messageBuilder.ToString();
+
+                        _logger.LogInformation($"Sending reply to: {tweet.CreatedBy.ScreenName}");
+                        var publishTweetParameters = new PublishTweetParameters(correctionString)
+                        {
+                            InReplyToTweetId = tweet.Id
+                        };
+                        var replyTweet = await _twitterClient.Tweets.PublishTweetAsync(publishTweetParameters);
+
+                        if (replyTweet != null)
+                        {
+                            _logger.LogInformation("Reply sent successfuly");
+                            await _twitterLogService.LogReply(tweet.Id, replyTweet.Id);
+                        }
+
+                        await Task.Delay(_twitterBotSettings.PublishTweetDelayMilliseconds);
                     }
 
                     var followBackUsersTask = FollowBackUsers(followerIds);
+                    var publishScheduledTweetsTask = PublishScheduledTweets();
 
                     if (tweets.Any())
                     {
@@ -131,7 +135,7 @@ namespace GrammarNazi.App.HostedServices
                         await _twitterLogService.LogTweet(lastTweet.Id);
                     }
 
-                    await followBackUsersTask;
+                    await Task.WhenAll(followBackUsersTask, publishScheduledTweetsTask);
                 }
                 catch (Exception ex)
                 {
@@ -154,6 +158,26 @@ namespace GrammarNazi.App.HostedServices
             foreach (var userId in userIdsToFollow)
             {
                 await _twitterClient.Users.FollowUserAsync(userId);
+            }
+        }
+
+        private async Task PublishScheduledTweets()
+        {
+            var scheduledTweets = await _scheduledTweetService.GetPendingScheduledTweets();
+
+            foreach (var scheduledTweet in scheduledTweets)
+            {
+                var tweet = await _twitterClient.Tweets.PublishTweetAsync(scheduledTweet.TweetText);
+
+                if (tweet != null)
+                {
+                    scheduledTweet.TweetId = tweet.Id;
+                    scheduledTweet.IsPublished = true;
+                    scheduledTweet.PublishDate = DateTime.Now;
+
+                    await _scheduledTweetService.Update(scheduledTweet);
+                    await Task.Delay(_twitterBotSettings.PublishTweetDelayMilliseconds);
+                }
             }
         }
     }

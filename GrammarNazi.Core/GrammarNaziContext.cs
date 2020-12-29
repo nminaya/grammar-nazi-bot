@@ -21,6 +21,9 @@ namespace GrammarNazi.Core
             modelBuilder.Entity<TwitterLog>()
                 .HasKey(v => v.TweetId);
 
+            modelBuilder.Entity<ScheduledTweet>()
+                .HasKey(v => v.Id);
+
             modelBuilder.Entity<ChatConfiguration>()
                 .Property(e => e.WhiteListWords)
                 .HasConversion(v => v.Join(","), v => v.Split(',', StringSplitOptions.RemoveEmptyEntries).ToList());

@@ -79,5 +79,12 @@ namespace GrammarNazi.Core.Repositories
         }
 
         private async Task<IEnumerable<T>> GetAllItems() => (await _firebaseClient.Child(typeof(T).Name).OnceAsync<T>()).Select(v => v.Object);
+
+        public async Task<IEnumerable<T>> GetAll(Expression<Func<T, bool>> filter)
+        {
+            var items = await GetAllItems();
+
+            return items.Where(filter.Compile());
+        }
     }
 }

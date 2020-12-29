@@ -105,21 +105,21 @@ namespace GrammarNazi.App.HostedServices
 
             var corretionResult = await grammarService.GetCorrections(text);
 
-            if (corretionResult.HasCorrections)
+            if (!corretionResult.HasCorrections)
+                return;
+
+            var messageBuilder = new StringBuilder();
+
+            foreach (var correction in corretionResult.Corrections)
             {
-                var messageBuilder = new StringBuilder();
+                var correctionDetailMessage = !chatConfig.HideCorrectionDetails && !string.IsNullOrEmpty(correction.Message)
+                    ? $"[{correction.Message}]"
+                    : string.Empty;
 
-                foreach (var correction in corretionResult.Corrections)
-                {
-                    var correctionDetailMessage = !chatConfig.HideCorrectionDetails && !string.IsNullOrEmpty(correction.Message)
-                        ? $"[{correction.Message}]"
-                        : string.Empty;
-
-                    messageBuilder.AppendLine($"*{correction.PossibleReplacements.First()} {correctionDetailMessage}");
-                }
-
-                await _client.SendTextMessageAsync(message.Chat.Id, messageBuilder.ToString(), replyToMessageId: message.MessageId);
+                messageBuilder.AppendLine($"*{correction.PossibleReplacements.First()} {correctionDetailMessage}");
             }
+
+            await _client.SendTextMessageAsync(message.Chat.Id, messageBuilder.ToString(), replyToMessageId: message.MessageId);
         }
 
         private async Task<ChatConfiguration> GetChatConfiguration(long chatId)

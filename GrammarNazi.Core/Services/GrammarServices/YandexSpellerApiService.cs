@@ -27,7 +27,7 @@ namespace GrammarNazi.Core.Services
         public async Task<GrammarCheckResult> GetCorrections(string text)
         {
             if (string.IsNullOrWhiteSpace(text))
-                return new GrammarCheckResult(default);
+                return new(default);
 
             string languageCode;
             if (SelectedLanguage != SupportedLanguages.Auto)
@@ -38,33 +38,29 @@ namespace GrammarNazi.Core.Services
             {
                 var languageInfo = _languageService.IdentifyLanguage(text);
 
-                if (languageInfo == default)
-                {
+                if (languageInfo == default) // Language not supported
                     return new(default);
-                }
 
                 languageCode = languageInfo.TwoLetterISOLanguageName;
             }
 
-            var response = await _yandexSpellerApiClient.CheckText(text, languageCode);
+            var textCorrections = await _yandexSpellerApiClient.CheckText(text, languageCode);
 
-            if (response?.Any() == true)
+            if (textCorrections?.Any() == true)
             {
                 var corrections = new List<GrammarCorrection>();
 
-                foreach (var spellResult in response.Where(ErrorCodeFIlter))
+                foreach (var textCorrection in textCorrections.Where(ErrorCodeFIlter))
                 {
-                    if (IsWhiteListWord(spellResult.Word))
+                    if (IsWhiteListWord(textCorrection.Word))
                         continue;
 
-                    var correction = new GrammarCorrection
+                    corrections.Add(new()
                     {
-                        WrongWord = spellResult.Word,
-                        PossibleReplacements = spellResult.Replacements,
-                        Message = GetErrorMessage(spellResult)
-                    };
-
-                    corrections.Add(correction);
+                        WrongWord = textCorrection.Word,
+                        PossibleReplacements = textCorrection.Replacements,
+                        Message = GetErrorMessage(textCorrection)
+                    });
                 }
 
                 return new(corrections);
@@ -73,7 +69,7 @@ namespace GrammarNazi.Core.Services
             return new(default);
         }
 
-        private string GetErrorMessage(CheckTextResponse checkTextResponse)
+        private static string GetErrorMessage(CheckTextResponse checkTextResponse)
         {
             return checkTextResponse.ErrorCode switch
             {

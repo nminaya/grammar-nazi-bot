@@ -2,6 +2,8 @@
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using System;
+using System.Collections.Generic;
+using System.Linq;
 using System.Linq.Expressions;
 using System.Threading.Tasks;
 
@@ -36,6 +38,11 @@ namespace GrammarNazi.Core.Repositories
             await _dbContext.SaveChangesAsync();
         }
 
+        public async Task<IEnumerable<T>> GetAll(Expression<Func<T, bool>> filter)
+        {
+            return await _dbContext.Set<T>().Where(filter).ToListAsync();
+        }
+
         public async Task<T> GetFirst(Expression<Func<T, bool>> filter)
         {
             return await _dbContext.Set<T>().AsNoTracking().FirstOrDefaultAsync(filter);
@@ -48,6 +55,7 @@ namespace GrammarNazi.Core.Repositories
 
         public async Task Update(T entity, Expression<Func<T, bool>> identifier)
         {
+            //TODO: Find way to update without removing
             var obj = await _dbContext.Set<T>().FirstOrDefaultAsync(identifier);
             if (obj != default)
                 _dbContext.Set<T>().Remove(obj);
