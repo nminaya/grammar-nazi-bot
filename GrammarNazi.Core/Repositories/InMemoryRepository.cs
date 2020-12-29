@@ -49,6 +49,7 @@ namespace GrammarNazi.Core.Repositories
 
         public Task Update(T entity, Expression<Func<T, bool>> identifier)
         {
+            //TODO: Find way to update without removing
             var obj = _list.FirstOrDefault(identifier.Compile());
 
             if (obj != default)

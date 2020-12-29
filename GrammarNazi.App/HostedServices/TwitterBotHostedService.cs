@@ -92,36 +92,36 @@ namespace GrammarNazi.App.HostedServices
 
                         var correctionsResult = await _grammarService.GetCorrections(tweetText);
 
-                        if (correctionsResult.HasCorrections)
+                        if (!correctionsResult.HasCorrections)
+                            continue;
+
+                        var messageBuilder = new StringBuilder();
+
+                        var mentionedUsers = tweet.UserMentions.Select(v => v.ToString()).Join(" "); // Other users mentioned in the tweet
+                        messageBuilder.Append($"@{tweet.CreatedBy.ScreenName} {mentionedUsers}");
+
+                        foreach (var correction in correctionsResult.Corrections)
                         {
-                            var messageBuilder = new StringBuilder();
-
-                            var mentionedUsers = tweet.UserMentions.Select(v => v.ToString()).Join(" "); // Other users mentioned in the tweet
-                            messageBuilder.Append($"@{tweet.CreatedBy.ScreenName} {mentionedUsers}");
-
-                            foreach (var correction in correctionsResult.Corrections)
-                            {
-                                // Only suggest the first possible replacement for now
-                                messageBuilder.AppendLine($"*{correction.PossibleReplacements.First()} [{correction.Message}]");
-                            }
-
-                            var correctionString = messageBuilder.ToString();
-
-                            _logger.LogInformation($"Sending reply to: {tweet.CreatedBy.ScreenName}");
-                            var publishTweetParameters = new PublishTweetParameters(correctionString)
-                            {
-                                InReplyToTweetId = tweet.Id
-                            };
-                            var replyTweet = await _twitterClient.Tweets.PublishTweetAsync(publishTweetParameters);
-
-                            if (replyTweet != null)
-                            {
-                                _logger.LogInformation("Reply sent successfuly");
-                                await _twitterLogService.LogReply(tweet.Id, replyTweet.Id);
-                            }
-
-                            await Task.Delay(_twitterBotSettings.PublishTweetDelayMilliseconds);
+                            // Only suggest the first possible replacement
+                            messageBuilder.AppendLine($"*{correction.PossibleReplacements.First()} [{correction.Message}]");
                         }
+
+                        var correctionString = messageBuilder.ToString();
+
+                        _logger.LogInformation($"Sending reply to: {tweet.CreatedBy.ScreenName}");
+                        var publishTweetParameters = new PublishTweetParameters(correctionString)
+                        {
+                            InReplyToTweetId = tweet.Id
+                        };
+                        var replyTweet = await _twitterClient.Tweets.PublishTweetAsync(publishTweetParameters);
+
+                        if (replyTweet != null)
+                        {
+                            _logger.LogInformation("Reply sent successfuly");
+                            await _twitterLogService.LogReply(tweet.Id, replyTweet.Id);
+                        }
+
+                        await Task.Delay(_twitterBotSettings.PublishTweetDelayMilliseconds);
                     }
 
                     var followBackUsersTask = FollowBackUsers(followerIds);
