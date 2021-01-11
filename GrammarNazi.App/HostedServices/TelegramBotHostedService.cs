@@ -58,7 +58,7 @@ namespace GrammarNazi.App.HostedServices
                 {
                     await OnMessageReceived(obj, eventArgs);
                 }
-                catch (ApiRequestException ex) when (ex.Message.Contains("bot was blocked by the user"))
+                catch (ApiRequestException ex) when (ex.Message.Contains("bot was blocked by the user") || ex.Message.Contains("bot was kicked from the supergroup"))
                 {
                     _logger.LogWarning(ex, "User has blocked the Bot");
                 }
