@@ -25,7 +25,7 @@ namespace GrammarNazi.Core.Services
             return new()
             {
                 Score = analysisResult.Result.Polarity,
-                SentimentType = GetSentimentType(analysisResult.Result.Type)
+                Type = GetSentimentType(analysisResult.Result.Type)
             };
         }
 

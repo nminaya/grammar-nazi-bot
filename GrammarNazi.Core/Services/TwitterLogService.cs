@@ -39,7 +39,7 @@ namespace GrammarNazi.Core.Services
 
         public async Task LogTweet(long tweetId)
         {
-            if (await _repository.Any(v => v.TweetId == tweetId))
+            if (await TweetExist(tweetId))
                 return;
 
             var twitterLog = new TwitterLog
@@ -49,6 +49,11 @@ namespace GrammarNazi.Core.Services
             };
 
             await _repository.Add(twitterLog);
+        }
+
+        public Task<bool> TweetExist(long tweetId)
+        {
+            return _repository.Any(v => v.TweetId == tweetId);
         }
     }
 }

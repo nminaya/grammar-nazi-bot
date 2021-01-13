@@ -190,15 +190,14 @@ namespace GrammarNazi.App.HostedServices
 
             foreach (var reply in replies)
             {
-                // TODO: get value from service
-                bool isReplyToBot = 1 == 1;
+                bool isReplyToBot = await _twitterLogService.TweetExist(reply.InReplyToStatusId.Value);
 
                 if (!isReplyToBot)
                     continue;
 
-                var sentimentAnalysisResult = await _sentimentAnalysisService.GetSentimentAnalysis(reply.Text);
+                var sentimentAnalysis = await _sentimentAnalysisService.GetSentimentAnalysis(reply.Text);
 
-                if (sentimentAnalysisResult.SentimentType == SentimentTypes.Positive)
+                if (sentimentAnalysis.Type == SentimentTypes.Positive)
                 {
                     await _twitterClient.Tweets.FavoriteTweetAsync(reply.Id);
                 }
