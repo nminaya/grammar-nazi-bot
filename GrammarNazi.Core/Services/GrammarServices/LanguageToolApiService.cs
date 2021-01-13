@@ -105,6 +105,7 @@ namespace GrammarNazi.Core.Services
                 && match.Rule.Id != "ES_QUESTION_MARK"
                 && match.Rule.Id != "GONNA"
                 && match.Rule.Id != "DECIMAL_COMMA"
+                && match.Rule.Id != "ONOMATOPEYAS"
                 && match.Rule.Id != "INCORRECT_SPACES";
         }
 
