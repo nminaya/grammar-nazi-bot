@@ -64,7 +64,7 @@ namespace GrammarNazi.App
             services.AddTransient<IMeganingCloudLangApiClient, MeganingCloudLangApiClient>();
             services.AddTransient<IYandexSpellerApiClient, YandexSpellerApiClient>();
             services.AddTransient<IDatamuseApiClient, DatamuseApiClient>();
-            services.AddTransient<ISentimApiClient, ISentimApiClient>();
+            services.AddTransient<ISentimApiClient, SentimApiClient>();
             services.AddTransient<IChatConfigurationService, ChatConfigurationService>();
             services.AddTransient<IScheduledTweetService, ScheduledTweetService>();
             services.AddTransient<ILanguageService, NTextCatLanguageService>();
