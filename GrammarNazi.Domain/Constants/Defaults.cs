@@ -9,5 +9,6 @@ namespace GrammarNazi.Domain.Constants
         public const int StringComparableRange = 2;
         public const GrammarAlgorithms DefaultAlgorithm = GrammarAlgorithms.LanguageToolApi;
         public const string TelegramBotUser = "grammarNz_Bot";
+        public const double ValidPositiveSentimentScore = 0.90;
     }
 }

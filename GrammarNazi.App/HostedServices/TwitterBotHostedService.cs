@@ -129,6 +129,7 @@ namespace GrammarNazi.App.HostedServices
 
                     var followBackUsersTask = FollowBackUsers(followerIds);
                     var publishScheduledTweetsTask = PublishScheduledTweets();
+                    var likeRepliesToBotTask = LikeRepliesToBot(tweets);
 
                     if (tweets.Any())
                     {
@@ -138,7 +139,7 @@ namespace GrammarNazi.App.HostedServices
                         await _twitterLogService.LogTweet(lastTweet.Id);
                     }
 
-                    await Task.WhenAll(followBackUsersTask, publishScheduledTweetsTask);
+                    await Task.WhenAll(followBackUsersTask, publishScheduledTweetsTask, likeRepliesToBotTask);
                 }
                 catch (Exception ex)
                 {
@@ -184,7 +185,7 @@ namespace GrammarNazi.App.HostedServices
             }
         }
 
-        private async Task LikeReplyTweets(List<ITweet> tweets)
+        private async Task LikeRepliesToBot(List<ITweet> tweets)
         {
             var replies = tweets.Where(v => v.InReplyToStatusId != null);
 
@@ -197,7 +198,8 @@ namespace GrammarNazi.App.HostedServices
 
                 var sentimentAnalysis = await _sentimentAnalysisService.GetSentimentAnalysis(reply.Text);
 
-                if (sentimentAnalysis.Type == SentimentTypes.Positive)
+                if (sentimentAnalysis.Type == SentimentTypes.Positive
+                    && sentimentAnalysis.Score >= Defaults.ValidPositiveSentimentScore)
                 {
                     await _twitterClient.Tweets.FavoriteTweetAsync(reply.Id);
                 }
