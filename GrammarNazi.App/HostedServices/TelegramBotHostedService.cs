@@ -25,7 +25,6 @@ namespace GrammarNazi.App.HostedServices
         private readonly ILogger<TelegramBotHostedService> _logger;
         private readonly IEnumerable<IGrammarService> _grammarServices;
         private readonly IChatConfigurationService _chatConfigurationService;
-        private readonly IWebHostEnvironment _webHostEnvironment;
         private readonly ITelegramBotClient _client;
         private readonly ITelegramCommandHandlerService _telegramCommandHandlerService;
         private readonly IGithubService _githubService;
@@ -34,14 +33,12 @@ namespace GrammarNazi.App.HostedServices
             ITelegramBotClient telegramBotClient,
             IEnumerable<IGrammarService> grammarServices,
             IChatConfigurationService chatConfigurationService,
-            IWebHostEnvironment webHostEnvironment,
             ITelegramCommandHandlerService telegramCommandHandlerService,
             IGithubService githubService)
         {
             _logger = logger;
             _grammarServices = grammarServices;
             _chatConfigurationService = chatConfigurationService;
-            _webHostEnvironment = webHostEnvironment;
             _client = telegramBotClient;
             _telegramCommandHandlerService = telegramCommandHandlerService;
             _githubService = githubService;
@@ -79,13 +76,10 @@ namespace GrammarNazi.App.HostedServices
         {
             var message = messageEvent.Message;
 
-            _logger.LogInformation($"Message received from chat id: {message.Chat.Id}");
-
             if (message.Type != MessageType.Text) // We only analyze Text messages
                 return;
 
-            if (_webHostEnvironment.IsDevelopment())
-                _logger.LogInformation($"Message: {message.Text}");
+            _logger.LogInformation($"Message received from chat id: {message.Chat.Id}");
 
             if (message.Text.StartsWith('/')) // Text is a command
             {
