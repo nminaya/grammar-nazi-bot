@@ -28,6 +28,7 @@ namespace GrammarNazi.App.HostedServices
         private readonly IGithubService _githubService;
         private readonly TwitterBotSettings _twitterBotSettings;
         private readonly IScheduledTweetService _scheduledTweetService;
+        private readonly ISentimentAnalysisService _sentimentAnalysisService;
 
         public TwitterBotHostedService(ILogger<TwitterBotHostedService> logger,
             IEnumerable<IGrammarService> grammarServices,
@@ -35,7 +36,8 @@ namespace GrammarNazi.App.HostedServices
             ITwitterClient userClient,
             IOptions<TwitterBotSettings> options,
             IGithubService githubService,
-            IScheduledTweetService scheduledTweetService)
+            IScheduledTweetService scheduledTweetService,
+            ISentimentAnalysisService sentimentAnalysisService)
         {
             _logger = logger;
             _twitterLogService = twitterLogService;
@@ -46,6 +48,7 @@ namespace GrammarNazi.App.HostedServices
             _grammarService = grammarServices.First(v => v.GrammarAlgorith == Defaults.DefaultAlgorithm);
             _grammarService.SetStrictnessLevel(CorrectionStrictnessLevels.Tolerant);
             _scheduledTweetService = scheduledTweetService;
+            _sentimentAnalysisService = sentimentAnalysisService;
         }
 
         public override Task StartAsync(CancellationToken cancellationToken)
@@ -177,6 +180,27 @@ namespace GrammarNazi.App.HostedServices
 
                     await _scheduledTweetService.Update(scheduledTweet);
                     await Task.Delay(_twitterBotSettings.PublishTweetDelayMilliseconds);
+                }
+            }
+        }
+
+        private async Task LikeReplyTweets(List<ITweet> tweets)
+        {
+            var replies = tweets.Where(v => v.InReplyToStatusId != null);
+
+            foreach (var reply in replies)
+            {
+                // TODO: get value from service
+                bool isReplyToBot = 1 == 1;
+
+                if (!isReplyToBot)
+                    continue;
+
+                var sentimentAnalysisResult = await _sentimentAnalysisService.GetSentimentAnalysis(reply.Text);
+
+                if (sentimentAnalysisResult.SentimentType == SentimentTypes.Positive)
+                {
+                    await _twitterClient.Tweets.FavoriteTweetAsync(reply.Id);
                 }
             }
         }
