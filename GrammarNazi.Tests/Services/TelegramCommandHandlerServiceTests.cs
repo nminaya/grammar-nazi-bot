@@ -91,6 +91,41 @@ namespace GrammarNazi.Tests.Services
         [Theory]
         [InlineData(Commands.Start)]
         [InlineData(Commands.Start + "@" + Defaults.TelegramBotUser)]
+        public async Task Start_BotNotStopped_BotNotAdmin_Should_ReplyBotNotAdminMessage(string command)
+        {
+            // Arrange
+            var chatConfigurationServiceMock = new Mock<IChatConfigurationService>();
+            var telegramBotClientMock = new Mock<ITelegramBotClient>();
+            var service = new TelegramCommandHandlerService(chatConfigurationServiceMock.Object, telegramBotClientMock.Object);
+            const string replyMessage = "The bot needs admin rights";
+
+            var chatConfig = new ChatConfiguration
+            {
+                IsBotStopped = false
+            };
+
+            var message = new Message
+            {
+                Text = command,
+                Chat = new Chat
+                {
+                    Id = 1
+                }
+            };
+
+            chatConfigurationServiceMock.Setup(v => v.GetConfigurationByChatId(message.Chat.Id))
+                .ReturnsAsync(chatConfig);
+
+            // Act
+            await service.HandleCommand(message);
+
+            // Assert
+            telegramBotClientMock.Verify(v => v.SendTextMessageAsync(It.IsAny<ChatId>(), It.Is<string>(s => s.Contains(replyMessage)), ParseMode.Default, false, false, 0, null, default));
+        }
+
+        [Theory]
+        [InlineData(Commands.Start)]
+        [InlineData(Commands.Start + "@" + Defaults.TelegramBotUser)]
         public async Task Start_BotStoppedAndUserNotAdmin_Should_ReplyNotAdminMessage(string command)
         {
             // Arrange
