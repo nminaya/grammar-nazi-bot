@@ -50,28 +50,30 @@ namespace GrammarNazi.Core.Services
 
                     await _chatConfigurationService.AddConfiguration(chatConfiguration);
                 }
-                else
+                else if (chatConfig.IsBotStopped)
                 {
-                    if (chatConfig.IsBotStopped)
+                    if (!await IsUserAdmin(message))
                     {
-                        if (!await IsUserAdmin(message))
-                        {
-                            messageBuilder.AppendLine("Only admins can use this command.");
-                        }
-                        else
-                        {
-                            chatConfig.IsBotStopped = false;
-                            await _chatConfigurationService.Update(chatConfig);
-                            messageBuilder.AppendLine("Bot started");
-                        }
+                        messageBuilder.AppendLine("Only admins can use this command.");
                     }
                     else
                     {
-                        messageBuilder.AppendLine("Bot is already started");
+                        chatConfig.IsBotStopped = false;
+                        await _chatConfigurationService.Update(chatConfig);
+                        messageBuilder.AppendLine("Bot started");
+                        if (!(await IsBotAdmin(message)))
+                        {
+                            messageBuilder.AppendLine().AppendLine("NOTE: The bot needs admin rights in order to read messages of this chat.");
+                        }
                     }
+                }
+                else
+                {
+                    messageBuilder.AppendLine("Bot is already started");
                 }
 
                 await _client.SendTextMessageAsync(message.Chat.Id, messageBuilder.ToString());
+                await NotifyIfBotIsNotAdmin(message);
             }
             else if (IsCommand(Commands.Help, text))
             {
@@ -92,6 +94,7 @@ namespace GrammarNazi.Core.Services
                 messageBuilder.AppendLine($"{Commands.Intolerant} Set strictness level to {CorrectionStrictnessLevels.Intolerant.GetDescription()}");
 
                 await _client.SendTextMessageAsync(message.Chat.Id, messageBuilder.ToString());
+                await NotifyIfBotIsNotAdmin(message);
             }
             else if (IsCommand(Commands.Settings, text))
             {
@@ -111,6 +114,7 @@ namespace GrammarNazi.Core.Services
                     messageBuilder.AppendLine($"The bot is currently stopped. Type {Commands.Start} to activate the Bot.");
 
                 await _client.SendTextMessageAsync(message.Chat.Id, messageBuilder.ToString());
+                await NotifyIfBotIsNotAdmin(message);
             }
             else if (IsCommand(Commands.SetAlgorithm, text))
             {
@@ -150,6 +154,8 @@ namespace GrammarNazi.Core.Services
                         await _client.SendTextMessageAsync(message.Chat.Id, $"Invalid parameter. Type {Commands.SetAlgorithm} <algorithm_numer> to set an algorithm.");
                     }
                 }
+
+                await NotifyIfBotIsNotAdmin(message);
             }
             else if (IsCommand(Commands.Language, text))
             {
@@ -190,6 +196,8 @@ namespace GrammarNazi.Core.Services
                         await _client.SendTextMessageAsync(message.Chat.Id, $"Invalid parameter. Type {Commands.Language} <language_number> to set a language.");
                     }
                 }
+
+                await NotifyIfBotIsNotAdmin(message);
             }
             else if (IsCommand(Commands.Stop, text))
             {
@@ -205,7 +213,7 @@ namespace GrammarNazi.Core.Services
 
                 await _chatConfigurationService.Update(chatConfig);
 
-                await _client.SendTextMessageAsync(message.Chat.Id, $"Bot stopped");
+                await _client.SendTextMessageAsync(message.Chat.Id, "Bot stopped");
             }
             else if (IsCommand(Commands.HideDetails, text))
             {
@@ -222,6 +230,8 @@ namespace GrammarNazi.Core.Services
                 await _chatConfigurationService.Update(chatConfig);
 
                 await _client.SendTextMessageAsync(message.Chat.Id, "Correction details hidden ✅");
+
+                await NotifyIfBotIsNotAdmin(message);
             }
             else if (IsCommand(Commands.ShowDetails, text))
             {
@@ -238,6 +248,8 @@ namespace GrammarNazi.Core.Services
                 await _chatConfigurationService.Update(chatConfig);
 
                 await _client.SendTextMessageAsync(message.Chat.Id, "Show correction details ✅");
+
+                await NotifyIfBotIsNotAdmin(message);
             }
             else if (IsCommand(Commands.Tolerant, text))
             {
@@ -254,6 +266,8 @@ namespace GrammarNazi.Core.Services
                 await _chatConfigurationService.Update(chatConfig);
 
                 await _client.SendTextMessageAsync(message.Chat.Id, "Tolerant ✅");
+
+                await NotifyIfBotIsNotAdmin(message);
             }
             else if (IsCommand(Commands.Intolerant, text))
             {
@@ -270,6 +284,8 @@ namespace GrammarNazi.Core.Services
                 await _chatConfigurationService.Update(chatConfig);
 
                 await _client.SendTextMessageAsync(message.Chat.Id, "Intolerant ✅");
+
+                await NotifyIfBotIsNotAdmin(message);
             }
             else if (IsCommand(Commands.WhiteList, text))
             {
@@ -291,6 +307,8 @@ namespace GrammarNazi.Core.Services
                 }
 
                 await _client.SendTextMessageAsync(message.Chat.Id, $"You don't have Whitelist words configured. Use {Commands.AddWhiteList} to add words to the WhiteList.");
+
+                await NotifyIfBotIsNotAdmin(message);
             }
             else if (IsCommand(Commands.AddWhiteList, text))
             {
@@ -324,6 +342,8 @@ namespace GrammarNazi.Core.Services
 
                     await _client.SendTextMessageAsync(message.Chat.Id, $"Word '{word}' added to the WhiteList.");
                 }
+
+                await NotifyIfBotIsNotAdmin(message);
             }
             else if (IsCommand(Commands.RemoveWhiteList, text))
             {
@@ -357,6 +377,8 @@ namespace GrammarNazi.Core.Services
 
                     await _client.SendTextMessageAsync(message.Chat.Id, $"Word '{word}' removed from the WhiteList.");
                 }
+
+                await NotifyIfBotIsNotAdmin(message);
             }
         }
 
@@ -381,6 +403,22 @@ namespace GrammarNazi.Core.Services
             var currentUserId = message.From.Id;
 
             return chatAdministrators.Any(v => v.User.Id == currentUserId);
+        }
+
+        private async Task<bool> IsBotAdmin(Message message)
+        {
+            var bot = await _client.GetMeAsync();
+            var chatAdministrators = await _client.GetChatAdministratorsAsync(message.Chat.Id);
+
+            return chatAdministrators.Any(v => v.User.Id == bot.Id);
+        }
+
+        private async Task NotifyIfBotIsNotAdmin(Message message)
+        {
+            if (!await IsBotAdmin(message))
+            {
+                await _client.SendTextMessageAsync(message.Chat.Id, "NOTE: The bot needs admin rights in order to read messages from this chat.");
+            }
         }
 
         private static string GetAvailableAlgorithms(GrammarAlgorithms selectedAlgorith)
