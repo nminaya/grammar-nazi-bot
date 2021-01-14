@@ -97,7 +97,7 @@ namespace GrammarNazi.Tests.Services
             var chatConfigurationServiceMock = new Mock<IChatConfigurationService>();
             var telegramBotClientMock = new Mock<ITelegramBotClient>();
             var service = new TelegramCommandHandlerService(chatConfigurationServiceMock.Object, telegramBotClientMock.Object);
-            const string replyMessage = "Bot is already started";
+            const string replyMessage = "The bot needs admin rights";
 
             var chatConfig = new ChatConfiguration
             {
