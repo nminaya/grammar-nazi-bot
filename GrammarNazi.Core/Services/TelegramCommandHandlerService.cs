@@ -61,10 +61,6 @@ namespace GrammarNazi.Core.Services
                         chatConfig.IsBotStopped = false;
                         await _chatConfigurationService.Update(chatConfig);
                         messageBuilder.AppendLine("Bot started");
-                        if (!(await IsBotAdmin(message)))
-                        {
-                            messageBuilder.AppendLine().AppendLine("NOTE: The bot needs admin rights in order to read messages of this chat.");
-                        }
                     }
                 }
                 else
