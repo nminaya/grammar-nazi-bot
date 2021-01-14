@@ -97,7 +97,7 @@ namespace GrammarNazi.Tests.Services
             var chatConfigurationServiceMock = new Mock<IChatConfigurationService>();
             var telegramBotClientMock = new Mock<ITelegramBotClient>();
             var service = new TelegramCommandHandlerService(chatConfigurationServiceMock.Object, telegramBotClientMock.Object);
-            const string replyMessage = "The bot needs admin rights";
+            const string replyMessage = "Bot is already started";
 
             var chatConfig = new ChatConfiguration
             {
@@ -109,7 +109,8 @@ namespace GrammarNazi.Tests.Services
                 Text = command,
                 Chat = new Chat
                 {
-                    Id = 1
+                    Id = 1,
+                    Type = ChatType.Group
                 }
             };
 
@@ -120,7 +121,7 @@ namespace GrammarNazi.Tests.Services
             await service.HandleCommand(message);
 
             // Assert
-            telegramBotClientMock.Verify(v => v.SendTextMessageAsync(It.IsAny<ChatId>(), It.Is<string>(s => s.Contains(replyMessage)), ParseMode.Default, false, false, 0, null, default));
+            telegramBotClientMock.Verify(v => v.SendTextMessageAsync(It.IsAny<ChatId>(), It.Is<string>(s => s.Contains(replyMessage)), ParseMode.Default, false, false, 0, null, default), Times.Once);
         }
 
         [Theory]
