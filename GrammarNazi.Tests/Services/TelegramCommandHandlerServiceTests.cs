@@ -158,6 +158,9 @@ namespace GrammarNazi.Tests.Services
             telegramBotClientMock.Setup(v => v.GetChatAdministratorsAsync(It.IsAny<ChatId>(), default))
                 .ReturnsAsync(new[] { new ChatMember { User = new() { Id = message.From.Id } } });
 
+            telegramBotClientMock.Setup(v => v.GetMeAsync(default))
+                .ReturnsAsync(new User { Id = 123456 });
+
             chatConfigurationServiceMock.Setup(v => v.GetConfigurationByChatId(message.Chat.Id))
                 .ReturnsAsync(chatConfig);
 
@@ -258,6 +261,9 @@ namespace GrammarNazi.Tests.Services
             telegramBotClientMock.Setup(v => v.GetChatAdministratorsAsync(It.IsAny<ChatId>(), default))
                 .ReturnsAsync(new[] { new ChatMember { User = new() { Id = message.From.Id } } });
 
+            telegramBotClientMock.Setup(v => v.GetMeAsync(default))
+                .ReturnsAsync(new User { Id = 123456 });
+
             chatConfigurationServiceMock.Setup(v => v.GetConfigurationByChatId(message.Chat.Id))
                 .ReturnsAsync(chatConfig);
 
@@ -307,6 +313,9 @@ namespace GrammarNazi.Tests.Services
 
             telegramBotClientMock.Setup(v => v.GetChatAdministratorsAsync(It.IsAny<ChatId>(), default))
                 .ReturnsAsync(new[] { new ChatMember { User = new() { Id = message.From.Id } } });
+
+            telegramBotClientMock.Setup(v => v.GetMeAsync(default))
+                .ReturnsAsync(new User { Id = 123456 });
 
             chatConfigurationServiceMock.Setup(v => v.GetConfigurationByChatId(message.Chat.Id))
                 .ReturnsAsync(chatConfig);
@@ -358,6 +367,9 @@ namespace GrammarNazi.Tests.Services
             telegramBotClientMock.Setup(v => v.GetChatAdministratorsAsync(It.IsAny<ChatId>(), default))
                 .ReturnsAsync(new[] { new ChatMember { User = new() { Id = message.From.Id } } });
 
+            telegramBotClientMock.Setup(v => v.GetMeAsync(default))
+                .ReturnsAsync(new User { Id = 123456 });
+
             chatConfigurationServiceMock.Setup(v => v.GetConfigurationByChatId(message.Chat.Id))
                 .ReturnsAsync(chatConfig);
 
@@ -399,6 +411,9 @@ namespace GrammarNazi.Tests.Services
 
             telegramBotClientMock.Setup(v => v.GetChatAdministratorsAsync(It.IsAny<ChatId>(), default))
                 .ReturnsAsync(new[] { new ChatMember { User = new() { Id = message.From.Id } } });
+
+            telegramBotClientMock.Setup(v => v.GetMeAsync(default))
+                .ReturnsAsync(new User { Id = 123456 });
 
             chatConfigurationServiceMock.Setup(v => v.GetConfigurationByChatId(message.Chat.Id))
                 .ReturnsAsync(chatConfig);
@@ -445,6 +460,9 @@ namespace GrammarNazi.Tests.Services
             chatConfigurationServiceMock.Setup(v => v.GetConfigurationByChatId(message.Chat.Id))
                 .ReturnsAsync(chatConfig);
 
+            telegramBotClientMock.Setup(v => v.GetMeAsync(default))
+                .ReturnsAsync(new User { Id = 123456 });
+
             // Act
             await service.HandleCommand(message);
 
@@ -483,6 +501,9 @@ namespace GrammarNazi.Tests.Services
 
             telegramBotClientMock.Setup(v => v.GetChatAdministratorsAsync(It.IsAny<ChatId>(), default))
                 .ReturnsAsync(new[] { new ChatMember { User = new() { Id = message.From.Id } } });
+
+            telegramBotClientMock.Setup(v => v.GetMeAsync(default))
+                .ReturnsAsync(new User { Id = 123456 });
 
             chatConfigurationServiceMock.Setup(v => v.GetConfigurationByChatId(message.Chat.Id))
                 .ReturnsAsync(chatConfig);
@@ -533,6 +554,9 @@ namespace GrammarNazi.Tests.Services
             telegramBotClientMock.Setup(v => v.GetChatAdministratorsAsync(It.IsAny<ChatId>(), default))
                 .ReturnsAsync(new[] { new ChatMember { User = new() { Id = message.From.Id } } });
 
+            telegramBotClientMock.Setup(v => v.GetMeAsync(default))
+                .ReturnsAsync(new User { Id = 123456 });
+
             chatConfigurationServiceMock.Setup(v => v.GetConfigurationByChatId(message.Chat.Id))
                 .ReturnsAsync(chatConfig);
 
@@ -574,6 +598,9 @@ namespace GrammarNazi.Tests.Services
 
             telegramBotClientMock.Setup(v => v.GetChatAdministratorsAsync(It.IsAny<ChatId>(), default))
                 .ReturnsAsync(new[] { new ChatMember { User = new() { Id = message.From.Id } } });
+
+            telegramBotClientMock.Setup(v => v.GetMeAsync(default))
+                .ReturnsAsync(new User { Id = 123456 });
 
             chatConfigurationServiceMock.Setup(v => v.GetConfigurationByChatId(message.Chat.Id))
                 .ReturnsAsync(chatConfig);
@@ -617,6 +644,9 @@ namespace GrammarNazi.Tests.Services
             telegramBotClientMock.Setup(v => v.GetChatAdministratorsAsync(It.IsAny<ChatId>(), default))
                 .ReturnsAsync(new[] { new ChatMember { User = new() { Id = message.From.Id } } });
 
+            telegramBotClientMock.Setup(v => v.GetMeAsync(default))
+                .ReturnsAsync(new User { Id = 123456 });
+
             chatConfigurationServiceMock.Setup(v => v.GetConfigurationByChatId(message.Chat.Id))
                 .ReturnsAsync(chatConfig);
 
@@ -658,6 +688,9 @@ namespace GrammarNazi.Tests.Services
 
             telegramBotClientMock.Setup(v => v.GetChatAdministratorsAsync(It.IsAny<ChatId>(), default))
                 .ReturnsAsync(new[] { new ChatMember { User = new() { Id = message.From.Id } } });
+
+            telegramBotClientMock.Setup(v => v.GetMeAsync(default))
+                .ReturnsAsync(new User { Id = 123456 });
 
             chatConfigurationServiceMock.Setup(v => v.GetConfigurationByChatId(message.Chat.Id))
                 .ReturnsAsync(chatConfig);
@@ -707,6 +740,9 @@ namespace GrammarNazi.Tests.Services
 
             telegramBotClientMock.Setup(v => v.GetChatAdministratorsAsync(It.IsAny<ChatId>(), default))
                 .ReturnsAsync(new[] { new ChatMember { User = new() { Id = message.From.Id } } });
+
+            telegramBotClientMock.Setup(v => v.GetMeAsync(default))
+                .ReturnsAsync(new User { Id = 123456 });
 
             chatConfigurationServiceMock.Setup(v => v.GetConfigurationByChatId(message.Chat.Id))
                 .ReturnsAsync(chatConfig);
@@ -761,6 +797,9 @@ namespace GrammarNazi.Tests.Services
             chatConfigurationServiceMock.Setup(v => v.GetConfigurationByChatId(message.Chat.Id))
                 .ReturnsAsync(chatConfig);
 
+            telegramBotClientMock.Setup(v => v.GetMeAsync(default))
+                .ReturnsAsync(new User { Id = 123456 });
+
             // Act
             await service.HandleCommand(message);
 
@@ -799,6 +838,9 @@ namespace GrammarNazi.Tests.Services
 
             telegramBotClientMock.Setup(v => v.GetChatAdministratorsAsync(It.IsAny<ChatId>(), default))
                 .ReturnsAsync(new[] { new ChatMember { User = new() { Id = message.From.Id } } });
+
+            telegramBotClientMock.Setup(v => v.GetMeAsync(default))
+                .ReturnsAsync(new User { Id = 123456 });
 
             chatConfigurationServiceMock.Setup(v => v.GetConfigurationByChatId(message.Chat.Id))
                 .ReturnsAsync(chatConfig);
@@ -888,6 +930,9 @@ namespace GrammarNazi.Tests.Services
             telegramBotClientMock.Setup(v => v.GetChatAdministratorsAsync(It.IsAny<ChatId>(), default))
                 .ReturnsAsync(new[] { new ChatMember { User = new() { Id = message.From.Id } } });
 
+            telegramBotClientMock.Setup(v => v.GetMeAsync(default))
+                .ReturnsAsync(new User { Id = 123456 });
+
             chatConfigurationServiceMock.Setup(v => v.GetConfigurationByChatId(message.Chat.Id))
                 .ReturnsAsync(chatConfig);
 
@@ -968,6 +1013,9 @@ namespace GrammarNazi.Tests.Services
             telegramBotClientMock.Setup(v => v.GetChatAdministratorsAsync(It.IsAny<ChatId>(), default))
                 .ReturnsAsync(new[] { new ChatMember { User = new() { Id = message.From.Id } } });
 
+            telegramBotClientMock.Setup(v => v.GetMeAsync(default))
+                .ReturnsAsync(new User { Id = 123456 });
+
             chatConfigurationServiceMock.Setup(v => v.GetConfigurationByChatId(message.Chat.Id))
                 .ReturnsAsync(chatConfig);
 
@@ -1016,6 +1064,9 @@ namespace GrammarNazi.Tests.Services
 
             telegramBotClientMock.Setup(v => v.GetChatAdministratorsAsync(It.IsAny<ChatId>(), default))
                 .ReturnsAsync(new[] { new ChatMember { User = new() { Id = message.From.Id } } });
+
+            telegramBotClientMock.Setup(v => v.GetMeAsync(default))
+                .ReturnsAsync(new User { Id = 123456 });
 
             chatConfigurationServiceMock.Setup(v => v.GetConfigurationByChatId(message.Chat.Id))
                 .ReturnsAsync(chatConfig);
@@ -1096,6 +1147,9 @@ namespace GrammarNazi.Tests.Services
 
             telegramBotClientMock.Setup(v => v.GetChatAdministratorsAsync(It.IsAny<ChatId>(), default))
                 .ReturnsAsync(new[] { new ChatMember { User = new() { Id = message.From.Id } } });
+
+            telegramBotClientMock.Setup(v => v.GetMeAsync(default))
+                .ReturnsAsync(new User { Id = 123456 });
 
             chatConfigurationServiceMock.Setup(v => v.GetConfigurationByChatId(message.Chat.Id))
                 .ReturnsAsync(chatConfig);
