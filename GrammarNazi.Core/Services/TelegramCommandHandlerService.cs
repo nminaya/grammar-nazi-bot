@@ -403,6 +403,9 @@ namespace GrammarNazi.Core.Services
 
         private async Task<bool> IsBotAdmin(Message message)
         {
+            if (message.Chat.Type == ChatType.Private)
+                return true;
+
             var bot = await _client.GetMeAsync();
             var chatAdministrators = await _client.GetChatAdministratorsAsync(message.Chat.Id);
 
