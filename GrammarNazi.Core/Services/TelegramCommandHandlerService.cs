@@ -96,6 +96,10 @@ namespace GrammarNazi.Core.Services
             {
                 var chatConfig = await _chatConfigurationService.GetConfigurationByChatId(message.Chat.Id);
 
+                // TODO: Investigate how this could be null at this point https://github.com/nminaya/grammar-nazi-bot/issues/56
+                if (chatConfig == null)
+                    return;
+
                 var messageBuilder = new StringBuilder();
                 messageBuilder.AppendLine(GetAvailableAlgorithms(chatConfig.GrammarAlgorithm));
                 messageBuilder.AppendLine(GetSupportedLanguages(chatConfig.SelectedLanguage));
