@@ -3,7 +3,6 @@ using GrammarNazi.Domain.Constants;
 using GrammarNazi.Domain.Entities;
 using GrammarNazi.Domain.Enums;
 using GrammarNazi.Domain.Services;
-using Microsoft.AspNetCore.Hosting;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using System;
@@ -55,9 +54,24 @@ namespace GrammarNazi.App.HostedServices
                 {
                     await OnMessageReceived(obj, eventArgs);
                 }
-                catch (ApiRequestException ex) when (ex.Message.Contains("bot was blocked by the user") || ex.Message.Contains("bot was kicked from the supergroup"))
+                catch (ApiRequestException ex)
                 {
-                    _logger.LogWarning(ex, "User has blocked the Bot");
+                    if (ex.Message.Contains("bot was blocked by the user"))
+                    {
+                        _logger.LogWarning(ex, "User has blocked the Bot");
+                    }
+                    else if (ex.Message.Contains("bot was kicked from the supergroup"))
+                    {
+                        _logger.LogWarning(ex, "Bot was kicked from supergroup");
+                    }
+                    else if (ex.Message.Contains("have no rights to send a message"))
+                    {
+                        _logger.LogWarning(ex, "Bot has no rights to send a message");
+                    }
+                    else
+                    {
+                        _logger.LogError(ex, ex.Message);
+                    }
                 }
                 catch (Exception ex)
                 {
