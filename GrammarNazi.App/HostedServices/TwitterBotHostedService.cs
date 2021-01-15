@@ -28,6 +28,7 @@ namespace GrammarNazi.App.HostedServices
         private readonly IGithubService _githubService;
         private readonly TwitterBotSettings _twitterBotSettings;
         private readonly IScheduledTweetService _scheduledTweetService;
+        private readonly ISentimentAnalysisService _sentimentAnalysisService;
 
         public TwitterBotHostedService(ILogger<TwitterBotHostedService> logger,
             IEnumerable<IGrammarService> grammarServices,
@@ -35,7 +36,8 @@ namespace GrammarNazi.App.HostedServices
             ITwitterClient userClient,
             IOptions<TwitterBotSettings> options,
             IGithubService githubService,
-            IScheduledTweetService scheduledTweetService)
+            IScheduledTweetService scheduledTweetService,
+            ISentimentAnalysisService sentimentAnalysisService)
         {
             _logger = logger;
             _twitterLogService = twitterLogService;
@@ -46,6 +48,7 @@ namespace GrammarNazi.App.HostedServices
             _grammarService = grammarServices.First(v => v.GrammarAlgorith == Defaults.DefaultAlgorithm);
             _grammarService.SetStrictnessLevel(CorrectionStrictnessLevels.Tolerant);
             _scheduledTweetService = scheduledTweetService;
+            _sentimentAnalysisService = sentimentAnalysisService;
         }
 
         public override Task StartAsync(CancellationToken cancellationToken)
@@ -126,6 +129,7 @@ namespace GrammarNazi.App.HostedServices
 
                     var followBackUsersTask = FollowBackUsers(followerIds);
                     var publishScheduledTweetsTask = PublishScheduledTweets();
+                    var likeRepliesToBotTask = LikeRepliesToBot(tweets);
 
                     if (tweets.Any())
                     {
@@ -135,7 +139,7 @@ namespace GrammarNazi.App.HostedServices
                         await _twitterLogService.LogTweet(lastTweet.Id);
                     }
 
-                    await Task.WhenAll(followBackUsersTask, publishScheduledTweetsTask);
+                    await Task.WhenAll(followBackUsersTask, publishScheduledTweetsTask, likeRepliesToBotTask);
                 }
                 catch (Exception ex)
                 {
@@ -177,6 +181,27 @@ namespace GrammarNazi.App.HostedServices
 
                     await _scheduledTweetService.Update(scheduledTweet);
                     await Task.Delay(_twitterBotSettings.PublishTweetDelayMilliseconds);
+                }
+            }
+        }
+
+        private async Task LikeRepliesToBot(List<ITweet> tweets)
+        {
+            var replies = tweets.Where(v => v.InReplyToStatusId != null);
+
+            foreach (var reply in replies)
+            {
+                bool isReplyToBot = await _twitterLogService.TweetExist(reply.InReplyToStatusId.Value);
+
+                if (!isReplyToBot)
+                    continue;
+
+                var sentimentAnalysis = await _sentimentAnalysisService.GetSentimentAnalysis(reply.Text);
+
+                if (sentimentAnalysis.Type == SentimentTypes.Positive
+                    && sentimentAnalysis.Score >= Defaults.ValidPositiveSentimentScore)
+                {
+                    await _twitterClient.Tweets.FavoriteTweetAsync(reply.Id);
                 }
             }
         }
