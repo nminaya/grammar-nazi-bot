@@ -52,7 +52,7 @@ namespace GrammarNazi.Tests.HostedServices
             var twitterSettingsOptionsMock = new Mock<IOptions<TwitterBotSettings>>();
             var grammarServiceMock = new Mock<IGrammarService>();
             var cancellationTokenSource = new CancellationTokenSource();
-            var twitterSettings = new TwitterBotSettings { BotUsername = "botUser", TimelineFirstLoadPageSize = 15 };
+            var twitterSettings = new TwitterBotSettings { BotUsername = "botUser", TimelineFirstLoadPageSize = 15, HostedServiceIntervalMilliseconds = 150 };
 
             twitterSettingsOptionsMock.Setup(v => v.Value).Returns(twitterSettings);
             twitterLogServiceMock.Setup(v => v.GetLastTweetId()).ReturnsAsync(0);
@@ -69,11 +69,9 @@ namespace GrammarNazi.Tests.HostedServices
             var hostedService = new TwitterBotHostedService(Mock.Of<ILogger<TwitterBotHostedService>>(), new[] { grammarServiceMock.Object }, twitterLogServiceMock.Object, twitterClientMock.Object, twitterSettingsOptionsMock.Object, null, scheduleTweetServiceMock.Object, null);
 
             // Act
-            var startTask = new Thread(async () => await hostedService.StartAsync(cancellationTokenSource.Token));
-            startTask.Start(); // Act in new Thread to avoid blocking current thread
-            await Task.Delay(150);
+            var startTask = hostedService.StartAsync(cancellationTokenSource.Token);
             cancellationTokenSource.Cancel();
-            startTask.Join();
+            await startTask;
 
             // Assert
             twitterClientMock.Verify(v => v.Timelines.GetUserTimelineAsync(It.Is<GetUserTimelineParameters>(g => g.PageSize == twitterSettings.TimelineFirstLoadPageSize)));
@@ -89,7 +87,7 @@ namespace GrammarNazi.Tests.HostedServices
             var twitterSettingsOptionsMock = new Mock<IOptions<TwitterBotSettings>>();
             var grammarServiceMock = new Mock<IGrammarService>();
             var cancellationTokenSource = new CancellationTokenSource();
-            var twitterSettings = new TwitterBotSettings { BotUsername = "botUser", TimelineFirstLoadPageSize = 15 };
+            var twitterSettings = new TwitterBotSettings { BotUsername = "botUser", TimelineFirstLoadPageSize = 15, HostedServiceIntervalMilliseconds = 150 };
             const long lastTweetId = 123456;
 
             twitterSettingsOptionsMock.Setup(v => v.Value).Returns(twitterSettings);
@@ -107,18 +105,16 @@ namespace GrammarNazi.Tests.HostedServices
             var hostedService = new TwitterBotHostedService(Mock.Of<ILogger<TwitterBotHostedService>>(), new[] { grammarServiceMock.Object }, twitterLogServiceMock.Object, twitterClientMock.Object, twitterSettingsOptionsMock.Object, null, scheduleTweetServiceMock.Object, null);
 
             // Act
-            var startTask = new Thread(async () => await hostedService.StartAsync(cancellationTokenSource.Token));
-            startTask.Start(); // Act in new Thread to avoid blocking current thread
-            await Task.Delay(150);
+            var startTask = hostedService.StartAsync(cancellationTokenSource.Token);
             cancellationTokenSource.Cancel();
-            startTask.Join();
+            await startTask;
 
             // Assert
             twitterClientMock.Verify(v => v.Timelines.GetUserTimelineAsync(It.Is<GetUserTimelineParameters>(g => g.SinceId == lastTweetId)));
         }
 
         [Fact]
-        public async Task TweetWithRtPrefix_Should_Not_AnalyzeTweet()
+        public async Task TweetsWithRtPrefix_Should_Not_AnalyzeTweet()
         {
             // Assert
             var twitterClientMock = new Mock<ITwitterClient>();
@@ -128,7 +124,7 @@ namespace GrammarNazi.Tests.HostedServices
             var grammarServiceMock = new Mock<IGrammarService>();
             var tweetMock = new Mock<ITweet>();
             var cancellationTokenSource = new CancellationTokenSource();
-            var twitterSettings = new TwitterBotSettings { BotUsername = "botUser", TimelineFirstLoadPageSize = 15 };
+            var twitterSettings = new TwitterBotSettings { BotUsername = "botUser", TimelineFirstLoadPageSize = 15, HostedServiceIntervalMilliseconds = 150 };
             const long lastTweetId = 123456;
 
             tweetMock.Setup(v => v.Text).Returns("RT @TwitterUser This is a tweet");
@@ -148,15 +144,15 @@ namespace GrammarNazi.Tests.HostedServices
             var hostedService = new TwitterBotHostedService(Mock.Of<ILogger<TwitterBotHostedService>>(), new[] { grammarServiceMock.Object }, twitterLogServiceMock.Object, twitterClientMock.Object, twitterSettingsOptionsMock.Object, null, scheduleTweetServiceMock.Object, null);
 
             // Act
-            var startTask = new Thread(async () => await hostedService.StartAsync(cancellationTokenSource.Token));
-            startTask.Start(); // Act in new Thread to avoid blocking current thread
-            await Task.Delay(150);
+            var startTask = hostedService.StartAsync(cancellationTokenSource.Token);
             cancellationTokenSource.Cancel();
-            startTask.Join();
+            await startTask;
 
             // Assert
             grammarServiceMock.Verify(v => v.GetCorrections(It.IsAny<string>()), Times.Never);
             twitterLogServiceMock.Verify(v => v.LogTweet(It.IsAny<long>()), Times.Never);
         }
+
+       
     }
 }
