@@ -3,7 +3,6 @@ using GrammarNazi.Domain.Constants;
 using GrammarNazi.Domain.Entities;
 using GrammarNazi.Domain.Enums;
 using GrammarNazi.Domain.Services;
-using Microsoft.AspNetCore.Hosting;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using System;
@@ -25,7 +24,6 @@ namespace GrammarNazi.App.HostedServices
         private readonly ILogger<TelegramBotHostedService> _logger;
         private readonly IEnumerable<IGrammarService> _grammarServices;
         private readonly IChatConfigurationService _chatConfigurationService;
-        private readonly IWebHostEnvironment _webHostEnvironment;
         private readonly ITelegramBotClient _client;
         private readonly ITelegramCommandHandlerService _telegramCommandHandlerService;
         private readonly IGithubService _githubService;
@@ -34,14 +32,12 @@ namespace GrammarNazi.App.HostedServices
             ITelegramBotClient telegramBotClient,
             IEnumerable<IGrammarService> grammarServices,
             IChatConfigurationService chatConfigurationService,
-            IWebHostEnvironment webHostEnvironment,
             ITelegramCommandHandlerService telegramCommandHandlerService,
             IGithubService githubService)
         {
             _logger = logger;
             _grammarServices = grammarServices;
             _chatConfigurationService = chatConfigurationService;
-            _webHostEnvironment = webHostEnvironment;
             _client = telegramBotClient;
             _telegramCommandHandlerService = telegramCommandHandlerService;
             _githubService = githubService;
@@ -58,9 +54,24 @@ namespace GrammarNazi.App.HostedServices
                 {
                     await OnMessageReceived(obj, eventArgs);
                 }
-                catch (ApiRequestException ex) when (ex.Message.Contains("bot was blocked by the user"))
+                catch (ApiRequestException ex)
                 {
-                    _logger.LogWarning(ex, "User has blocked the Bot");
+                    if (ex.Message.Contains("bot was blocked by the user"))
+                    {
+                        _logger.LogWarning(ex, "User has blocked the Bot");
+                    }
+                    else if (ex.Message.Contains("bot was kicked from the supergroup"))
+                    {
+                        _logger.LogWarning(ex, "Bot was kicked from supergroup");
+                    }
+                    else if (ex.Message.Contains("have no rights to send a message"))
+                    {
+                        _logger.LogWarning(ex, "Bot has no rights to send a message");
+                    }
+                    else
+                    {
+                        _logger.LogError(ex, ex.Message);
+                    }
                 }
                 catch (Exception ex)
                 {
@@ -79,13 +90,10 @@ namespace GrammarNazi.App.HostedServices
         {
             var message = messageEvent.Message;
 
-            _logger.LogInformation($"Message received from chat id: {message.Chat.Id}");
-
             if (message.Type != MessageType.Text) // We only analyze Text messages
                 return;
 
-            if (_webHostEnvironment.IsDevelopment())
-                _logger.LogInformation($"Message: {message.Text}");
+            _logger.LogInformation($"Message received from chat id: {message.Chat.Id}");
 
             if (message.Text.StartsWith('/')) // Text is a command
             {
