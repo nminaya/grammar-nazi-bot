@@ -27,11 +27,12 @@ namespace GrammarNazi.Tests.HostedServices
             var loggerMock = new Mock<ILogger<TwitterBotHostedService>>();
             var twitterSettingsOptionsMock = new Mock<IOptions<TwitterBotSettings>>();
             var twitterSettings = new TwitterBotSettings { BotUsername = "botUser", TimelineFirstLoadPageSize = 15 };
+            var sentimetAnalysisMock = new Mock<ISentimentAnalysisService>();
 
             twitterSettingsOptionsMock.Setup(v => v.Value).Returns(twitterSettings);
             grammarServiceMock.Setup(v => v.GrammarAlgorith).Returns(GrammarAlgorithms.LanguageToolApi);
 
-            var hostedService = new TwitterBotHostedService(loggerMock.Object, new[] { grammarServiceMock.Object }, null, null, twitterSettingsOptionsMock.Object, null, null);
+            var hostedService = new TwitterBotHostedService(loggerMock.Object, new[] { grammarServiceMock.Object }, null, null, twitterSettingsOptionsMock.Object, null, null, sentimetAnalysisMock.Object);
 
             // Act
             cancellationTokenSource.Cancel();
@@ -65,7 +66,7 @@ namespace GrammarNazi.Tests.HostedServices
                 .ReturnsAsync(Enumerable.Empty<ScheduledTweet>());
             grammarServiceMock.Setup(v => v.GrammarAlgorith).Returns(GrammarAlgorithms.LanguageToolApi);
 
-            var hostedService = new TwitterBotHostedService(Mock.Of<ILogger<TwitterBotHostedService>>(), new[] { grammarServiceMock.Object }, twitterLogServiceMock.Object, twitterClientMock.Object, twitterSettingsOptionsMock.Object, null, scheduleTweetServiceMock.Object);
+            var hostedService = new TwitterBotHostedService(Mock.Of<ILogger<TwitterBotHostedService>>(), new[] { grammarServiceMock.Object }, twitterLogServiceMock.Object, twitterClientMock.Object, twitterSettingsOptionsMock.Object, null, scheduleTweetServiceMock.Object, null);
 
             // Act
             var startTask = new Thread(async () => await hostedService.StartAsync(cancellationTokenSource.Token));
@@ -103,7 +104,7 @@ namespace GrammarNazi.Tests.HostedServices
                 .ReturnsAsync(Enumerable.Empty<ScheduledTweet>());
             grammarServiceMock.Setup(v => v.GrammarAlgorith).Returns(GrammarAlgorithms.LanguageToolApi);
 
-            var hostedService = new TwitterBotHostedService(Mock.Of<ILogger<TwitterBotHostedService>>(), new[] { grammarServiceMock.Object }, twitterLogServiceMock.Object, twitterClientMock.Object, twitterSettingsOptionsMock.Object, null, scheduleTweetServiceMock.Object);
+            var hostedService = new TwitterBotHostedService(Mock.Of<ILogger<TwitterBotHostedService>>(), new[] { grammarServiceMock.Object }, twitterLogServiceMock.Object, twitterClientMock.Object, twitterSettingsOptionsMock.Object, null, scheduleTweetServiceMock.Object, null);
 
             // Act
             var startTask = new Thread(async () => await hostedService.StartAsync(cancellationTokenSource.Token));
@@ -144,7 +145,7 @@ namespace GrammarNazi.Tests.HostedServices
                 .ReturnsAsync(Enumerable.Empty<ScheduledTweet>());
             grammarServiceMock.Setup(v => v.GrammarAlgorith).Returns(GrammarAlgorithms.LanguageToolApi);
 
-            var hostedService = new TwitterBotHostedService(Mock.Of<ILogger<TwitterBotHostedService>>(), new[] { grammarServiceMock.Object }, twitterLogServiceMock.Object, twitterClientMock.Object, twitterSettingsOptionsMock.Object, null, scheduleTweetServiceMock.Object);
+            var hostedService = new TwitterBotHostedService(Mock.Of<ILogger<TwitterBotHostedService>>(), new[] { grammarServiceMock.Object }, twitterLogServiceMock.Object, twitterClientMock.Object, twitterSettingsOptionsMock.Object, null, scheduleTweetServiceMock.Object, null);
 
             // Act
             var startTask = new Thread(async () => await hostedService.StartAsync(cancellationTokenSource.Token));
