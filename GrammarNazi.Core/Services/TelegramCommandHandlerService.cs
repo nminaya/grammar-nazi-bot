@@ -10,6 +10,7 @@ using System.Threading.Tasks;
 using Telegram.Bot;
 using Telegram.Bot.Types;
 using Telegram.Bot.Types.Enums;
+using Telegram.Bot.Types.ReplyMarkups;
 
 namespace GrammarNazi.Core.Services
 {
@@ -130,11 +131,7 @@ namespace GrammarNazi.Core.Services
                 var parameters = text.Split(" ");
                 if (parameters.Length == 1)
                 {
-                    var chatConfig = await _chatConfigurationService.GetConfigurationByChatId(message.Chat.Id);
-
-                    messageBuilder.AppendLine($"Parameter not received. Type {Commands.SetAlgorithm} <algorithm_numer> to set an algorithm").AppendLine();
-                    messageBuilder.AppendLine(GetAvailableAlgorithms(chatConfig.GrammarAlgorithm));
-                    await _client.SendTextMessageAsync(message.Chat.Id, messageBuilder.ToString());
+                    await ShowAlgorithmOptions(message);
                 }
                 else
                 {
@@ -172,11 +169,7 @@ namespace GrammarNazi.Core.Services
 
                 if (parameters.Length == 1)
                 {
-                    var chatConfig = await _chatConfigurationService.GetConfigurationByChatId(message.Chat.Id);
-
-                    messageBuilder.AppendLine($"Parameter not received. Type {Commands.Language} <language_number> to set a language.").AppendLine();
-                    messageBuilder.AppendLine(GetSupportedLanguages(chatConfig.SelectedLanguage));
-                    await _client.SendTextMessageAsync(message.Chat.Id, messageBuilder.ToString());
+                    await ShowLanguageOptions(message);
                 }
                 else
                 {
@@ -380,6 +373,32 @@ namespace GrammarNazi.Core.Services
 
                 await NotifyIfBotIsNotAdmin(message);
             }
+        }
+
+        private async Task ShowLanguageOptions(Message message)
+        {
+            await _client.SendChatActionAsync(message.Chat.Id, ChatAction.Typing);
+
+            var languages = Enum.GetValues(typeof(SupportedLanguages))
+                            .Cast<SupportedLanguages>()
+                            .Select(v => new[] { InlineKeyboardButton.WithCallbackData(v.ToString(), $"{(int)v}") });
+
+            var inlineLanguages = new InlineKeyboardMarkup(languages);
+
+            await _client.SendTextMessageAsync(chatId: message.Chat.Id, text: "Chose language", replyMarkup: inlineLanguages);
+        }
+
+        private async Task ShowAlgorithmOptions(Message message)
+        {
+            await _client.SendChatActionAsync(message.Chat.Id, ChatAction.Typing);
+
+            var languages = Enum.GetValues(typeof(GrammarAlgorithms))
+                            .Cast<GrammarAlgorithms>()
+                            .Select(v => new[] { InlineKeyboardButton.WithCallbackData(v.ToString(), $"{(int)v}") });
+
+            var inlineLanguages = new InlineKeyboardMarkup(languages);
+
+            await _client.SendTextMessageAsync(chatId: message.Chat.Id, text: "Chose Algorithm", replyMarkup: inlineLanguages);
         }
 
         private static bool IsCommand(string expected, string actual)
