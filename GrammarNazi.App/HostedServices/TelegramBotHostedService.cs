@@ -82,6 +82,21 @@ namespace GrammarNazi.App.HostedServices
                 }
             };
 
+            _client.OnCallbackQuery += async (obj, eventArgs) =>
+            {
+                try
+                {
+                    await _telegramCommandHandlerService.HandleCallBackQuery(eventArgs.CallbackQuery);
+                }
+                catch (Exception ex)
+                {
+                    _logger.LogError(ex, ex.Message);
+
+                    // fire and forget
+                    _ = _githubService.CreateBugIssue($"Application Exception: {ex.Message}", ex);
+                }
+            };
+
             // Keep hosted service alive while receiving messages
             await Task.Delay(Timeout.Infinite, stoppingToken);
         }
@@ -115,6 +130,9 @@ namespace GrammarNazi.App.HostedServices
 
             if (!corretionResult.HasCorrections)
                 return;
+
+            // Send "Typing..." notification
+            await _client.SendChatActionAsync(message.Chat.Id, ChatAction.Typing);
 
             var messageBuilder = new StringBuilder();
 

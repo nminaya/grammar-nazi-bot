@@ -10,6 +10,7 @@ using System.Threading.Tasks;
 using Telegram.Bot;
 using Telegram.Bot.Types;
 using Telegram.Bot.Types.Enums;
+using Telegram.Bot.Types.ReplyMarkups;
 
 namespace GrammarNazi.Core.Services
 {
@@ -31,6 +32,8 @@ namespace GrammarNazi.Core.Services
 
             if (IsCommand(Commands.Start, text))
             {
+                await SendTypingNotification(message);
+
                 var chatConfig = await _chatConfigurationService.GetConfigurationByChatId(message.Chat.Id);
                 var messageBuilder = new StringBuilder();
 
@@ -73,6 +76,8 @@ namespace GrammarNazi.Core.Services
             }
             else if (IsCommand(Commands.Help, text))
             {
+                await SendTypingNotification(message);
+
                 var messageBuilder = new StringBuilder();
                 messageBuilder.AppendLine("Help").AppendLine();
                 messageBuilder.AppendLine("Useful commands:");
@@ -94,6 +99,8 @@ namespace GrammarNazi.Core.Services
             }
             else if (IsCommand(Commands.Settings, text))
             {
+                await SendTypingNotification(message);
+
                 var chatConfig = await _chatConfigurationService.GetConfigurationByChatId(message.Chat.Id);
 
                 // TODO: Investigate how this could be null at this point https://github.com/nminaya/grammar-nazi-bot/issues/56
@@ -118,6 +125,8 @@ namespace GrammarNazi.Core.Services
             }
             else if (IsCommand(Commands.SetAlgorithm, text))
             {
+                await SendTypingNotification(message);
+
                 var messageBuilder = new StringBuilder();
 
                 if (!await IsUserAdmin(message))
@@ -130,11 +139,7 @@ namespace GrammarNazi.Core.Services
                 var parameters = text.Split(" ");
                 if (parameters.Length == 1)
                 {
-                    var chatConfig = await _chatConfigurationService.GetConfigurationByChatId(message.Chat.Id);
-
-                    messageBuilder.AppendLine($"Parameter not received. Type {Commands.SetAlgorithm} <algorithm_numer> to set an algorithm").AppendLine();
-                    messageBuilder.AppendLine(GetAvailableAlgorithms(chatConfig.GrammarAlgorithm));
-                    await _client.SendTextMessageAsync(message.Chat.Id, messageBuilder.ToString());
+                    await ShowAlgorithmOptions(message);
                 }
                 else
                 {
@@ -159,6 +164,8 @@ namespace GrammarNazi.Core.Services
             }
             else if (IsCommand(Commands.Language, text))
             {
+                await SendTypingNotification(message);
+
                 var messageBuilder = new StringBuilder();
 
                 if (!await IsUserAdmin(message))
@@ -172,11 +179,7 @@ namespace GrammarNazi.Core.Services
 
                 if (parameters.Length == 1)
                 {
-                    var chatConfig = await _chatConfigurationService.GetConfigurationByChatId(message.Chat.Id);
-
-                    messageBuilder.AppendLine($"Parameter not received. Type {Commands.Language} <language_number> to set a language.").AppendLine();
-                    messageBuilder.AppendLine(GetSupportedLanguages(chatConfig.SelectedLanguage));
-                    await _client.SendTextMessageAsync(message.Chat.Id, messageBuilder.ToString());
+                    await ShowLanguageOptions(message);
                 }
                 else
                 {
@@ -201,6 +204,8 @@ namespace GrammarNazi.Core.Services
             }
             else if (IsCommand(Commands.Stop, text))
             {
+                await SendTypingNotification(message);
+
                 if (!await IsUserAdmin(message))
                 {
                     await _client.SendTextMessageAsync(message.Chat.Id, "Only admins can use this command.", replyToMessageId: message.MessageId);
@@ -217,6 +222,8 @@ namespace GrammarNazi.Core.Services
             }
             else if (IsCommand(Commands.HideDetails, text))
             {
+                await SendTypingNotification(message);
+
                 if (!await IsUserAdmin(message))
                 {
                     await _client.SendTextMessageAsync(message.Chat.Id, "Only admins can use this command.", replyToMessageId: message.MessageId);
@@ -235,6 +242,8 @@ namespace GrammarNazi.Core.Services
             }
             else if (IsCommand(Commands.ShowDetails, text))
             {
+                await SendTypingNotification(message);
+
                 if (!await IsUserAdmin(message))
                 {
                     await _client.SendTextMessageAsync(message.Chat.Id, "Only admins can use this command.", replyToMessageId: message.MessageId);
@@ -253,6 +262,8 @@ namespace GrammarNazi.Core.Services
             }
             else if (IsCommand(Commands.Tolerant, text))
             {
+                await SendTypingNotification(message);
+
                 if (!await IsUserAdmin(message))
                 {
                     await _client.SendTextMessageAsync(message.Chat.Id, "Only admins can use this command.", replyToMessageId: message.MessageId);
@@ -271,6 +282,8 @@ namespace GrammarNazi.Core.Services
             }
             else if (IsCommand(Commands.Intolerant, text))
             {
+                await SendTypingNotification(message);
+
                 if (!await IsUserAdmin(message))
                 {
                     await _client.SendTextMessageAsync(message.Chat.Id, "Only admins can use this command.", replyToMessageId: message.MessageId);
@@ -289,6 +302,8 @@ namespace GrammarNazi.Core.Services
             }
             else if (IsCommand(Commands.WhiteList, text))
             {
+                await SendTypingNotification(message);
+
                 var chatConfig = await _chatConfigurationService.GetConfigurationByChatId(message.Chat.Id);
 
                 if (chatConfig.WhiteListWords?.Any() == true)
@@ -312,6 +327,8 @@ namespace GrammarNazi.Core.Services
             }
             else if (IsCommand(Commands.AddWhiteList, text))
             {
+                await SendTypingNotification(message);
+
                 if (!await IsUserAdmin(message))
                 {
                     await _client.SendTextMessageAsync(message.Chat.Id, "Only admins can use this command.", replyToMessageId: message.MessageId);
@@ -347,6 +364,8 @@ namespace GrammarNazi.Core.Services
             }
             else if (IsCommand(Commands.RemoveWhiteList, text))
             {
+                await SendTypingNotification(message);
+
                 if (!await IsUserAdmin(message))
                 {
                     await _client.SendTextMessageAsync(message.Chat.Id, "Only admins can use this command.", replyToMessageId: message.MessageId);
@@ -382,6 +401,70 @@ namespace GrammarNazi.Core.Services
             }
         }
 
+        public async Task HandleCallBackQuery(CallbackQuery callbackQuery)
+        {
+            var message = callbackQuery.Message;
+
+            if (!await IsUserAdmin(callbackQuery.Message, callbackQuery.From))
+            {
+                var userMention = $"[{callbackQuery.From.FirstName} {callbackQuery.From.LastName}](tg://user?id={callbackQuery.From.Id})";
+
+                await _client.SendTextMessageAsync(message.Chat.Id, $"{userMention} Only admins can use this command.", ParseMode.Markdown);
+                return;
+            }
+
+            var chatConfig = await _chatConfigurationService.GetConfigurationByChatId(message.Chat.Id);
+
+            var enumTypeString = callbackQuery.Data.Split(".")[0];
+
+            if (enumTypeString == nameof(SupportedLanguages))
+            {
+                var languageSelectedString = callbackQuery.Data.Split(".")[1];
+
+                var languageSelected = Enum.GetValues(typeof(SupportedLanguages)).Cast<SupportedLanguages>().First(v => v.ToString() == languageSelectedString);
+
+                chatConfig.SelectedLanguage = languageSelected;
+
+                await _client.SendTextMessageAsync(message.Chat.Id, $"Language updated: {languageSelected}");
+            }
+            else
+            {
+                var algorithmSelectedString = callbackQuery.Data.Split(".")[1];
+
+                var algorithmSelected = Enum.GetValues(typeof(GrammarAlgorithms)).Cast<GrammarAlgorithms>().First(v => v.ToString() == algorithmSelectedString);
+
+                chatConfig.GrammarAlgorithm = algorithmSelected;
+
+                await _client.SendTextMessageAsync(message.Chat.Id, $"Algorithm updated: {algorithmSelected}");
+            }
+
+            await _chatConfigurationService.Update(chatConfig);
+
+            await _client.DeleteMessageAsync(callbackQuery.Message.Chat.Id, callbackQuery.Message.MessageId);
+        }
+
+        private async Task ShowLanguageOptions(Message message)
+        {
+            var languages = Enum.GetValues(typeof(SupportedLanguages))
+                            .Cast<SupportedLanguages>()
+                            .Select(v => new[] { InlineKeyboardButton.WithCallbackData($"{(int)v} - {v}", $"{nameof(SupportedLanguages)}.{v}") });
+
+            var inlineLanguages = new InlineKeyboardMarkup(languages);
+
+            await _client.SendTextMessageAsync(message.Chat.Id, "Chose language", replyMarkup: inlineLanguages);
+        }
+
+        private async Task ShowAlgorithmOptions(Message message)
+        {
+            var languages = Enum.GetValues(typeof(GrammarAlgorithms))
+                            .Cast<GrammarAlgorithms>()
+                            .Select(v => new[] { InlineKeyboardButton.WithCallbackData($"{(int)v} - {v}", $"{nameof(GrammarAlgorithms)}.{v}") });
+
+            var inlineLanguages = new InlineKeyboardMarkup(languages);
+
+            await _client.SendTextMessageAsync(message.Chat.Id, "Chose Algorithm", replyMarkup: inlineLanguages);
+        }
+
         private static bool IsCommand(string expected, string actual)
         {
             if (actual.Contains("@"))
@@ -394,13 +477,13 @@ namespace GrammarNazi.Core.Services
             return actual.StartsWith(expected);
         }
 
-        private async Task<bool> IsUserAdmin(Message message)
+        private async Task<bool> IsUserAdmin(Message message, User user = null)
         {
             if (message.Chat.Type == ChatType.Private)
                 return true;
 
             var chatAdministrators = await _client.GetChatAdministratorsAsync(message.Chat.Id);
-            var currentUserId = message.From.Id;
+            var currentUserId = user == null ? message.From.Id : user.Id;
 
             return chatAdministrators.Any(v => v.User.Id == currentUserId);
         }
@@ -422,6 +505,11 @@ namespace GrammarNazi.Core.Services
             {
                 await _client.SendTextMessageAsync(message.Chat.Id, "NOTE: The bot needs admin rights in order to read messages from this chat.");
             }
+        }
+
+        private async Task SendTypingNotification(Message message)
+        {
+            await _client.SendChatActionAsync(message.Chat.Id, ChatAction.Typing);
         }
 
         private static string GetAvailableAlgorithms(GrammarAlgorithms selectedAlgorith)
