@@ -405,9 +405,11 @@ namespace GrammarNazi.Core.Services
         {
             var message = callbackQuery.Message;
 
-            if (!await IsUserAdmin(callbackQuery.Message))
+            if (!await IsUserAdmin(callbackQuery.Message, callbackQuery.From))
             {
-                await _client.SendTextMessageAsync(message.Chat.Id, "Only admins can use this command.", replyToMessageId: message.MessageId);
+                var userMention = $"[{callbackQuery.From.FirstName} {callbackQuery.From.LastName}](tg://user?id={callbackQuery.From.Id})";
+
+                await _client.SendTextMessageAsync(message.Chat.Id, $"{userMention} Only admins can use this command.", ParseMode.Markdown);
                 return;
             }
 
@@ -475,13 +477,13 @@ namespace GrammarNazi.Core.Services
             return actual.StartsWith(expected);
         }
 
-        private async Task<bool> IsUserAdmin(Message message)
+        private async Task<bool> IsUserAdmin(Message message, User user = null)
         {
             if (message.Chat.Type == ChatType.Private)
                 return true;
 
             var chatAdministrators = await _client.GetChatAdministratorsAsync(message.Chat.Id);
-            var currentUserId = message.From.Id;
+            var currentUserId = user == null ? message.From.Id : user.Id;
 
             return chatAdministrators.Any(v => v.User.Id == currentUserId);
         }
