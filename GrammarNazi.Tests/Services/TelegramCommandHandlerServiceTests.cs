@@ -15,8 +15,8 @@ namespace GrammarNazi.Tests.Services
     public class TelegramCommandHandlerServiceTests
     {
         [Theory]
-        [InlineData(Commands.Start)]
-        [InlineData(Commands.Start + "@" + Defaults.TelegramBotUser)]
+        [InlineData(TelegramBotCommands.Start)]
+        [InlineData(TelegramBotCommands.Start + "@" + Defaults.TelegramBotUser)]
         public async Task Start_NotChatCongfigured_Should_CreateChatConfig_And_ReplyWelcomeMessage(string command)
         {
             // Arrange
@@ -50,8 +50,8 @@ namespace GrammarNazi.Tests.Services
         }
 
         [Theory]
-        [InlineData(Commands.Start)]
-        [InlineData(Commands.Start + "@" + Defaults.TelegramBotUser)]
+        [InlineData(TelegramBotCommands.Start)]
+        [InlineData(TelegramBotCommands.Start + "@" + Defaults.TelegramBotUser)]
         public async Task Start_BotNotStopped_Should_ReplyBotStartedMessage(string command)
         {
             // Arrange
@@ -89,8 +89,8 @@ namespace GrammarNazi.Tests.Services
         }
 
         [Theory]
-        [InlineData(Commands.Start)]
-        [InlineData(Commands.Start + "@" + Defaults.TelegramBotUser)]
+        [InlineData(TelegramBotCommands.Start)]
+        [InlineData(TelegramBotCommands.Start + "@" + Defaults.TelegramBotUser)]
         public async Task Start_BotNotStopped_BotNotAdmin_Should_ReplyBotNotAdminMessage(string command)
         {
             // Arrange
@@ -125,8 +125,8 @@ namespace GrammarNazi.Tests.Services
         }
 
         [Theory]
-        [InlineData(Commands.Start)]
-        [InlineData(Commands.Start + "@" + Defaults.TelegramBotUser)]
+        [InlineData(TelegramBotCommands.Start)]
+        [InlineData(TelegramBotCommands.Start + "@" + Defaults.TelegramBotUser)]
         public async Task Start_BotStoppedAndUserNotAdmin_Should_ReplyNotAdminMessage(string command)
         {
             // Arrange
@@ -165,8 +165,8 @@ namespace GrammarNazi.Tests.Services
         }
 
         [Theory]
-        [InlineData(Commands.Start)]
-        [InlineData(Commands.Start + "@" + Defaults.TelegramBotUser)]
+        [InlineData(TelegramBotCommands.Start)]
+        [InlineData(TelegramBotCommands.Start + "@" + Defaults.TelegramBotUser)]
         public async Task Start_BotStoppedAndUserAdmin_Should_ChangeChatConfig_And_ReplyMessage(string command)
         {
             // Arrange
@@ -210,16 +210,16 @@ namespace GrammarNazi.Tests.Services
         }
 
         [Theory]
-        [InlineData(Commands.Stop)]
-        [InlineData(Commands.Stop + "@" + Defaults.TelegramBotUser)]
+        [InlineData(TelegramBotCommands.Stop)]
+        [InlineData(TelegramBotCommands.Stop + "@" + Defaults.TelegramBotUser)]
         public async Task Stop_UserNotAdmin_Should_ReplyMessage(string command)
         {
             await TestNotAdminUser(command);
         }
 
         [Theory]
-        [InlineData(Commands.Stop)]
-        [InlineData(Commands.Stop + "@" + Defaults.TelegramBotUser)]
+        [InlineData(TelegramBotCommands.Stop)]
+        [InlineData(TelegramBotCommands.Stop + "@" + Defaults.TelegramBotUser)]
         public async Task Stop_UserIsAdmin_Should_ChangeChatConfig_And_ReplyMessage(string command)
         {
             // Arrange
@@ -260,16 +260,16 @@ namespace GrammarNazi.Tests.Services
         }
 
         [Theory]
-        [InlineData(Commands.HideDetails)]
-        [InlineData(Commands.HideDetails + "@" + Defaults.TelegramBotUser)]
+        [InlineData(TelegramBotCommands.HideDetails)]
+        [InlineData(TelegramBotCommands.HideDetails + "@" + Defaults.TelegramBotUser)]
         public async Task HideDetails_UserIsNotAdmin_Should_ReplyMessage(string command)
         {
             await TestNotAdminUser(command);
         }
 
         [Theory]
-        [InlineData(Commands.HideDetails)]
-        [InlineData(Commands.HideDetails + "@" + Defaults.TelegramBotUser)]
+        [InlineData(TelegramBotCommands.HideDetails)]
+        [InlineData(TelegramBotCommands.HideDetails + "@" + Defaults.TelegramBotUser)]
         public async Task HideDetails_UserIsAdmin_Should_ChangeChatConfig_And_ReplyMessage(string command)
         {
             // Arrange
@@ -313,16 +313,16 @@ namespace GrammarNazi.Tests.Services
         }
 
         [Theory]
-        [InlineData(Commands.ShowDetails)]
-        [InlineData(Commands.ShowDetails + "@" + Defaults.TelegramBotUser)]
+        [InlineData(TelegramBotCommands.ShowDetails)]
+        [InlineData(TelegramBotCommands.ShowDetails + "@" + Defaults.TelegramBotUser)]
         public async Task ShowDetails_UserIsNotAdmin_Should_ReplyMessage(string command)
         {
             await TestNotAdminUser(command);
         }
 
         [Theory]
-        [InlineData(Commands.ShowDetails)]
-        [InlineData(Commands.ShowDetails + "@" + Defaults.TelegramBotUser)]
+        [InlineData(TelegramBotCommands.ShowDetails)]
+        [InlineData(TelegramBotCommands.ShowDetails + "@" + Defaults.TelegramBotUser)]
         public async Task ShowDetails_UserIsAdmin_Should_ChangeChatConfig_And_ReplyMessage(string command)
         {
             // Arrange
@@ -366,18 +366,18 @@ namespace GrammarNazi.Tests.Services
         }
 
         [Theory]
-        [InlineData(Commands.Language)]
-        [InlineData(Commands.Language + "@" + Defaults.TelegramBotUser)]
+        [InlineData(TelegramBotCommands.Language)]
+        [InlineData(TelegramBotCommands.Language + "@" + Defaults.TelegramBotUser)]
         public async Task Language_UserIsNotAdmin_Should_ReplyMessage(string command)
         {
             await TestNotAdminUser(command);
         }
 
         [Theory]
-        [InlineData(Commands.Language, "Test")]
-        [InlineData(Commands.Language + "@" + Defaults.TelegramBotUser, "Test")]
-        [InlineData(Commands.Language, "fjkafdk324")]
-        [InlineData(Commands.Language + "@" + Defaults.TelegramBotUser, "flkjsdf234")]
+        [InlineData(TelegramBotCommands.Language, "Test")]
+        [InlineData(TelegramBotCommands.Language + "@" + Defaults.TelegramBotUser, "Test")]
+        [InlineData(TelegramBotCommands.Language, "fjkafdk324")]
+        [InlineData(TelegramBotCommands.Language + "@" + Defaults.TelegramBotUser, "flkjsdf234")]
         public async Task Language_ParameterIsNotNumber_Should_ReplyMessage(string command, string parameter)
         {
             // Arrange
@@ -419,10 +419,10 @@ namespace GrammarNazi.Tests.Services
         }
 
         [Theory]
-        [InlineData(Commands.Language, "500")]
-        [InlineData(Commands.Language + "@" + Defaults.TelegramBotUser, "500")]
-        [InlineData(Commands.Language, "123456")]
-        [InlineData(Commands.Language + "@" + Defaults.TelegramBotUser, "123456")]
+        [InlineData(TelegramBotCommands.Language, "500")]
+        [InlineData(TelegramBotCommands.Language + "@" + Defaults.TelegramBotUser, "500")]
+        [InlineData(TelegramBotCommands.Language, "123456")]
+        [InlineData(TelegramBotCommands.Language + "@" + Defaults.TelegramBotUser, "123456")]
         public async Task Language_InvalidParameter_Should_ReplyMessage(string command, string parameter)
         {
             // Arrange
@@ -464,10 +464,10 @@ namespace GrammarNazi.Tests.Services
         }
 
         [Theory]
-        [InlineData(Commands.Language, SupportedLanguages.English)]
-        [InlineData(Commands.Language + "@" + Defaults.TelegramBotUser, SupportedLanguages.English)]
-        [InlineData(Commands.Language, SupportedLanguages.Spanish)]
-        [InlineData(Commands.Language + "@" + Defaults.TelegramBotUser, SupportedLanguages.Spanish)]
+        [InlineData(TelegramBotCommands.Language, SupportedLanguages.English)]
+        [InlineData(TelegramBotCommands.Language + "@" + Defaults.TelegramBotUser, SupportedLanguages.English)]
+        [InlineData(TelegramBotCommands.Language, SupportedLanguages.Spanish)]
+        [InlineData(TelegramBotCommands.Language + "@" + Defaults.TelegramBotUser, SupportedLanguages.Spanish)]
         public async Task Language_ValidParameter_Should_ChangeChatConfig_And_ReplyMessage(string command, SupportedLanguages languageParameter)
         {
             // Arrange
@@ -510,18 +510,18 @@ namespace GrammarNazi.Tests.Services
         }
 
         [Theory]
-        [InlineData(Commands.SetAlgorithm)]
-        [InlineData(Commands.SetAlgorithm + "@" + Defaults.TelegramBotUser)]
+        [InlineData(TelegramBotCommands.SetAlgorithm)]
+        [InlineData(TelegramBotCommands.SetAlgorithm + "@" + Defaults.TelegramBotUser)]
         public async Task SetAlgorithm_UserIsNotAdmin_Should_ReplyMessage(string command)
         {
             await TestNotAdminUser(command);
         }
 
         [Theory]
-        [InlineData(Commands.SetAlgorithm, "Test")]
-        [InlineData(Commands.SetAlgorithm + "@" + Defaults.TelegramBotUser, "Test")]
-        [InlineData(Commands.SetAlgorithm, "fjkafdk324")]
-        [InlineData(Commands.SetAlgorithm + "@" + Defaults.TelegramBotUser, "flkjsdf234")]
+        [InlineData(TelegramBotCommands.SetAlgorithm, "Test")]
+        [InlineData(TelegramBotCommands.SetAlgorithm + "@" + Defaults.TelegramBotUser, "Test")]
+        [InlineData(TelegramBotCommands.SetAlgorithm, "fjkafdk324")]
+        [InlineData(TelegramBotCommands.SetAlgorithm + "@" + Defaults.TelegramBotUser, "flkjsdf234")]
         public async Task SetAlgorithm_ParameterIsNotNumber_Should_ReplyMessage(string command, string parameter)
         {
             // Arrange
@@ -563,10 +563,10 @@ namespace GrammarNazi.Tests.Services
         }
 
         [Theory]
-        [InlineData(Commands.SetAlgorithm, "500")]
-        [InlineData(Commands.SetAlgorithm + "@" + Defaults.TelegramBotUser, "500")]
-        [InlineData(Commands.SetAlgorithm, "123456")]
-        [InlineData(Commands.SetAlgorithm + "@" + Defaults.TelegramBotUser, "123456")]
+        [InlineData(TelegramBotCommands.SetAlgorithm, "500")]
+        [InlineData(TelegramBotCommands.SetAlgorithm + "@" + Defaults.TelegramBotUser, "500")]
+        [InlineData(TelegramBotCommands.SetAlgorithm, "123456")]
+        [InlineData(TelegramBotCommands.SetAlgorithm + "@" + Defaults.TelegramBotUser, "123456")]
         public async Task SetAlgorithm_InvalidParameter_Should_ReplyMessage(string command, string parameter)
         {
             // Arrange
@@ -608,10 +608,10 @@ namespace GrammarNazi.Tests.Services
         }
 
         [Theory]
-        [InlineData(Commands.SetAlgorithm, GrammarAlgorithms.LanguageToolApi)]
-        [InlineData(Commands.SetAlgorithm + "@" + Defaults.TelegramBotUser, GrammarAlgorithms.LanguageToolApi)]
-        [InlineData(Commands.SetAlgorithm, GrammarAlgorithms.InternalAlgorithm)]
-        [InlineData(Commands.SetAlgorithm + "@" + Defaults.TelegramBotUser, GrammarAlgorithms.InternalAlgorithm)]
+        [InlineData(TelegramBotCommands.SetAlgorithm, GrammarAlgorithms.LanguageToolApi)]
+        [InlineData(TelegramBotCommands.SetAlgorithm + "@" + Defaults.TelegramBotUser, GrammarAlgorithms.LanguageToolApi)]
+        [InlineData(TelegramBotCommands.SetAlgorithm, GrammarAlgorithms.InternalAlgorithm)]
+        [InlineData(TelegramBotCommands.SetAlgorithm + "@" + Defaults.TelegramBotUser, GrammarAlgorithms.InternalAlgorithm)]
         public async Task SetAlgorithm_ValidParameter_Should_ChangeChatConfig_And_ReplyMessage(string command, GrammarAlgorithms algorithmParameter)
         {
             // Arrange
@@ -654,16 +654,16 @@ namespace GrammarNazi.Tests.Services
         }
 
         [Theory]
-        [InlineData(Commands.Tolerant)]
-        [InlineData(Commands.Tolerant + "@" + Defaults.TelegramBotUser)]
+        [InlineData(TelegramBotCommands.Tolerant)]
+        [InlineData(TelegramBotCommands.Tolerant + "@" + Defaults.TelegramBotUser)]
         public async Task Tolerant_UserIsNotAdmin_Should_ReplyMessage(string command)
         {
             await TestNotAdminUser(command);
         }
 
         [Theory]
-        [InlineData(Commands.Tolerant)]
-        [InlineData(Commands.Tolerant + "@" + Defaults.TelegramBotUser)]
+        [InlineData(TelegramBotCommands.Tolerant)]
+        [InlineData(TelegramBotCommands.Tolerant + "@" + Defaults.TelegramBotUser)]
         public async Task Tolerant_UserIsAdmin_Should_ChangeChatConfig_And_ReplyMessage(string command)
         {
             // Arrange
@@ -707,16 +707,16 @@ namespace GrammarNazi.Tests.Services
         }
 
         [Theory]
-        [InlineData(Commands.Intolerant)]
-        [InlineData(Commands.Intolerant + "@" + Defaults.TelegramBotUser)]
+        [InlineData(TelegramBotCommands.Intolerant)]
+        [InlineData(TelegramBotCommands.Intolerant + "@" + Defaults.TelegramBotUser)]
         public async Task Intolerant_UserIsNotAdmin_Should_ReplyMessage(string command)
         {
             await TestNotAdminUser(command);
         }
 
         [Theory]
-        [InlineData(Commands.Intolerant)]
-        [InlineData(Commands.Intolerant + "@" + Defaults.TelegramBotUser)]
+        [InlineData(TelegramBotCommands.Intolerant)]
+        [InlineData(TelegramBotCommands.Intolerant + "@" + Defaults.TelegramBotUser)]
         public async Task Intolerant_UserIsAdmin_Should_ChangeChatConfig_And_ReplyMessage(string command)
         {
             // Arrange
@@ -760,8 +760,8 @@ namespace GrammarNazi.Tests.Services
         }
 
         [Theory]
-        [InlineData(Commands.WhiteList)]
-        [InlineData(Commands.WhiteList + "@" + Defaults.TelegramBotUser)]
+        [InlineData(TelegramBotCommands.WhiteList)]
+        [InlineData(TelegramBotCommands.WhiteList + "@" + Defaults.TelegramBotUser)]
         public async Task WhiteList_NoWhiteListsConfigured_Should_ReplyMessage(string command)
         {
             // Arrange
@@ -803,8 +803,8 @@ namespace GrammarNazi.Tests.Services
         }
 
         [Theory]
-        [InlineData(Commands.WhiteList)]
-        [InlineData(Commands.WhiteList + "@" + Defaults.TelegramBotUser)]
+        [InlineData(TelegramBotCommands.WhiteList)]
+        [InlineData(TelegramBotCommands.WhiteList + "@" + Defaults.TelegramBotUser)]
         public async Task WhiteList_WhiteListsConfigured_Should_ReplyMessageWithWhiteList(string command)
         {
             // Arrange
@@ -843,16 +843,16 @@ namespace GrammarNazi.Tests.Services
         }
 
         [Theory]
-        [InlineData(Commands.AddWhiteList)]
-        [InlineData(Commands.AddWhiteList + "@" + Defaults.TelegramBotUser)]
+        [InlineData(TelegramBotCommands.AddWhiteList)]
+        [InlineData(TelegramBotCommands.AddWhiteList + "@" + Defaults.TelegramBotUser)]
         public async Task AddWhiteList_UserIsNotAdmin_Should_ReplyMessage(string command)
         {
             await TestNotAdminUser(command);
         }
 
         [Theory]
-        [InlineData(Commands.AddWhiteList)]
-        [InlineData(Commands.AddWhiteList + "@" + Defaults.TelegramBotUser)]
+        [InlineData(TelegramBotCommands.AddWhiteList)]
+        [InlineData(TelegramBotCommands.AddWhiteList + "@" + Defaults.TelegramBotUser)]
         public async Task AddWhiteList_NoParameter_Should_ReplyMessage(string command)
         {
             // Arrange
@@ -894,8 +894,8 @@ namespace GrammarNazi.Tests.Services
         }
 
         [Theory]
-        [InlineData(Commands.AddWhiteList, "Word")]
-        [InlineData(Commands.AddWhiteList + "@" + Defaults.TelegramBotUser, "Word")]
+        [InlineData(TelegramBotCommands.AddWhiteList, "Word")]
+        [InlineData(TelegramBotCommands.AddWhiteList + "@" + Defaults.TelegramBotUser, "Word")]
         public async Task AddWhiteList_WordExist_Should_ReplyMessage(string command, string parameter)
         {
             // Arrange
@@ -934,8 +934,8 @@ namespace GrammarNazi.Tests.Services
         }
 
         [Theory]
-        [InlineData(Commands.AddWhiteList, "Word")]
-        [InlineData(Commands.AddWhiteList + "@" + Defaults.TelegramBotUser, "Word")]
+        [InlineData(TelegramBotCommands.AddWhiteList, "Word")]
+        [InlineData(TelegramBotCommands.AddWhiteList + "@" + Defaults.TelegramBotUser, "Word")]
         public async Task AddWhiteList_NoWordExist_Should_ChangeChatConfig_And_ReplyMessage(string command, string parameter)
         {
             // Arrange
@@ -978,16 +978,16 @@ namespace GrammarNazi.Tests.Services
         }
 
         [Theory]
-        [InlineData(Commands.RemoveWhiteList)]
-        [InlineData(Commands.RemoveWhiteList + "@" + Defaults.TelegramBotUser)]
+        [InlineData(TelegramBotCommands.RemoveWhiteList)]
+        [InlineData(TelegramBotCommands.RemoveWhiteList + "@" + Defaults.TelegramBotUser)]
         public async Task RemoveWhiteList_UserIsNotAdmin_Should_ReplyMessage(string command)
         {
             await TestNotAdminUser(command);
         }
 
         [Theory]
-        [InlineData(Commands.RemoveWhiteList)]
-        [InlineData(Commands.RemoveWhiteList + "@" + Defaults.TelegramBotUser)]
+        [InlineData(TelegramBotCommands.RemoveWhiteList)]
+        [InlineData(TelegramBotCommands.RemoveWhiteList + "@" + Defaults.TelegramBotUser)]
         public async Task RemoveWhiteList_NoParameter_Should_ReplyMessage(string command)
         {
             // Arrange
@@ -1029,8 +1029,8 @@ namespace GrammarNazi.Tests.Services
         }
 
         [Theory]
-        [InlineData(Commands.RemoveWhiteList, "Word")]
-        [InlineData(Commands.RemoveWhiteList + "@" + Defaults.TelegramBotUser, "Word")]
+        [InlineData(TelegramBotCommands.RemoveWhiteList, "Word")]
+        [InlineData(TelegramBotCommands.RemoveWhiteList + "@" + Defaults.TelegramBotUser, "Word")]
         public async Task RemoveWhiteList_NoWordExist_Should_ReplyMessage(string command, string parameter)
         {
             // Arrange
@@ -1069,8 +1069,8 @@ namespace GrammarNazi.Tests.Services
         }
 
         [Theory]
-        [InlineData(Commands.RemoveWhiteList, "Word")]
-        [InlineData(Commands.RemoveWhiteList + "@" + Defaults.TelegramBotUser, "Word")]
+        [InlineData(TelegramBotCommands.RemoveWhiteList, "Word")]
+        [InlineData(TelegramBotCommands.RemoveWhiteList + "@" + Defaults.TelegramBotUser, "Word")]
         public async Task RemoveWhiteList_WordExist_Should_RemoveWordFromWhiteList_And_ReplyMessage(string command, string parameter)
         {
             // Arrange

@@ -1,6 +1,6 @@
 ﻿namespace GrammarNazi.Domain.Constants
 {
-    public static class Commands
+    public static class TelegramBotCommands
     {
         public const string Start = "/start";
         public const string Help = "/help";
