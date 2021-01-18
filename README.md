@@ -7,6 +7,9 @@ Bot that corrects spelling mistakes.
 #### Twitter Bot
 [@GrammarNazi_Bot](https://twitter.com/GrammarNazi_Bot) This Twitter bot analyzes the latest tweets of its followers, and if it finds any spelling or grammar errors, it will tweet a reply with its corrections using the asterisk symbol (*).
 
+#### Discord Bot
+Is comming... [#62](https://github.com/nminaya/grammar-nazi-bot/issues/62) 
+
 ## Features
 #### Twitter Bot
 - Evaluates Tweets of followers.
