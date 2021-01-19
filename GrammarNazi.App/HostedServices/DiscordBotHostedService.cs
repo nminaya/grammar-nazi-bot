@@ -2,6 +2,7 @@
 using Discord.Commands;
 using Discord.WebSocket;
 using GrammarNazi.Domain.Constants;
+using GrammarNazi.Domain.Entities;
 using GrammarNazi.Domain.Entities.Settings;
 using GrammarNazi.Domain.Enums;
 using GrammarNazi.Domain.Services;
@@ -24,11 +25,13 @@ namespace GrammarNazi.App.HostedServices
         private readonly ILogger<DiscordBotHostedService> _logger;
         private readonly IGithubService _githubService;
         private readonly IEnumerable<IGrammarService> _grammarServices;
+        private readonly IDiscordChannelConfigService _discordChannelConfigService;
 
         public DiscordBotHostedService(BaseSocketClient baseSocketClient,
             IOptions<DiscordSettings> options,
             IGithubService githubService,
             IEnumerable<IGrammarService> grammarServices,
+            IDiscordChannelConfigService discordChannelConfigService,
             ILogger<DiscordBotHostedService> logger)
         {
             _client = baseSocketClient;
@@ -36,6 +39,7 @@ namespace GrammarNazi.App.HostedServices
             _logger = logger;
             _githubService = githubService;
             _grammarServices = grammarServices;
+            _discordChannelConfigService = discordChannelConfigService;
         }
 
         protected override async Task ExecuteAsync(CancellationToken stoppingToken)
@@ -75,10 +79,16 @@ namespace GrammarNazi.App.HostedServices
 
             _logger.LogInformation($"Message received from channel id: {message.Channel.Id}");
 
-            // TODO: Implement command handler
+            // Text is a command
+            if (message.Content.StartsWith(DiscordBotCommands.Prefix))
+            {
+                await HandleCommad(message);
+                return;
+            }
 
-            // TODO: Implement DiscordChatConfiguration
-            var grammarService = GetConfiguredGrammarService();
+            var channelConfig = await GetChatConfiguration(message.Channel.Id);
+
+            var grammarService = GetConfiguredGrammarService(channelConfig);
 
             var corretionResult = await grammarService.GetCorrections(message.Content);
 
@@ -107,14 +117,37 @@ namespace GrammarNazi.App.HostedServices
             await context.Channel.SendMessageAsync(messageBuilder.ToString());
         }
 
-        private IGrammarService GetConfiguredGrammarService()
+        private IGrammarService GetConfiguredGrammarService(DiscordChannelConfig channelConfig)
         {
-            // TODO: Implement get configured grammar Service
-            var grammarService = _grammarServices.First(v => v.GrammarAlgorith == Defaults.DefaultAlgorithm);
-            grammarService.SetSelectedLanguage(SupportedLanguages.Auto);
-            grammarService.SetStrictnessLevel(CorrectionStrictnessLevels.Intolerant);
+            var grammarService = _grammarServices.First(v => v.GrammarAlgorith == channelConfig.GrammarAlgorithm);
+            grammarService.SetSelectedLanguage(channelConfig.SelectedLanguage);
+            grammarService.SetStrictnessLevel(channelConfig.CorrectionStrictnessLevel);
 
             return grammarService;
+        }
+
+        private async Task<DiscordChannelConfig> GetChatConfiguration(ulong channelId)
+        {
+            var channelConfig = await _discordChannelConfigService.GetConfigurationByChannelId(channelId);
+
+            if (channelConfig != null)
+                return channelConfig;
+
+            var channelConfiguration = new DiscordChannelConfig
+            {
+                ChannelId = channelId,
+                GrammarAlgorithm = Defaults.DefaultAlgorithm,
+                SelectedLanguage = SupportedLanguages.Auto
+            };
+
+            await _discordChannelConfigService.AddConfiguration(channelConfiguration);
+
+            return channelConfiguration;
+        }
+
+        private async Task HandleCommad(SocketUserMessage message)
+        {
+            //TODO: Implement command handling
         }
     }
 }

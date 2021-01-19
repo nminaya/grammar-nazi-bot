@@ -79,6 +79,7 @@ namespace GrammarNazi.App
             services.AddTransient<IGithubService, GithubService>();
             services.AddTransient<ITelegramCommandHandlerService, TelegramCommandHandlerService>();
             services.AddTransient<ISentimentAnalysisService, SentimentAnalysisService>();
+            services.AddTransient<IDiscordChannelConfigService, DiscordChannelConfigService>();
 
             // HttpClient
             services.AddHttpClient();
