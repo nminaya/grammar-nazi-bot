@@ -26,12 +26,14 @@ namespace GrammarNazi.App.HostedServices
         private readonly IGithubService _githubService;
         private readonly IEnumerable<IGrammarService> _grammarServices;
         private readonly IDiscordChannelConfigService _discordChannelConfigService;
+        private readonly IDiscordCommandHandlerService _discordCommandHandlerService;
 
         public DiscordBotHostedService(BaseSocketClient baseSocketClient,
             IOptions<DiscordSettings> options,
             IGithubService githubService,
             IEnumerable<IGrammarService> grammarServices,
             IDiscordChannelConfigService discordChannelConfigService,
+            IDiscordCommandHandlerService discordCommandHandlerService,
             ILogger<DiscordBotHostedService> logger)
         {
             _client = baseSocketClient;
@@ -40,6 +42,7 @@ namespace GrammarNazi.App.HostedServices
             _githubService = githubService;
             _grammarServices = grammarServices;
             _discordChannelConfigService = discordChannelConfigService;
+            _discordCommandHandlerService = discordCommandHandlerService;
         }
 
         protected override async Task ExecuteAsync(CancellationToken stoppingToken)
@@ -82,7 +85,7 @@ namespace GrammarNazi.App.HostedServices
             // Text is a command
             if (message.Content.StartsWith(DiscordBotCommands.Prefix))
             {
-                await HandleCommad(message);
+                await _discordCommandHandlerService.HandleCommand(message);
                 return;
             }
 
@@ -104,7 +107,7 @@ namespace GrammarNazi.App.HostedServices
 
             foreach (var correction in corretionResult.Corrections)
             {
-                var correctionDetailMessage = !string.IsNullOrEmpty(correction.Message)
+                var correctionDetailMessage = !channelConfig.HideCorrectionDetails && !string.IsNullOrEmpty(correction.Message)
                     ? $"[{correction.Message}]"
                     : string.Empty;
 
@@ -143,11 +146,6 @@ namespace GrammarNazi.App.HostedServices
             await _discordChannelConfigService.AddConfiguration(channelConfiguration);
 
             return channelConfiguration;
-        }
-
-        private async Task HandleCommad(SocketUserMessage message)
-        {
-            //TODO: Implement command handling
         }
     }
 }
