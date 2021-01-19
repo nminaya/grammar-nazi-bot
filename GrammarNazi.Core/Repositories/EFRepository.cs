@@ -27,7 +27,7 @@ namespace GrammarNazi.Core.Repositories
         public async Task<bool> Any(Expression<Func<T, bool>> filter = default)
         {
             if (filter == default)
-                return await _dbContext.Set<T>().AnyAsync();
+                return await EntityFrameworkQueryableExtensions.AnyAsync(_dbContext.Set<T>());
 
             return await _dbContext.Set<T>().AnyAsync(filter);
         }
