@@ -74,10 +74,7 @@ namespace GrammarNazi.App.HostedServices
 
         private async Task OnMessageReceived(SocketMessage arg)
         {
-            if (arg is not SocketUserMessage message)
-                return;
-
-            if (message.Author.IsBot)
+            if (arg is not SocketUserMessage message || message.Author.IsBot)
                 return;
 
             _logger.LogInformation($"Message received from channel id: {message.Channel.Id}");
@@ -90,6 +87,9 @@ namespace GrammarNazi.App.HostedServices
             }
 
             var channelConfig = await GetChatConfiguration(message.Channel.Id);
+
+            if (channelConfig.IsBotStopped)
+                return;
 
             var grammarService = GetConfiguredGrammarService(channelConfig);
 
