@@ -1,4 +1,5 @@
-﻿using Discord.Commands;
+﻿using Discord;
+using Discord.Commands;
 using Discord.WebSocket;
 using GrammarNazi.Core.Extensions;
 using GrammarNazi.Domain.Constants;
@@ -36,8 +37,8 @@ namespace GrammarNazi.Core.Services
                 if (chatConfig == null)
                 {
                     messageBuilder.AppendLine("Hi, I'm GrammarNazi.");
-                    messageBuilder.AppendLine("I'm currently working and correcting all spelling errors in this chat.");
-                    messageBuilder.AppendLine($"Type {DiscordBotCommands.Help} to get useful commands.");
+                    messageBuilder.AppendLine("I'm currently working and correcting all spelling errors in this channel.");
+                    messageBuilder.AppendLine($"Type `{DiscordBotCommands.Help}` to get useful commands.");
 
                     var chatConfiguration = new DiscordChannelConfig
                     {
@@ -67,27 +68,26 @@ namespace GrammarNazi.Core.Services
                     messageBuilder.AppendLine("Bot is already started");
                 }
 
-                await SendMessage(message, messageBuilder.ToString());
+                await SendMessage(message, messageBuilder.ToString(), DiscordBotCommands.Start);
             }
             else if (text.StartsWith(DiscordBotCommands.Help))
             {
                 var messageBuilder = new StringBuilder();
-                messageBuilder.AppendLine("Help").AppendLine();
                 messageBuilder.AppendLine("Useful commands:");
-                messageBuilder.AppendLine($"{DiscordBotCommands.Start} start/activate the Bot.");
-                messageBuilder.AppendLine($"{DiscordBotCommands.Stop} stop/disable the Bot.");
-                messageBuilder.AppendLine($"{DiscordBotCommands.Settings} get configured settings.");
-                messageBuilder.AppendLine($"{DiscordBotCommands.SetAlgorithm} <algorithm_number> to set an algorithm.");
-                messageBuilder.AppendLine($"{DiscordBotCommands.Language} <language_number> to set a language.");
-                messageBuilder.AppendLine($"{DiscordBotCommands.ShowDetails} Show correction details");
-                messageBuilder.AppendLine($"{DiscordBotCommands.HideDetails} Hide correction details");
-                messageBuilder.AppendLine($"{DiscordBotCommands.WhiteList} See list of ignored words.");
-                messageBuilder.AppendLine($"{DiscordBotCommands.AddWhiteList} <word> to add a Whitelist word.");
-                messageBuilder.AppendLine($"{DiscordBotCommands.RemoveWhiteList} <word> to remove a Whitelist word.");
-                messageBuilder.AppendLine($"{DiscordBotCommands.Tolerant} Set strictness level to {CorrectionStrictnessLevels.Tolerant.GetDescription()}");
-                messageBuilder.AppendLine($"{DiscordBotCommands.Intolerant} Set strictness level to {CorrectionStrictnessLevels.Intolerant.GetDescription()}");
+                messageBuilder.AppendLine($"`{DiscordBotCommands.Start}` start/activate the Bot.");
+                messageBuilder.AppendLine($"`{DiscordBotCommands.Stop}` stop/disable the Bot.");
+                messageBuilder.AppendLine($"`{DiscordBotCommands.Settings}` get configured settings.");
+                messageBuilder.AppendLine($"`{DiscordBotCommands.SetAlgorithm}` <algorithm_number> to set an algorithm.");
+                messageBuilder.AppendLine($"`{DiscordBotCommands.Language}` <language_number> to set a language.");
+                messageBuilder.AppendLine($"`{DiscordBotCommands.ShowDetails}` Show correction details");
+                messageBuilder.AppendLine($"`{DiscordBotCommands.HideDetails}` Hide correction details");
+                messageBuilder.AppendLine($"`{DiscordBotCommands.WhiteList}` See list of ignored words.");
+                messageBuilder.AppendLine($"`{DiscordBotCommands.AddWhiteList}` <word> to add a Whitelist word.");
+                messageBuilder.AppendLine($"`{DiscordBotCommands.RemoveWhiteList}` <word> to remove a Whitelist word.");
+                messageBuilder.AppendLine($"`{DiscordBotCommands.Tolerant}` Set strictness level to {CorrectionStrictnessLevels.Tolerant.GetDescription()}");
+                messageBuilder.AppendLine($"`{DiscordBotCommands.Intolerant}` Set strictness level to {CorrectionStrictnessLevels.Intolerant.GetDescription()}");
 
-                await SendMessage(message, messageBuilder.ToString());
+                await SendMessage(message, messageBuilder.ToString(), DiscordBotCommands.Help);
             }
             else if (text.StartsWith(DiscordBotCommands.Settings))
             {
@@ -101,12 +101,12 @@ namespace GrammarNazi.Core.Services
                 messageBuilder.AppendLine($"Show correction details {showCorrectionDetailsIcon}").AppendLine();
                 messageBuilder.AppendLine("Strictness level:").AppendLine($"{chatConfig.CorrectionStrictnessLevel.GetDescription()} ✅").AppendLine();
 
-                messageBuilder.AppendLine($"Whitelist Words:").AppendLine($"Type {DiscordBotCommands.WhiteList} to see Whitelist words configured.").AppendLine();
+                messageBuilder.AppendLine($"Whitelist Words:").AppendLine($"Type `{DiscordBotCommands.WhiteList}` to see Whitelist words configured.").AppendLine();
 
                 if (chatConfig.IsBotStopped)
-                    messageBuilder.AppendLine($"The bot is currently stopped. Type {DiscordBotCommands.Start} to activate the Bot.");
+                    messageBuilder.AppendLine($"The bot is currently stopped. Type `{DiscordBotCommands.Start}` to activate the Bot.");
 
-                await SendMessage(message, messageBuilder.ToString());
+                await SendMessage(message, messageBuilder.ToString(), DiscordBotCommands.Settings);
             }
             else if (text.StartsWith(DiscordBotCommands.SetAlgorithm))
             {
@@ -116,7 +116,7 @@ namespace GrammarNazi.Core.Services
                 {
                     messageBuilder.AppendLine("Only admins can use this command.");
                     //TODO: Send reply
-                    await SendMessage(message, messageBuilder.ToString());
+                    await SendMessage(message, messageBuilder.ToString(), DiscordBotCommands.SetAlgorithm);
                     return;
                 }
 
@@ -125,9 +125,9 @@ namespace GrammarNazi.Core.Services
                 {
                     var chatConfig = await _channelConfigService.GetConfigurationByChannelId(message.Channel.Id);
 
-                    messageBuilder.AppendLine($"Parameter not received. Type {DiscordBotCommands.SetAlgorithm} <algorithm_numer> to set an algorithm").AppendLine();
+                    messageBuilder.AppendLine($"Parameter not received. Type `{DiscordBotCommands.SetAlgorithm}` <algorithm_numer> to set an algorithm").AppendLine();
                     messageBuilder.AppendLine(GetAvailableAlgorithms(chatConfig.GrammarAlgorithm));
-                    await SendMessage(message, messageBuilder.ToString());
+                    await SendMessage(message, messageBuilder.ToString(), DiscordBotCommands.SetAlgorithm);
                 }
                 else
                 {
@@ -140,11 +140,11 @@ namespace GrammarNazi.Core.Services
 
                         await _channelConfigService.Update(chatConfig);
 
-                        await SendMessage(message, "Algorithm updated.");
+                        await SendMessage(message, "Algorithm updated.", DiscordBotCommands.SetAlgorithm);
                     }
                     else
                     {
-                        await SendMessage(message, $"Invalid parameter. Type {DiscordBotCommands.SetAlgorithm} <algorithm_numer> to set an algorithm.");
+                        await SendMessage(message, $"Invalid parameter. Type `{DiscordBotCommands.SetAlgorithm}` <algorithm_numer> to set an algorithm.", DiscordBotCommands.SetAlgorithm);
                     }
                 }
             }
@@ -156,7 +156,7 @@ namespace GrammarNazi.Core.Services
                 {
                     messageBuilder.AppendLine("Only admins can use this command.");
                     //TODO: Send reply
-                    await SendMessage(message, messageBuilder.ToString());
+                    await SendMessage(message, messageBuilder.ToString(), DiscordBotCommands.Language);
                     return;
                 }
 
@@ -166,9 +166,9 @@ namespace GrammarNazi.Core.Services
                 {
                     var chatConfig = await _channelConfigService.GetConfigurationByChannelId(message.Channel.Id);
 
-                    messageBuilder.AppendLine($"Parameter not received. Type {DiscordBotCommands.Language} <language_number> to set a language.").AppendLine();
+                    messageBuilder.AppendLine($"Parameter not received. Type `{DiscordBotCommands.Language}` <language_number> to set a language.").AppendLine();
                     messageBuilder.AppendLine(GetSupportedLanguages(chatConfig.SelectedLanguage));
-                    await SendMessage(message, messageBuilder.ToString());
+                    await SendMessage(message, messageBuilder.ToString(), DiscordBotCommands.Language);
                 }
                 else
                 {
@@ -181,11 +181,11 @@ namespace GrammarNazi.Core.Services
 
                         await _channelConfigService.Update(chatConfig);
 
-                        await SendMessage(message, "Language updated.");
+                        await SendMessage(message, "Language updated.", DiscordBotCommands.Language);
                     }
                     else
                     {
-                        await SendMessage(message, $"Invalid parameter. Type {DiscordBotCommands.Language} <language_number> to set a language.");
+                        await SendMessage(message, $"Invalid parameter. Type `{DiscordBotCommands.Language}` <language_number> to set a language.", DiscordBotCommands.Language);
                     }
                 }
             }
@@ -194,7 +194,7 @@ namespace GrammarNazi.Core.Services
                 if (!await IsUserAdmin(message))
                 {
                     //TODO: Send reply
-                    await SendMessage(message, "Only admins can use this command.");
+                    await SendMessage(message, "Only admins can use this command.", DiscordBotCommands.Stop);
                     return;
                 }
 
@@ -204,14 +204,14 @@ namespace GrammarNazi.Core.Services
 
                 await _channelConfigService.Update(chatConfig);
 
-                await SendMessage(message, "Bot stopped");
+                await SendMessage(message, "Bot stopped", DiscordBotCommands.Stop);
             }
             else if (text.StartsWith(DiscordBotCommands.HideDetails))
             {
                 if (!await IsUserAdmin(message))
                 {
                     //TODO: Send reply
-                    await SendMessage(message, "Only admins can use this command.");
+                    await SendMessage(message, "Only admins can use this command.", DiscordBotCommands.HideDetails);
                     return;
                 }
 
@@ -221,14 +221,14 @@ namespace GrammarNazi.Core.Services
 
                 await _channelConfigService.Update(chatConfig);
 
-                await SendMessage(message, "Correction details hidden ✅");
+                await SendMessage(message, "Correction details hidden ✅", DiscordBotCommands.HideDetails);
             }
             else if (text.StartsWith(DiscordBotCommands.ShowDetails))
             {
                 if (!await IsUserAdmin(message))
                 {
                     //TODO: Send reply
-                    await SendMessage(message, "Only admins can use this command.");
+                    await SendMessage(message, "Only admins can use this command.", DiscordBotCommands.ShowDetails);
                     return;
                 }
 
@@ -238,14 +238,14 @@ namespace GrammarNazi.Core.Services
 
                 await _channelConfigService.Update(chatConfig);
 
-                await SendMessage(message, "Show correction details ✅");
+                await SendMessage(message, "Show correction details ✅", DiscordBotCommands.ShowDetails);
             }
             else if (text.StartsWith(DiscordBotCommands.Tolerant))
             {
                 if (!await IsUserAdmin(message))
                 {
                     //TODO: Send reply
-                    await SendMessage(message, "Only admins can use this command.");
+                    await SendMessage(message, "Only admins can use this command.", DiscordBotCommands.Tolerant);
                     return;
                 }
 
@@ -255,14 +255,14 @@ namespace GrammarNazi.Core.Services
 
                 await _channelConfigService.Update(chatConfig);
 
-                await SendMessage(message, "Tolerant ✅");
+                await SendMessage(message, "Tolerant ✅", DiscordBotCommands.Tolerant);
             }
             else if (text.StartsWith(DiscordBotCommands.Intolerant))
             {
                 if (!await IsUserAdmin(message))
                 {
                     //TODO: Send reply
-                    await SendMessage(message, "Only admins can use this command.");
+                    await SendMessage(message, "Only admins can use this command.", DiscordBotCommands.Intolerant);
                     return;
                 }
 
@@ -272,7 +272,7 @@ namespace GrammarNazi.Core.Services
 
                 await _channelConfigService.Update(chatConfig);
 
-                await SendMessage(message, "Intolerant ✅");
+                await SendMessage(message, "Intolerant ✅", DiscordBotCommands.Intolerant);
             }
             else if (text.StartsWith(DiscordBotCommands.WhiteList))
             {
@@ -288,19 +288,19 @@ namespace GrammarNazi.Core.Services
                         messageBuilder.AppendLine($"- {word}");
                     }
 
-                    await SendMessage(message, messageBuilder.ToString());
+                    await SendMessage(message, messageBuilder.ToString(), DiscordBotCommands.WhiteList);
 
                     return;
                 }
 
-                await SendMessage(message, $"You don't have Whitelist words configured. Use {DiscordBotCommands.AddWhiteList} to add words to the WhiteList.");
+                await SendMessage(message, $"You don't have Whitelist words configured. Use `{DiscordBotCommands.AddWhiteList}` to add words to the WhiteList.", DiscordBotCommands.WhiteList);
             }
             else if (text.StartsWith(DiscordBotCommands.AddWhiteList))
             {
                 if (!await IsUserAdmin(message))
                 {
                     //TODO: Send reply
-                    await SendMessage(message, "Only admins can use this command.");
+                    await SendMessage(message, "Only admins can use this command.", DiscordBotCommands.AddWhiteList);
                     return;
                 }
 
@@ -308,7 +308,7 @@ namespace GrammarNazi.Core.Services
 
                 if (parameters.Length == 1)
                 {
-                    await SendMessage(message, $"Parameter not received. Type {DiscordBotCommands.AddWhiteList} <word> to add a Whitelist word.");
+                    await SendMessage(message, $"Parameter not received. Type `{DiscordBotCommands.AddWhiteList}` <word> to add a Whitelist word.", DiscordBotCommands.AddWhiteList);
                 }
                 else
                 {
@@ -318,7 +318,7 @@ namespace GrammarNazi.Core.Services
 
                     if (chatConfig.WhiteListWords.Contains(word))
                     {
-                        await SendMessage(message, $"The word '{word}' is already on the WhiteList");
+                        await SendMessage(message, $"The word '{word}' is already on the WhiteList", DiscordBotCommands.AddWhiteList);
                         return;
                     }
 
@@ -326,7 +326,7 @@ namespace GrammarNazi.Core.Services
 
                     await _channelConfigService.Update(chatConfig);
 
-                    await SendMessage(message, $"Word '{word}' added to the WhiteList.");
+                    await SendMessage(message, $"Word '{word}' added to the WhiteList.", DiscordBotCommands.AddWhiteList);
                 }
             }
             else if (text.StartsWith(DiscordBotCommands.RemoveWhiteList))
@@ -334,7 +334,7 @@ namespace GrammarNazi.Core.Services
                 if (!await IsUserAdmin(message))
                 {
                     //TODO: Send reply
-                    await SendMessage(message, "Only admins can use this command.");
+                    await SendMessage(message, "Only admins can use this command.", DiscordBotCommands.RemoveWhiteList);
                     return;
                 }
 
@@ -342,7 +342,7 @@ namespace GrammarNazi.Core.Services
 
                 if (parameters.Length == 1)
                 {
-                    await SendMessage(message, $"Parameter not received. Type {DiscordBotCommands.RemoveWhiteList} <word> to remove a Whitelist word.");
+                    await SendMessage(message, $"Parameter not received. Type `{DiscordBotCommands.RemoveWhiteList}` <word> to remove a Whitelist word.", DiscordBotCommands.RemoveWhiteList);
                 }
                 else
                 {
@@ -352,7 +352,7 @@ namespace GrammarNazi.Core.Services
 
                     if (!chatConfig.WhiteListWords.Contains(word))
                     {
-                        await SendMessage(message, $"The word '{word}' is not in the WhiteList.");
+                        await SendMessage(message, $"The word '{word}' is not in the WhiteList.", DiscordBotCommands.RemoveWhiteList);
                         return;
                     }
 
@@ -360,7 +360,7 @@ namespace GrammarNazi.Core.Services
 
                     await _channelConfigService.Update(chatConfig);
 
-                    await SendMessage(message, $"Word '{word}' removed from the WhiteList.");
+                    await SendMessage(message, $"Word '{word}' removed from the WhiteList.", DiscordBotCommands.RemoveWhiteList);
                 }
             }
         }
@@ -370,11 +370,18 @@ namespace GrammarNazi.Core.Services
             return true;
         }
 
-        private async Task SendMessage(SocketUserMessage socketUserMessage, string message)
+        private async Task SendMessage(SocketUserMessage socketUserMessage, string message, string command)
         {
             var context = new SocketCommandContext((DiscordSocketClient)_client, socketUserMessage);
 
-            await context.Channel.SendMessageAsync(message);
+            var embed = new EmbedBuilder
+            {
+                Color = new Color(255, 100, 0),
+                Title = command,
+                Description = message
+            };
+
+            await context.Channel.SendMessageAsync(embed: embed.Build());
         }
 
         private static string GetAvailableAlgorithms(GrammarAlgorithms selectedAlgorith)
