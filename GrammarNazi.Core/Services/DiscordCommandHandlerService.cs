@@ -367,6 +367,7 @@ namespace GrammarNazi.Core.Services
 
         private async Task<bool> IsUserAdmin(SocketUserMessage message)
         {
+            // TODO: Implement admin validation
             return true;
         }
 
