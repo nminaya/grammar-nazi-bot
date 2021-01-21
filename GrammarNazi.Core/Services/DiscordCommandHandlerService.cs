@@ -373,8 +373,6 @@ namespace GrammarNazi.Core.Services
 
         private async Task SendMessage(SocketUserMessage socketUserMessage, string message, string command)
         {
-            var context = new SocketCommandContext((DiscordSocketClient)_client, socketUserMessage);
-
             var embed = new EmbedBuilder
             {
                 Color = new Color(255, 100, 0),
@@ -382,7 +380,7 @@ namespace GrammarNazi.Core.Services
                 Description = message
             };
 
-            await context.Channel.SendMessageAsync(embed: embed.Build());
+            await socketUserMessage.Channel.SendMessageAsync(embed: embed.Build());
         }
 
         private static string GetAvailableAlgorithms(GrammarAlgorithms selectedAlgorith)

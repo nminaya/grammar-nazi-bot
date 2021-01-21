@@ -98,9 +98,7 @@ namespace GrammarNazi.App.HostedServices
             if (!corretionResult.HasCorrections)
                 return;
 
-            var context = new SocketCommandContext((DiscordSocketClient)_client, message);
-
-            await context.Channel.TriggerTypingAsync();
+            await message.Channel.TriggerTypingAsync();
 
             var messageBuilder = new StringBuilder();
             messageBuilder.AppendLine(message.Author.Mention);
@@ -116,8 +114,7 @@ namespace GrammarNazi.App.HostedServices
 
             // TODO: Wait for Discord.NET v2.3.0 release
             //await context.Channel.SendMessageAsync(messageBuilder.ToString(), messageReference: new MessageReference(message.Id));
-
-            await context.Channel.SendMessageAsync(messageBuilder.ToString());
+            await message.Channel.SendMessageAsync(messageBuilder.ToString());
         }
 
         private IGrammarService GetConfiguredGrammarService(DiscordChannelConfig channelConfig)
