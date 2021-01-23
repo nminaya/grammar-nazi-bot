@@ -52,7 +52,7 @@ namespace GrammarNazi.Core.Services
                 }
                 else if (chatConfig.IsBotStopped)
                 {
-                    if (!await IsUserAdmin(message))
+                    if (!IsUserAdmin(message))
                     {
                         messageBuilder.AppendLine("Only admins can use this command.");
                     }
@@ -112,7 +112,7 @@ namespace GrammarNazi.Core.Services
             {
                 var messageBuilder = new StringBuilder();
 
-                if (!await IsUserAdmin(message))
+                if (!IsUserAdmin(message))
                 {
                     messageBuilder.AppendLine("Only admins can use this command.");
                     //TODO: Send reply
@@ -152,7 +152,7 @@ namespace GrammarNazi.Core.Services
             {
                 var messageBuilder = new StringBuilder();
 
-                if (!await IsUserAdmin(message))
+                if (!IsUserAdmin(message))
                 {
                     messageBuilder.AppendLine("Only admins can use this command.");
                     //TODO: Send reply
@@ -191,7 +191,7 @@ namespace GrammarNazi.Core.Services
             }
             else if (text.StartsWith(DiscordBotCommands.Stop))
             {
-                if (!await IsUserAdmin(message))
+                if (!IsUserAdmin(message))
                 {
                     //TODO: Send reply
                     await SendMessage(message, "Only admins can use this command.", DiscordBotCommands.Stop);
@@ -208,7 +208,7 @@ namespace GrammarNazi.Core.Services
             }
             else if (text.StartsWith(DiscordBotCommands.HideDetails))
             {
-                if (!await IsUserAdmin(message))
+                if (!IsUserAdmin(message))
                 {
                     //TODO: Send reply
                     await SendMessage(message, "Only admins can use this command.", DiscordBotCommands.HideDetails);
@@ -225,7 +225,7 @@ namespace GrammarNazi.Core.Services
             }
             else if (text.StartsWith(DiscordBotCommands.ShowDetails))
             {
-                if (!await IsUserAdmin(message))
+                if (!IsUserAdmin(message))
                 {
                     //TODO: Send reply
                     await SendMessage(message, "Only admins can use this command.", DiscordBotCommands.ShowDetails);
@@ -242,7 +242,7 @@ namespace GrammarNazi.Core.Services
             }
             else if (text.StartsWith(DiscordBotCommands.Tolerant))
             {
-                if (!await IsUserAdmin(message))
+                if (!IsUserAdmin(message))
                 {
                     //TODO: Send reply
                     await SendMessage(message, "Only admins can use this command.", DiscordBotCommands.Tolerant);
@@ -259,7 +259,7 @@ namespace GrammarNazi.Core.Services
             }
             else if (text.StartsWith(DiscordBotCommands.Intolerant))
             {
-                if (!await IsUserAdmin(message))
+                if (!IsUserAdmin(message))
                 {
                     //TODO: Send reply
                     await SendMessage(message, "Only admins can use this command.", DiscordBotCommands.Intolerant);
@@ -297,7 +297,7 @@ namespace GrammarNazi.Core.Services
             }
             else if (text.StartsWith(DiscordBotCommands.AddWhiteList))
             {
-                if (!await IsUserAdmin(message))
+                if (!IsUserAdmin(message))
                 {
                     //TODO: Send reply
                     await SendMessage(message, "Only admins can use this command.", DiscordBotCommands.AddWhiteList);
@@ -331,7 +331,7 @@ namespace GrammarNazi.Core.Services
             }
             else if (text.StartsWith(DiscordBotCommands.RemoveWhiteList))
             {
-                if (!await IsUserAdmin(message))
+                if (!IsUserAdmin(message))
                 {
                     //TODO: Send reply
                     await SendMessage(message, "Only admins can use this command.", DiscordBotCommands.RemoveWhiteList);
@@ -365,10 +365,10 @@ namespace GrammarNazi.Core.Services
             }
         }
 
-        private async Task<bool> IsUserAdmin(SocketUserMessage message)
+        private bool IsUserAdmin(SocketUserMessage message)
         {
-            // TODO: Implement admin validation
-            return true;
+            var user = message.Author as SocketGuildUser;
+            return user.GuildPermissions.Administrator;
         }
 
         private async Task SendMessage(SocketUserMessage socketUserMessage, string message, string command)
