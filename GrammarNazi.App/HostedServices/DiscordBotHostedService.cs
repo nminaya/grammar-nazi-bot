@@ -74,7 +74,7 @@ namespace GrammarNazi.App.HostedServices
 
         private async Task OnMessageReceived(SocketMessage arg)
         {
-            if (arg is not SocketUserMessage message || message.Author.IsBot)
+            if (arg is not SocketUserMessage message || message.Author.IsBot || message.Author.IsWebhook)
                 return;
 
             _logger.LogInformation($"Message received from channel id: {message.Channel.Id}");
