@@ -1,5 +1,4 @@
 ﻿using Discord;
-using Discord.Commands;
 using Discord.WebSocket;
 using GrammarNazi.Core.Extensions;
 using GrammarNazi.Domain.Constants;
@@ -16,13 +15,10 @@ namespace GrammarNazi.Core.Services
     public class DiscordCommandHandlerService : IDiscordCommandHandlerService
     {
         private readonly IDiscordChannelConfigService _channelConfigService;
-        private readonly BaseSocketClient _client;
 
-        public DiscordCommandHandlerService(IDiscordChannelConfigService channelConfigService,
-            BaseSocketClient client)
+        public DiscordCommandHandlerService(IDiscordChannelConfigService channelConfigService)
         {
             _channelConfigService = channelConfigService;
-            _client = client;
         }
 
         public async Task HandleCommand(SocketUserMessage message)
@@ -365,13 +361,13 @@ namespace GrammarNazi.Core.Services
             }
         }
 
-        private bool IsUserAdmin(SocketUserMessage message)
+        private static bool IsUserAdmin(SocketUserMessage message)
         {
             var user = message.Author as SocketGuildUser;
             return user.GuildPermissions.Administrator;
         }
 
-        private async Task SendMessage(SocketUserMessage socketUserMessage, string message, string command)
+        private static async Task SendMessage(SocketUserMessage socketUserMessage, string message, string command)
         {
             var embed = new EmbedBuilder
             {
