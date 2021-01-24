@@ -79,14 +79,14 @@ namespace GrammarNazi.App.HostedServices
 
             _logger.LogInformation($"Message received from channel id: {message.Channel.Id}");
 
+            var channelConfig = await GetChatConfiguration(message.Channel.Id);
+
             // Text is a command
             if (message.Content.StartsWith(DiscordBotCommands.Prefix))
             {
                 await _discordCommandHandlerService.HandleCommand(message);
                 return;
             }
-
-            var channelConfig = await GetChatConfiguration(message.Channel.Id);
 
             if (channelConfig.IsBotStopped)
                 return;
