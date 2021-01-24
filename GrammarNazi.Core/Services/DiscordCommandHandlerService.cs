@@ -27,10 +27,10 @@ namespace GrammarNazi.Core.Services
 
             if (text.StartsWith(DiscordBotCommands.Start))
             {
-                var chatConfig = await _channelConfigService.GetConfigurationByChannelId(message.Channel.Id);
+                var channelConfig = await _channelConfigService.GetConfigurationByChannelId(message.Channel.Id);
                 var messageBuilder = new StringBuilder();
 
-                if (chatConfig == null)
+                if (channelConfig == null)
                 {
                     messageBuilder.AppendLine("Hi, I'm GrammarNazi.");
                     messageBuilder.AppendLine("I'm currently working and correcting all spelling errors in this channel.");
@@ -46,7 +46,7 @@ namespace GrammarNazi.Core.Services
 
                     await _channelConfigService.AddConfiguration(chatConfiguration);
                 }
-                else if (chatConfig.IsBotStopped)
+                else if (channelConfig.IsBotStopped)
                 {
                     if (!IsUserAdmin(message))
                     {
@@ -54,8 +54,8 @@ namespace GrammarNazi.Core.Services
                     }
                     else
                     {
-                        chatConfig.IsBotStopped = false;
-                        await _channelConfigService.Update(chatConfig);
+                        channelConfig.IsBotStopped = false;
+                        await _channelConfigService.Update(channelConfig);
                         messageBuilder.AppendLine("Bot started");
                     }
                 }
@@ -87,19 +87,19 @@ namespace GrammarNazi.Core.Services
             }
             else if (text.StartsWith(DiscordBotCommands.Settings))
             {
-                var chatConfig = await _channelConfigService.GetConfigurationByChannelId(message.Channel.Id);
+                var channelConfig = await _channelConfigService.GetConfigurationByChannelId(message.Channel.Id);
 
                 var messageBuilder = new StringBuilder();
-                messageBuilder.AppendLine(GetAvailableAlgorithms(chatConfig.GrammarAlgorithm));
-                messageBuilder.AppendLine(GetSupportedLanguages(chatConfig.SelectedLanguage));
+                messageBuilder.AppendLine(GetAvailableAlgorithms(channelConfig.GrammarAlgorithm));
+                messageBuilder.AppendLine(GetSupportedLanguages(channelConfig.SelectedLanguage));
 
-                var showCorrectionDetailsIcon = chatConfig.HideCorrectionDetails ? "❌" : "✅";
+                var showCorrectionDetailsIcon = channelConfig.HideCorrectionDetails ? "❌" : "✅";
                 messageBuilder.AppendLine($"Show correction details {showCorrectionDetailsIcon}").AppendLine();
-                messageBuilder.AppendLine("Strictness level:").AppendLine($"{chatConfig.CorrectionStrictnessLevel.GetDescription()} ✅").AppendLine();
+                messageBuilder.AppendLine("Strictness level:").AppendLine($"{channelConfig.CorrectionStrictnessLevel.GetDescription()} ✅").AppendLine();
 
                 messageBuilder.AppendLine($"Whitelist Words:").AppendLine($"Type `{DiscordBotCommands.WhiteList}` to see Whitelist words configured.").AppendLine();
 
-                if (chatConfig.IsBotStopped)
+                if (channelConfig.IsBotStopped)
                     messageBuilder.AppendLine($"The bot is currently stopped. Type `{DiscordBotCommands.Start}` to activate the Bot.");
 
                 await SendMessage(message, messageBuilder.ToString(), DiscordBotCommands.Settings);
@@ -119,10 +119,10 @@ namespace GrammarNazi.Core.Services
                 var parameters = text.Split(" ");
                 if (parameters.Length == 1)
                 {
-                    var chatConfig = await _channelConfigService.GetConfigurationByChannelId(message.Channel.Id);
+                    var channelConfig = await _channelConfigService.GetConfigurationByChannelId(message.Channel.Id);
 
                     messageBuilder.AppendLine($"Parameter not received. Type `{DiscordBotCommands.SetAlgorithm}` <algorithm_numer> to set an algorithm").AppendLine();
-                    messageBuilder.AppendLine(GetAvailableAlgorithms(chatConfig.GrammarAlgorithm));
+                    messageBuilder.AppendLine(GetAvailableAlgorithms(channelConfig.GrammarAlgorithm));
                     await SendMessage(message, messageBuilder.ToString(), DiscordBotCommands.SetAlgorithm);
                 }
                 else
@@ -131,10 +131,10 @@ namespace GrammarNazi.Core.Services
 
                     if (parsedOk && algorithm.IsAssignableToEnum<GrammarAlgorithms>())
                     {
-                        var chatConfig = await _channelConfigService.GetConfigurationByChannelId(message.Channel.Id);
-                        chatConfig.GrammarAlgorithm = (GrammarAlgorithms)algorithm;
+                        var channelConfig = await _channelConfigService.GetConfigurationByChannelId(message.Channel.Id);
+                        channelConfig.GrammarAlgorithm = (GrammarAlgorithms)algorithm;
 
-                        await _channelConfigService.Update(chatConfig);
+                        await _channelConfigService.Update(channelConfig);
 
                         await SendMessage(message, "Algorithm updated.", DiscordBotCommands.SetAlgorithm);
                     }
@@ -160,10 +160,10 @@ namespace GrammarNazi.Core.Services
 
                 if (parameters.Length == 1)
                 {
-                    var chatConfig = await _channelConfigService.GetConfigurationByChannelId(message.Channel.Id);
+                    var channelConfig = await _channelConfigService.GetConfigurationByChannelId(message.Channel.Id);
 
                     messageBuilder.AppendLine($"Parameter not received. Type `{DiscordBotCommands.Language}` <language_number> to set a language.").AppendLine();
-                    messageBuilder.AppendLine(GetSupportedLanguages(chatConfig.SelectedLanguage));
+                    messageBuilder.AppendLine(GetSupportedLanguages(channelConfig.SelectedLanguage));
                     await SendMessage(message, messageBuilder.ToString(), DiscordBotCommands.Language);
                 }
                 else
@@ -172,10 +172,10 @@ namespace GrammarNazi.Core.Services
 
                     if (parsedOk && language.IsAssignableToEnum<SupportedLanguages>())
                     {
-                        var chatConfig = await _channelConfigService.GetConfigurationByChannelId(message.Channel.Id);
-                        chatConfig.SelectedLanguage = (SupportedLanguages)language;
+                        var channelConfig = await _channelConfigService.GetConfigurationByChannelId(message.Channel.Id);
+                        channelConfig.SelectedLanguage = (SupportedLanguages)language;
 
-                        await _channelConfigService.Update(chatConfig);
+                        await _channelConfigService.Update(channelConfig);
 
                         await SendMessage(message, "Language updated.", DiscordBotCommands.Language);
                     }
@@ -194,11 +194,11 @@ namespace GrammarNazi.Core.Services
                     return;
                 }
 
-                var chatConfig = await _channelConfigService.GetConfigurationByChannelId(message.Channel.Id);
+                var channelConfig = await _channelConfigService.GetConfigurationByChannelId(message.Channel.Id);
 
-                chatConfig.IsBotStopped = true;
+                channelConfig.IsBotStopped = true;
 
-                await _channelConfigService.Update(chatConfig);
+                await _channelConfigService.Update(channelConfig);
 
                 await SendMessage(message, "Bot stopped", DiscordBotCommands.Stop);
             }
@@ -211,11 +211,11 @@ namespace GrammarNazi.Core.Services
                     return;
                 }
 
-                var chatConfig = await _channelConfigService.GetConfigurationByChannelId(message.Channel.Id);
+                var channelConfig = await _channelConfigService.GetConfigurationByChannelId(message.Channel.Id);
 
-                chatConfig.HideCorrectionDetails = true;
+                channelConfig.HideCorrectionDetails = true;
 
-                await _channelConfigService.Update(chatConfig);
+                await _channelConfigService.Update(channelConfig);
 
                 await SendMessage(message, "Correction details hidden ✅", DiscordBotCommands.HideDetails);
             }
@@ -228,11 +228,11 @@ namespace GrammarNazi.Core.Services
                     return;
                 }
 
-                var chatConfig = await _channelConfigService.GetConfigurationByChannelId(message.Channel.Id);
+                var channelConfig = await _channelConfigService.GetConfigurationByChannelId(message.Channel.Id);
 
-                chatConfig.HideCorrectionDetails = false;
+                channelConfig.HideCorrectionDetails = false;
 
-                await _channelConfigService.Update(chatConfig);
+                await _channelConfigService.Update(channelConfig);
 
                 await SendMessage(message, "Show correction details ✅", DiscordBotCommands.ShowDetails);
             }
@@ -245,11 +245,11 @@ namespace GrammarNazi.Core.Services
                     return;
                 }
 
-                var chatConfig = await _channelConfigService.GetConfigurationByChannelId(message.Channel.Id);
+                var channelConfig = await _channelConfigService.GetConfigurationByChannelId(message.Channel.Id);
 
-                chatConfig.CorrectionStrictnessLevel = CorrectionStrictnessLevels.Tolerant;
+                channelConfig.CorrectionStrictnessLevel = CorrectionStrictnessLevels.Tolerant;
 
-                await _channelConfigService.Update(chatConfig);
+                await _channelConfigService.Update(channelConfig);
 
                 await SendMessage(message, "Tolerant ✅", DiscordBotCommands.Tolerant);
             }
@@ -262,24 +262,24 @@ namespace GrammarNazi.Core.Services
                     return;
                 }
 
-                var chatConfig = await _channelConfigService.GetConfigurationByChannelId(message.Channel.Id);
+                var channelConfig = await _channelConfigService.GetConfigurationByChannelId(message.Channel.Id);
 
-                chatConfig.CorrectionStrictnessLevel = CorrectionStrictnessLevels.Intolerant;
+                channelConfig.CorrectionStrictnessLevel = CorrectionStrictnessLevels.Intolerant;
 
-                await _channelConfigService.Update(chatConfig);
+                await _channelConfigService.Update(channelConfig);
 
                 await SendMessage(message, "Intolerant ✅", DiscordBotCommands.Intolerant);
             }
             else if (text.StartsWith(DiscordBotCommands.WhiteList))
             {
-                var chatConfig = await _channelConfigService.GetConfigurationByChannelId(message.Channel.Id);
+                var channelConfig = await _channelConfigService.GetConfigurationByChannelId(message.Channel.Id);
 
-                if (chatConfig.WhiteListWords?.Any() == true)
+                if (channelConfig.WhiteListWords?.Any() == true)
                 {
                     var messageBuilder = new StringBuilder();
                     messageBuilder.AppendLine("Whitelist Words:\n");
 
-                    foreach (var word in chatConfig.WhiteListWords)
+                    foreach (var word in channelConfig.WhiteListWords)
                     {
                         messageBuilder.AppendLine($"- {word}");
                     }
@@ -308,19 +308,19 @@ namespace GrammarNazi.Core.Services
                 }
                 else
                 {
-                    var chatConfig = await _channelConfigService.GetConfigurationByChannelId(message.Channel.Id);
+                    var channelConfig = await _channelConfigService.GetConfigurationByChannelId(message.Channel.Id);
 
                     var word = parameters[1].Trim();
 
-                    if (chatConfig.WhiteListWords.Contains(word))
+                    if (channelConfig.WhiteListWords.Contains(word))
                     {
                         await SendMessage(message, $"The word '{word}' is already on the WhiteList", DiscordBotCommands.AddWhiteList);
                         return;
                     }
 
-                    chatConfig.WhiteListWords.Add(word);
+                    channelConfig.WhiteListWords.Add(word);
 
-                    await _channelConfigService.Update(chatConfig);
+                    await _channelConfigService.Update(channelConfig);
 
                     await SendMessage(message, $"Word '{word}' added to the WhiteList.", DiscordBotCommands.AddWhiteList);
                 }
@@ -342,19 +342,19 @@ namespace GrammarNazi.Core.Services
                 }
                 else
                 {
-                    var chatConfig = await _channelConfigService.GetConfigurationByChannelId(message.Channel.Id);
+                    var channelConfig = await _channelConfigService.GetConfigurationByChannelId(message.Channel.Id);
 
                     var word = parameters[1].Trim();
 
-                    if (!chatConfig.WhiteListWords.Contains(word))
+                    if (!channelConfig.WhiteListWords.Contains(word))
                     {
                         await SendMessage(message, $"The word '{word}' is not in the WhiteList.", DiscordBotCommands.RemoveWhiteList);
                         return;
                     }
 
-                    chatConfig.WhiteListWords.Remove(word);
+                    channelConfig.WhiteListWords.Remove(word);
 
-                    await _channelConfigService.Update(chatConfig);
+                    await _channelConfigService.Update(channelConfig);
 
                     await SendMessage(message, $"Word '{word}' removed from the WhiteList.", DiscordBotCommands.RemoveWhiteList);
                 }
