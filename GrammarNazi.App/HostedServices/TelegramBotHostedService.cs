@@ -110,13 +110,13 @@ namespace GrammarNazi.App.HostedServices
 
             _logger.LogInformation($"Message received from chat id: {message.Chat.Id}");
 
+            var chatConfig = await GetChatConfiguration(message.Chat.Id);
+
             if (message.Text.StartsWith('/')) // Text is a command
             {
                 await _telegramCommandHandlerService.HandleCommand(message);
                 return;
             }
-
-            var chatConfig = await GetChatConfiguration(message.Chat.Id);
 
             if (chatConfig.IsBotStopped)
                 return;
