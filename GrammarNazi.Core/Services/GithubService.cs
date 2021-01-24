@@ -22,6 +22,9 @@ namespace GrammarNazi.Core.Services
 
         public async Task CreateBugIssue(string title, Exception exception)
         {
+            if (title.Length > 256)
+                title = title[0..255];
+
             // Do not duplicate the issue if exist
             if (await IssueExist(title))
                 return;
