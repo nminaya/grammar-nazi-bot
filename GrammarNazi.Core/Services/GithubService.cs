@@ -1,4 +1,5 @@
-﻿using GrammarNazi.Domain.Entities.Settings;
+﻿using GrammarNazi.Domain.Constants;
+using GrammarNazi.Domain.Entities.Settings;
 using GrammarNazi.Domain.Services;
 using Microsoft.Extensions.Options;
 using Octokit;
@@ -22,11 +23,10 @@ namespace GrammarNazi.Core.Services
 
         public async Task CreateBugIssue(string title, Exception exception)
         {
-            if (title.Length > 256)
-                title = title[0..255];
+            var issueTitle = GetTrimmedTitle(title);
 
             // Do not duplicate the issue if exist
-            if (await IssueExist(title))
+            if (await IssueExist(issueTitle))
                 return;
 
             var bodyBuilder = new StringBuilder();
@@ -34,7 +34,7 @@ namespace GrammarNazi.Core.Services
             bodyBuilder.AppendLine($"Date (UTC): {DateTime.UtcNow}\n\n");
             bodyBuilder.AppendLine("Exception:\n\n").AppendLine(exception.ToString());
 
-            var issue = new NewIssue(title)
+            var issue = new NewIssue(issueTitle)
             {
                 Body = bodyBuilder.ToString()
             };
@@ -48,6 +48,16 @@ namespace GrammarNazi.Core.Services
             var issues = await _githubClient.Issue.GetAllForRepository(_githubSettings.Username, _githubSettings.RepositoryName);
 
             return issues.Any(v => v.Title == title);
+        }
+
+        private static string GetTrimmedTitle(string title)
+        {
+            if (title.Length <= Defaults.GithubIssueMaxTitleLength)
+                return title;
+
+            const string dots = "...";
+
+            return title[0..(Defaults.GithubIssueMaxTitleLength - dots.Length)] + dots;
         }
     }
 }
