@@ -11,5 +11,6 @@ namespace GrammarNazi.Domain.Constants
         public const string TelegramBotUser = "grammarNz_Bot";
         public const double ValidPositiveSentimentScore = 0.90;
         public const int GithubIssueMaxTitleLength = 256;
+        public const int TwitterTextMaxLength = 280;
     }
 }

@@ -112,7 +112,7 @@ namespace GrammarNazi.App.HostedServices
                         var correctionString = messageBuilder.ToString();
 
                         // TODO: Workaround for https://github.com/nminaya/grammar-nazi-bot/issues/70 while finding best way to validate tweet Length
-                        if (correctionString.Length > 280)
+                        if (correctionString.Length - mentionedUsers.Length > Defaults.TwitterTextMaxLength)
                             continue;
 
                         _logger.LogInformation($"Sending reply to: {tweet.CreatedBy.ScreenName}");
