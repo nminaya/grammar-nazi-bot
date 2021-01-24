@@ -8,7 +8,7 @@
   <ItemGroup>
     <PackageReference Include="Discord.Net" Version="2.2.0" />
     <PackageReference Include="FirebaseAuthentication.net" Version="3.4.0" />
-    <PackageReference Include="FirebaseDatabase.net" Version="4.0.4" />
+    <PackageReference Include="FirebaseDatabase.net" Version="4.0.5" />
     <PackageReference Include="Microsoft.VisualStudio.Azure.Containers.Tools.Targets" Version="1.10.8" />
     <PackageReference Include="Octokit" Version="0.48.0" />
     <PackageReference Include="Telegram.Bot" Version="15.7.1" />
