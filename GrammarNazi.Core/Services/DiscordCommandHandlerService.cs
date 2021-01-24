@@ -363,6 +363,9 @@ namespace GrammarNazi.Core.Services
 
         private static bool IsUserAdmin(SocketUserMessage message)
         {
+            if (message.Channel is IPrivateChannel)
+                return true;
+
             var user = message.Author as SocketGuildUser;
             return user.GuildPermissions.Administrator;
         }
