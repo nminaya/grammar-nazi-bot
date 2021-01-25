@@ -111,7 +111,7 @@ namespace GrammarNazi.App.HostedServices
 
                         var correctionString = messageBuilder.ToString();
 
-                        // TODO: Workaround for https://github.com/nminaya/grammar-nazi-bot/issues/70 while finding best way to validate tweet Length
+                        // TODO: Separate corrections in various tweets when max characters exceeded https://github.com/nminaya/grammar-nazi-bot/issues/73
                         if (correctionString.Length - mentionedUsers.Length > Defaults.TwitterTextMaxLength)
                             continue;
 
