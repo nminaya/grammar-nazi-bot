@@ -14,6 +14,7 @@ using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 using Tweetinvi;
+using Tweetinvi.Exceptions;
 using Tweetinvi.Models;
 using Tweetinvi.Parameters;
 
@@ -147,10 +148,12 @@ namespace GrammarNazi.App.HostedServices
                 }
                 catch (Exception ex)
                 {
-                    _logger.LogError(ex, ex.Message);
+                    var message = ex is TwitterException tEx ? tEx.TwitterDescription : ex.Message;
+
+                    _logger.LogError(ex, message);
 
                     // fire and forget
-                    _ = _githubService.CreateBugIssue($"Application Exception: {ex.Message}", ex);
+                    _ = _githubService.CreateBugIssue($"Application Exception: {message}", ex);
                 }
 
                 await Task.Delay(_twitterBotSettings.HostedServiceIntervalMilliseconds);
