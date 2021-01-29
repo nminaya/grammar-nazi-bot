@@ -1,9 +1,9 @@
 ﻿using GrammarNazi.Domain.Clients;
+using GrammarNazi.Domain.Constants;
 using GrammarNazi.Domain.Entities.LanguageToolAPI;
 using Microsoft.Extensions.Logging;
 using Newtonsoft.Json;
 using System.Net.Http;
-using System.Threading;
 using System.Threading.Tasks;
 using System.Web;
 
@@ -41,7 +41,7 @@ namespace GrammarNazi.Core.Clients
                 return new()
                 {
                     Matches = new(),
-                    Language = new() { Code = Thread.CurrentThread.CurrentCulture.TwoLetterISOLanguageName }
+                    Language = new() { Code = Defaults.LanguageCode }
                 };
             }
         }
