@@ -2,20 +2,20 @@
 {
     public static class DiscordBotCommands
     {
-        public const string Prefix = "!";
+        public static readonly string Prefix = "!";
 
-        public const string Start = Prefix + "start";
-        public const string Help = Prefix + "help";
-        public const string Settings = Prefix + "settings";
-        public const string SetAlgorithm = Prefix + "set_algorithm";
-        public const string Language = Prefix + "lang";
-        public const string Stop = Prefix + "stop";
-        public const string HideDetails = Prefix + "hide_details";
-        public const string ShowDetails = Prefix + "show_details";
-        public const string Tolerant = Prefix + "tolerant";
-        public const string Intolerant = Prefix + "intolerant";
-        public const string WhiteList = Prefix + "whitelist";
-        public const string AddWhiteList = Prefix + "add_whitelist";
-        public const string RemoveWhiteList = Prefix + "remove_whitelist";
+        public static readonly string Start = $"{Prefix}start";
+        public static readonly string Help = $"{Prefix}help";
+        public static readonly string Settings = $"{Prefix}settings";
+        public static readonly string SetAlgorithm = $"{Prefix}set_algorithm";
+        public static readonly string Language = $"{Prefix}lang";
+        public static readonly string Stop = $"{Prefix}stop";
+        public static readonly string HideDetails = $"{Prefix}hide_details";
+        public static readonly string ShowDetails = $"{Prefix}show_details";
+        public static readonly string Tolerant = $"{Prefix}tolerant";
+        public static readonly string Intolerant = $"{Prefix}intolerant";
+        public static readonly string WhiteList = $"{Prefix}whitelist";
+        public static readonly string AddWhiteList = $"{Prefix}add_whitelist";
+        public static readonly string RemoveWhiteList = $"{Prefix}remove_whitelist";
     }
 }
