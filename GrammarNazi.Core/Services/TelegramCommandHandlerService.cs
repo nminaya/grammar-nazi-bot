@@ -103,10 +103,6 @@ namespace GrammarNazi.Core.Services
 
                 var chatConfig = await _chatConfigurationService.GetConfigurationByChatId(message.Chat.Id);
 
-                // TODO: Investigate how this could be null at this point https://github.com/nminaya/grammar-nazi-bot/issues/56
-                if (chatConfig == null)
-                    return;
-
                 var messageBuilder = new StringBuilder();
                 messageBuilder.AppendLine(GetAvailableAlgorithms(chatConfig.GrammarAlgorithm));
                 messageBuilder.AppendLine(GetSupportedLanguages(chatConfig.SelectedLanguage));
@@ -139,7 +135,7 @@ namespace GrammarNazi.Core.Services
                 var parameters = text.Split(" ");
                 if (parameters.Length == 1)
                 {
-                    await ShowAlgorithmOptions(message);
+                    await ShowOptions<GrammarAlgorithms>(message, "Choose Algorithm");
                 }
                 else
                 {
@@ -179,7 +175,7 @@ namespace GrammarNazi.Core.Services
 
                 if (parameters.Length == 1)
                 {
-                    await ShowLanguageOptions(message);
+                    await ShowOptions<SupportedLanguages>(message, "Choose Language");
                 }
                 else
                 {
@@ -443,26 +439,17 @@ namespace GrammarNazi.Core.Services
             await _client.DeleteMessageAsync(callbackQuery.Message.Chat.Id, callbackQuery.Message.MessageId);
         }
 
-        private async Task ShowLanguageOptions(Message message)
+        private async Task ShowOptions<T>(Message message, string messageTitle) where T : Enum
         {
-            var languages = Enum.GetValues(typeof(SupportedLanguages))
-                            .Cast<SupportedLanguages>()
-                            .Select(v => new[] { InlineKeyboardButton.WithCallbackData($"{(int)v} - {v}", $"{nameof(SupportedLanguages)}.{v}") });
+            var enumType = typeof(T);
 
-            var inlineLanguages = new InlineKeyboardMarkup(languages);
+            var options = Enum.GetValues(enumType)
+                            .Cast<T>()
+                            .Select(v => new[] { InlineKeyboardButton.WithCallbackData($"{Convert.ToInt32(v)} - {v}", $"{enumType.Name}.{v}") });
 
-            await _client.SendTextMessageAsync(message.Chat.Id, "Chose language", replyMarkup: inlineLanguages);
-        }
+            var inlineOptions = new InlineKeyboardMarkup(options);
 
-        private async Task ShowAlgorithmOptions(Message message)
-        {
-            var languages = Enum.GetValues(typeof(GrammarAlgorithms))
-                            .Cast<GrammarAlgorithms>()
-                            .Select(v => new[] { InlineKeyboardButton.WithCallbackData($"{(int)v} - {v}", $"{nameof(GrammarAlgorithms)}.{v}") });
-
-            var inlineLanguages = new InlineKeyboardMarkup(languages);
-
-            await _client.SendTextMessageAsync(message.Chat.Id, "Chose Algorithm", replyMarkup: inlineLanguages);
+            await _client.SendTextMessageAsync(message.Chat.Id, messageTitle, replyMarkup: inlineOptions);
         }
 
         private static bool IsCommand(string expected, string actual)
