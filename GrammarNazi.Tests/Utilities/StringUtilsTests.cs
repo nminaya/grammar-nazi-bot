@@ -51,6 +51,7 @@ namespace GrammarNazi.Tests.Utilities
         }
 
         [Theory]
+        [InlineData("bored🔫😡😆😡❤️😡😡❤️", "bored")]
         [InlineData("This is fun 😂", "This is fun")]
         [InlineData("😀😁😂🤣😃😄😅😆💋👏😜💖😢😎🎶😉😍😒😘🤞😊😩😬👍", "")]
         [InlineData("Test😁Test1", "TestTest1")]
