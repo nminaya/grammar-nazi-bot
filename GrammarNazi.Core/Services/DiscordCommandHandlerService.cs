@@ -111,8 +111,7 @@ namespace GrammarNazi.Core.Services
                 if (!IsUserAdmin(message))
                 {
                     messageBuilder.AppendLine("Only admins can use this command.");
-                    //TODO: Send reply
-                    await SendMessage(message, messageBuilder.ToString(), DiscordBotCommands.SetAlgorithm);
+                    await message.Channel.SendMessageAsync(messageBuilder.ToString(), messageReference: new MessageReference(message.Id));
                     return;
                 }
 
@@ -151,8 +150,7 @@ namespace GrammarNazi.Core.Services
                 if (!IsUserAdmin(message))
                 {
                     messageBuilder.AppendLine("Only admins can use this command.");
-                    //TODO: Send reply
-                    await SendMessage(message, messageBuilder.ToString(), DiscordBotCommands.Language);
+                    await message.Channel.SendMessageAsync(messageBuilder.ToString(), messageReference: new MessageReference(message.Id));
                     return;
                 }
 
@@ -189,8 +187,7 @@ namespace GrammarNazi.Core.Services
             {
                 if (!IsUserAdmin(message))
                 {
-                    //TODO: Send reply
-                    await SendMessage(message, "Only admins can use this command.", DiscordBotCommands.Stop);
+                    await message.Channel.SendMessageAsync("Only admins can use this command.", messageReference: new MessageReference(message.Id));
                     return;
                 }
 
@@ -206,8 +203,7 @@ namespace GrammarNazi.Core.Services
             {
                 if (!IsUserAdmin(message))
                 {
-                    //TODO: Send reply
-                    await SendMessage(message, "Only admins can use this command.", DiscordBotCommands.HideDetails);
+                    await message.Channel.SendMessageAsync("Only admins can use this command.", messageReference: new MessageReference(message.Id));
                     return;
                 }
 
@@ -223,8 +219,7 @@ namespace GrammarNazi.Core.Services
             {
                 if (!IsUserAdmin(message))
                 {
-                    //TODO: Send reply
-                    await SendMessage(message, "Only admins can use this command.", DiscordBotCommands.ShowDetails);
+                    await message.Channel.SendMessageAsync("Only admins can use this command.", messageReference: new MessageReference(message.Id));
                     return;
                 }
 
@@ -240,8 +235,7 @@ namespace GrammarNazi.Core.Services
             {
                 if (!IsUserAdmin(message))
                 {
-                    //TODO: Send reply
-                    await SendMessage(message, "Only admins can use this command.", DiscordBotCommands.Tolerant);
+                    await message.Channel.SendMessageAsync("Only admins can use this command.", messageReference: new MessageReference(message.Id));
                     return;
                 }
 
@@ -257,8 +251,7 @@ namespace GrammarNazi.Core.Services
             {
                 if (!IsUserAdmin(message))
                 {
-                    //TODO: Send reply
-                    await SendMessage(message, "Only admins can use this command.", DiscordBotCommands.Intolerant);
+                    await message.Channel.SendMessageAsync("Only admins can use this command.", messageReference: new MessageReference(message.Id));
                     return;
                 }
 
@@ -295,8 +288,7 @@ namespace GrammarNazi.Core.Services
             {
                 if (!IsUserAdmin(message))
                 {
-                    //TODO: Send reply
-                    await SendMessage(message, "Only admins can use this command.", DiscordBotCommands.AddWhiteList);
+                    await message.Channel.SendMessageAsync("Only admins can use this command.", messageReference: new MessageReference(message.Id));
                     return;
                 }
 
@@ -329,8 +321,7 @@ namespace GrammarNazi.Core.Services
             {
                 if (!IsUserAdmin(message))
                 {
-                    //TODO: Send reply
-                    await SendMessage(message, "Only admins can use this command.", DiscordBotCommands.RemoveWhiteList);
+                    await message.Channel.SendMessageAsync("Only admins can use this command.", messageReference: new MessageReference(message.Id));
                     return;
                 }
 

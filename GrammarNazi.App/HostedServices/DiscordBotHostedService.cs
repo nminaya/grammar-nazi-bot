@@ -101,7 +101,6 @@ namespace GrammarNazi.App.HostedServices
             await message.Channel.TriggerTypingAsync();
 
             var messageBuilder = new StringBuilder();
-            messageBuilder.AppendLine(message.Author.Mention);
 
             foreach (var correction in corretionResult.Corrections)
             {
@@ -112,9 +111,7 @@ namespace GrammarNazi.App.HostedServices
                 messageBuilder.AppendLine($"*{correction.PossibleReplacements.First()} {correctionDetailMessage}");
             }
 
-            // TODO: Wait for Discord.NET v2.3.0 release
-            //await context.Channel.SendMessageAsync(messageBuilder.ToString(), messageReference: new MessageReference(message.Id));
-            await message.Channel.SendMessageAsync(messageBuilder.ToString());
+            await message.Channel.SendMessageAsync(messageBuilder.ToString(), messageReference: new MessageReference(message.Id));
         }
 
         private IGrammarService GetConfiguredGrammarService(DiscordChannelConfig channelConfig)
