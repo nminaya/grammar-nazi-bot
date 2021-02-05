@@ -72,9 +72,9 @@ namespace GrammarNazi.App.HostedServices
             await Task.Delay(Timeout.Infinite, stoppingToken);
         }
 
-        private async Task OnMessageReceived(SocketMessage arg)
+        private async Task OnMessageReceived(SocketMessage socketMessage)
         {
-            if (arg is not SocketUserMessage message || message.Author.IsBot || message.Author.IsWebhook)
+            if (socketMessage is not SocketUserMessage message || message.Author.IsBot || message.Author.IsWebhook)
                 return;
 
             _logger.LogInformation($"Message received from channel id: {message.Channel.Id}");

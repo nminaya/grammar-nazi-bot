@@ -46,27 +46,25 @@ namespace GrammarNazi.Core.Services
 
             var textCorrections = await _yandexSpellerApiClient.CheckText(text, languageCode);
 
-            if (textCorrections?.Any() == true)
+            if (textCorrections?.Any() != true)
+                return new(default);
+
+            var corrections = new List<GrammarCorrection>();
+
+            foreach (var textCorrection in textCorrections.Where(ErrorCodeFIlter))
             {
-                var corrections = new List<GrammarCorrection>();
+                if (IsWhiteListWord(textCorrection.Word))
+                    continue;
 
-                foreach (var textCorrection in textCorrections.Where(ErrorCodeFIlter))
+                corrections.Add(new()
                 {
-                    if (IsWhiteListWord(textCorrection.Word))
-                        continue;
-
-                    corrections.Add(new()
-                    {
-                        WrongWord = textCorrection.Word,
-                        PossibleReplacements = textCorrection.Replacements,
-                        Message = GetErrorMessage(textCorrection)
-                    });
-                }
-
-                return new(corrections);
+                    WrongWord = textCorrection.Word,
+                    PossibleReplacements = textCorrection.Replacements,
+                    Message = GetErrorMessage(textCorrection)
+                });
             }
 
-            return new(default);
+            return new(corrections);
         }
 
         private static string GetErrorMessage(CheckTextResponse checkTextResponse)
