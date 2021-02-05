@@ -358,7 +358,7 @@ namespace GrammarNazi.Core.Services
                 return true;
 
             var user = message.Author as SocketGuildUser;
-            return user.GuildPermissions.Administrator;
+            return user.GuildPermissions.Administrator || user.GuildPermissions.ManageChannels;
         }
 
         private static async Task SendMessage(SocketUserMessage socketUserMessage, string message, string command)
