@@ -46,7 +46,7 @@ namespace GrammarNazi.Core.Services
 
             var textCorrections = await _yandexSpellerApiClient.CheckText(text, languageCode);
 
-            if (textCorrections?.Any() != true)
+            if (!textCorrections.Any())
                 return new(default);
 
             var corrections = new List<GrammarCorrection>();
