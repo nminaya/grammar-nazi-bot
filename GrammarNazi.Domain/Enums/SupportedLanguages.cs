@@ -1,4 +1,5 @@
-﻿using System.ComponentModel;
+﻿using GrammarNazi.Domain.Attributes;
+using System.ComponentModel;
 
 namespace GrammarNazi.Domain.Enums
 {
@@ -6,10 +7,10 @@ namespace GrammarNazi.Domain.Enums
     {
         Auto = 0,
 
-        [Description("eng")]
+        [LanguageInformation("en", "eng")]
         English = 1,
 
-        [Description("spa")]
+        [LanguageInformation("es", "spa")]
         Spanish = 2
     }
 }
