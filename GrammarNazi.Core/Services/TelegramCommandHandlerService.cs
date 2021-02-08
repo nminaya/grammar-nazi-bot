@@ -445,7 +445,7 @@ namespace GrammarNazi.Core.Services
 
             var options = Enum.GetValues(enumType)
                             .Cast<T>()
-                            .Select(v => new[] { InlineKeyboardButton.WithCallbackData($"{Convert.ToInt32(v)} - {v}", $"{enumType.Name}.{v}") });
+                            .Select(v => new[] { InlineKeyboardButton.WithCallbackData($"{Convert.ToInt32(v)} - {v.GetDescription()}", $"{enumType.Name}.{v}") });
 
             var inlineOptions = new InlineKeyboardMarkup(options);
 
@@ -525,7 +525,7 @@ namespace GrammarNazi.Core.Services
             foreach (var item in languages)
             {
                 var selected = item == selectedLanguage ? "✅" : "";
-                messageBuilder.AppendLine($"{(int)item} - {item} {selected}");
+                messageBuilder.AppendLine($"{(int)item} - {item.GetDescription()} {selected}");
             }
 
             return messageBuilder.ToString();
