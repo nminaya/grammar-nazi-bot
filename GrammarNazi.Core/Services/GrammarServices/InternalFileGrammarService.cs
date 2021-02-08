@@ -46,7 +46,7 @@ namespace GrammarNazi.Core.Services
             }
             else
             {
-                language = LanguageUtils.GetLanguageCode(SelectedLanguage.GetDescription());
+                language = SelectedLanguage.GetLanguageInformation().TwoLetterISOLanguageName;
             }
 
             var corrections = new List<GrammarCorrection>();

@@ -32,7 +32,7 @@ namespace GrammarNazi.Core.Services
             string languageCode;
             if (SelectedLanguage != SupportedLanguages.Auto)
             {
-                languageCode = LanguageUtils.GetLanguageCode(SelectedLanguage.GetDescription());
+                languageCode = SelectedLanguage.GetLanguageInformation().TwoLetterISOLanguageName;
             }
             else
             {

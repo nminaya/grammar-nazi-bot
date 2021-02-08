@@ -22,14 +22,14 @@ namespace GrammarNazi.Core.Utilities
         }
 
         /// <summary>
-        /// Get string array of supported languages
+        /// Get string array of three letter supported languages
         /// </summary>
         /// <returns></returns>
         public static string[] GetSupportedLanguages()
         {
             return Enum.GetValues(typeof(SupportedLanguages))
                     .Cast<SupportedLanguages>()
-                    .Select(v => v.GetDescription())
+                    .Select(v => v.GetLanguageInformation().ThreeLetterISOLanguageName)
                     .Where(v => !string.IsNullOrEmpty(v))
                     .ToArray();
         }
