@@ -24,6 +24,9 @@ namespace GrammarNazi.Core.Extensions
 
         public static LanguageInformation GetLanguageInformation(this SupportedLanguages language)
         {
+            if (language == SupportedLanguages.Auto)
+                return default;
+
             var langInfo = language
                 .GetType()
                 .GetField(language.ToString())

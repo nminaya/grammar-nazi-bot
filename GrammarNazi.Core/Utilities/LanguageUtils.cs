@@ -29,7 +29,7 @@ namespace GrammarNazi.Core.Utilities
         {
             return Enum.GetValues(typeof(SupportedLanguages))
                     .Cast<SupportedLanguages>()
-                    .Select(v => v.GetLanguageInformation().ThreeLetterISOLanguageName)
+                    .Select(v => v.GetLanguageInformation()?.ThreeLetterISOLanguageName)
                     .Where(v => !string.IsNullOrEmpty(v))
                     .ToArray();
         }
