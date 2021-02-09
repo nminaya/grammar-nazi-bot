@@ -11,12 +11,12 @@ namespace GrammarNazi.Core.Utilities
         /// <summary>
         /// Get TwoLetterISOLanguageName with the given ThreeLetterISOLanguageName
         /// </summary>
-        /// <param name="langCode"></param>
+        /// <param name="threeLetterLanguageName"></param>
         /// <returns>TwoLetterISOLanguageName</returns>
-        public static string GetLanguageCode(string langCode)
+        public static string GetLanguageCode(string threeLetterLanguageName)
         {
             var culture = CultureInfo.GetCultures(CultureTypes.AllCultures)
-                            .FirstOrDefault(v => v.ThreeLetterISOLanguageName == langCode || v.ThreeLetterWindowsLanguageName.ToLower() == langCode);
+                            .FirstOrDefault(v => v.ThreeLetterISOLanguageName == threeLetterLanguageName || v.ThreeLetterWindowsLanguageName.ToLower() == threeLetterLanguageName);
 
             return culture.TwoLetterISOLanguageName;
         }
