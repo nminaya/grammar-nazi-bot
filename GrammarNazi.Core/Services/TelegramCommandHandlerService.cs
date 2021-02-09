@@ -104,8 +104,8 @@ namespace GrammarNazi.Core.Services
                 var chatConfig = await _chatConfigurationService.GetConfigurationByChatId(message.Chat.Id);
 
                 var messageBuilder = new StringBuilder();
-                messageBuilder.AppendLine(GetAvailableAlgorithms(chatConfig.GrammarAlgorithm));
-                messageBuilder.AppendLine(GetSupportedLanguages(chatConfig.SelectedLanguage));
+                messageBuilder.AppendLine(GetAvailableOptions(chatConfig.GrammarAlgorithm, "Algorithms Available:"));
+                messageBuilder.AppendLine(GetAvailableOptions(chatConfig.SelectedLanguage, "Supported Languages:"));
 
                 var showCorrectionDetailsIcon = chatConfig.HideCorrectionDetails ? "❌" : "✅";
                 messageBuilder.AppendLine($"Show correction details {showCorrectionDetailsIcon}").AppendLine();
@@ -499,33 +499,17 @@ namespace GrammarNazi.Core.Services
             await _client.SendChatActionAsync(message.Chat.Id, ChatAction.Typing);
         }
 
-        private static string GetAvailableAlgorithms(GrammarAlgorithms selectedAlgorith)
+        private static string GetAvailableOptions<T>(T selectedOption, string message) where T : Enum
         {
-            var algorithms = Enum.GetValues(typeof(GrammarAlgorithms)).Cast<GrammarAlgorithms>();
+            var options = Enum.GetValues(typeof(T)).Cast<T>();
 
             var messageBuilder = new StringBuilder();
-            messageBuilder.AppendLine("Algorithms available:");
+            messageBuilder.AppendLine(message);
 
-            foreach (var item in algorithms)
+            foreach (var item in options)
             {
-                var selected = item == selectedAlgorith ? "✅" : "";
-                messageBuilder.AppendLine($"{(int)item} - {item.GetDescription()} {selected}");
-            }
-
-            return messageBuilder.ToString();
-        }
-
-        private static string GetSupportedLanguages(SupportedLanguages selectedLanguage)
-        {
-            var languages = Enum.GetValues(typeof(SupportedLanguages)).Cast<SupportedLanguages>();
-
-            var messageBuilder = new StringBuilder();
-            messageBuilder.AppendLine("Supported Languages:");
-
-            foreach (var item in languages)
-            {
-                var selected = item == selectedLanguage ? "✅" : "";
-                messageBuilder.AppendLine($"{(int)item} - {item.GetDescription()} {selected}");
+                var selected = item.Equals(selectedOption) ? "✅" : "";
+                messageBuilder.AppendLine($"{Convert.ToInt32(item)} - {item.GetDescription()} {selected}");
             }
 
             return messageBuilder.ToString();
