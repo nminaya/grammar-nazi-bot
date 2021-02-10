@@ -39,7 +39,10 @@ namespace GrammarNazi.App
 
             // Hosted services
             services.AddHostedService<TelegramBotHostedService>();
+
+            // Disabled due to account suspension https://github.com/nminaya/grammar-nazi-bot/issues/76
             //services.AddHostedService<TwitterBotHostedService>();
+
             services.AddHostedService<DiscordBotHostedService>();
 
             ConfigureDependencies(services);
@@ -58,7 +61,7 @@ namespace GrammarNazi.App
             });
 
             // Repository
-            services.AddTransient(typeof(IRepository<>), typeof(FirebaseRepository<>)); // Use Firebase for now
+            services.AddTransient(typeof(IRepository<>), typeof(FirebaseRepository<>));
 
             // Services
             services.AddSingleton<IFileService, FileService>();
