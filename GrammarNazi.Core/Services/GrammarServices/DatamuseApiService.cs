@@ -57,15 +57,17 @@ namespace GrammarNazi.Core.Services
             {
                 var wordCheckResult = await wordCheckResultTask;
 
-                if (wordCheckResult.IsWrongWord)
+                if (!wordCheckResult.IsWrongWord)
                 {
-                    corrections.Add(new()
-                    {
-                        WrongWord = wordCheckResult.Word,
-                        PossibleReplacements = wordCheckResult.SimilarWords.Select(v => v.Word),
-                        Message = GetCorrectionMessage(wordCheckResult.Word, language)
-                    });
+                    continue;
                 }
+
+                corrections.Add(new()
+                {
+                    WrongWord = wordCheckResult.Word,
+                    PossibleReplacements = wordCheckResult.SimilarWords.Select(v => v.Word),
+                    Message = GetCorrectionMessage(wordCheckResult.Word, language)
+                });
             }
 
             return new(corrections);
