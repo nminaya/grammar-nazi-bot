@@ -131,7 +131,7 @@ namespace GrammarNazi.App.HostedServices
 
             ulong guild = message.Channel switch
             {
-                SocketDMChannel dmChannel => dmChannel.Recipient.Id,
+                SocketDMChannel dmChannel => dmChannel.Id,
                 SocketGuildChannel guildChannel => guildChannel.Guild.Id,
                 _ => default
             };
