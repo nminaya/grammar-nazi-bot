@@ -1,5 +1,4 @@
 ﻿using Discord;
-using Discord.Commands;
 using Discord.WebSocket;
 using GrammarNazi.Domain.Constants;
 using GrammarNazi.Domain.Entities;
@@ -79,7 +78,7 @@ namespace GrammarNazi.App.HostedServices
 
             _logger.LogInformation($"Message received from channel id: {message.Channel.Id}");
 
-            var channelConfig = await GetChatConfiguration(message.Channel.Id);
+            var channelConfig = await GetChatConfiguration(message);
 
             // Text is a command
             if (message.Content.StartsWith(DiscordBotCommands.Prefix))
@@ -123,17 +122,25 @@ namespace GrammarNazi.App.HostedServices
             return grammarService;
         }
 
-        private async Task<DiscordChannelConfig> GetChatConfiguration(ulong channelId)
+        private async Task<DiscordChannelConfig> GetChatConfiguration(SocketUserMessage message)
         {
-            var channelConfig = await _discordChannelConfigService.GetConfigurationByChannelId(channelId);
+            var channelConfig = await _discordChannelConfigService.GetConfigurationByChannelId(message.Channel.Id);
 
             if (channelConfig != null)
                 return channelConfig;
 
+            ulong guild = message.Channel switch
+            {
+                SocketDMChannel dmChannel => dmChannel.Recipient.Id,
+                SocketGuildChannel guildChannel => guildChannel.Guild.Id,
+                _ => default
+            };
+
             var channelConfiguration = new DiscordChannelConfig
             {
-                ChannelId = channelId,
+                ChannelId = message.Channel.Id,
                 GrammarAlgorithm = Defaults.DefaultAlgorithm,
+                Guild = guild,
                 SelectedLanguage = SupportedLanguages.Auto
             };
 

@@ -39,6 +39,11 @@ namespace GrammarNazi.Domain.Entities
         public bool HideCorrectionDetails { get; set; }
 
         /// <summary>
+        /// Server Id
+        /// </summary>
+        public ulong Guild { get; set; }
+
+        /// <summary>
         /// List of ignored words
         /// </summary>
         public List<string> WhiteListWords { get; set; } = new();
