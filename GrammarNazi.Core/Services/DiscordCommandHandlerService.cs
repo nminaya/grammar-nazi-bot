@@ -2,7 +2,6 @@
 using Discord.WebSocket;
 using GrammarNazi.Core.Extensions;
 using GrammarNazi.Domain.Constants;
-using GrammarNazi.Domain.Entities;
 using GrammarNazi.Domain.Enums;
 using GrammarNazi.Domain.Services;
 using System;
@@ -30,23 +29,7 @@ namespace GrammarNazi.Core.Services
                 var channelConfig = await _channelConfigService.GetConfigurationByChannelId(message.Channel.Id);
                 var messageBuilder = new StringBuilder();
 
-                if (channelConfig == null)
-                {
-                    messageBuilder.AppendLine("Hi, I'm GrammarNazi.");
-                    messageBuilder.AppendLine("I'm currently working and correcting all spelling errors in this channel.");
-                    messageBuilder.AppendLine($"Type `{DiscordBotCommands.Help}` to get useful commands.");
-
-                    var chatConfiguration = new DiscordChannelConfig
-                    {
-                        ChannelId = message.Channel.Id,
-                        GrammarAlgorithm = Defaults.DefaultAlgorithm,
-                        CorrectionStrictnessLevel = CorrectionStrictnessLevels.Intolerant,
-                        SelectedLanguage = SupportedLanguages.Auto
-                    };
-
-                    await _channelConfigService.AddConfiguration(chatConfiguration);
-                }
-                else if (channelConfig.IsBotStopped)
+                if (channelConfig.IsBotStopped)
                 {
                     if (!IsUserAdmin(message))
                     {

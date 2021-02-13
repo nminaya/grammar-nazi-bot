@@ -129,6 +129,11 @@ namespace GrammarNazi.App.HostedServices
             if (channelConfig != null)
                 return channelConfig;
 
+            var messageBuilder = new StringBuilder();
+            messageBuilder.AppendLine("Hi, I'm GrammarNazi.");
+            messageBuilder.AppendLine("I'm currently working and correcting all spelling errors in this channel.");
+            messageBuilder.AppendLine($"Type `{DiscordBotCommands.Help}` to get useful commands.");
+
             ulong guild = message.Channel switch
             {
                 SocketDMChannel dmChannel => dmChannel.Id,
@@ -145,6 +150,8 @@ namespace GrammarNazi.App.HostedServices
             };
 
             await _discordChannelConfigService.AddConfiguration(channelConfiguration);
+
+            await message.Channel.SendMessageAsync(messageBuilder.ToString());
 
             return channelConfiguration;
         }
