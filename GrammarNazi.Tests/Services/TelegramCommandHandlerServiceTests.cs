@@ -17,41 +17,6 @@ namespace GrammarNazi.Tests.Services
         [Theory]
         [InlineData(TelegramBotCommands.Start)]
         [InlineData(TelegramBotCommands.Start + "@" + Defaults.TelegramBotUser)]
-        public async Task Start_NotChatCongfigured_Should_CreateChatConfig_And_ReplyWelcomeMessage(string command)
-        {
-            // Arrange
-            var chatConfigurationServiceMock = new Mock<IChatConfigurationService>();
-            var telegramBotClientMock = new Mock<ITelegramBotClient>();
-            var service = new TelegramCommandHandlerService(chatConfigurationServiceMock.Object, telegramBotClientMock.Object);
-            const string welcomeMessage = "Hi, I'm GrammarNazi";
-
-            var message = new Message
-            {
-                Text = command,
-                Chat = new Chat
-                {
-                    Id = 1
-                }
-            };
-
-            chatConfigurationServiceMock.Setup(v => v.GetConfigurationByChatId(message.Chat.Id))
-                .ReturnsAsync((ChatConfiguration)null);
-
-            // Act
-            await service.HandleCommand(message);
-
-            // Assert
-            chatConfigurationServiceMock.Verify(v => v.AddConfiguration(It.IsAny<ChatConfiguration>()), Times.Once);
-
-            // Using It.IsAny<ChatId>() due to an issue with ChatId.Equals method.
-            // We should be able to especify ChatId's after this PR gets merged https://github.com/TelegramBots/Telegram.Bot/pull/940
-            // and the Telegram.Bot nuget package updated.
-            telegramBotClientMock.Verify(v => v.SendTextMessageAsync(It.IsAny<ChatId>(), It.Is<string>(s => s.Contains(welcomeMessage)), ParseMode.Default, false, false, 0, null, default));
-        }
-
-        [Theory]
-        [InlineData(TelegramBotCommands.Start)]
-        [InlineData(TelegramBotCommands.Start + "@" + Defaults.TelegramBotUser)]
         public async Task Start_BotNotStopped_Should_ReplyBotStartedMessage(string command)
         {
             // Arrange
