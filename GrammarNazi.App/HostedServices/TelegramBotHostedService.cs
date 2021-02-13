@@ -154,6 +154,11 @@ namespace GrammarNazi.App.HostedServices
 
             if (chatConfig != null)
                 return chatConfig;
+            var messageBuilder = new StringBuilder();
+
+            messageBuilder.AppendLine("Hi, I'm GrammarNazi.");
+            messageBuilder.AppendLine("I'm currently working and correcting all spelling errors in this chat.");
+            messageBuilder.AppendLine($"Type {TelegramBotCommands.Help} to get useful commands.");
 
             var chatConfiguration = new ChatConfiguration
             {
@@ -163,6 +168,7 @@ namespace GrammarNazi.App.HostedServices
             };
 
             await _chatConfigurationService.AddConfiguration(chatConfiguration);
+            await _client.SendTextMessageAsync(chatId, messageBuilder.ToString());
 
             return chatConfiguration;
         }

@@ -37,23 +37,7 @@ namespace GrammarNazi.Core.Services
                 var chatConfig = await _chatConfigurationService.GetConfigurationByChatId(message.Chat.Id);
                 var messageBuilder = new StringBuilder();
 
-                if (chatConfig == null)
-                {
-                    messageBuilder.AppendLine("Hi, I'm GrammarNazi.");
-                    messageBuilder.AppendLine("I'm currently working and correcting all spelling errors in this chat.");
-                    messageBuilder.AppendLine($"Type {TelegramBotCommands.Help} to get useful commands.");
-
-                    var chatConfiguration = new ChatConfiguration
-                    {
-                        ChatId = message.Chat.Id,
-                        GrammarAlgorithm = Defaults.DefaultAlgorithm,
-                        CorrectionStrictnessLevel = CorrectionStrictnessLevels.Intolerant,
-                        SelectedLanguage = SupportedLanguages.Auto
-                    };
-
-                    await _chatConfigurationService.AddConfiguration(chatConfiguration);
-                }
-                else if (chatConfig.IsBotStopped)
+                if (chatConfig.IsBotStopped)
                 {
                     if (!await IsUserAdmin(message))
                     {
