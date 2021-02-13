@@ -1,4 +1,5 @@
 ﻿using Discord;
+using Discord.Net;
 using Discord.WebSocket;
 using GrammarNazi.Domain.Constants;
 using GrammarNazi.Domain.Entities;
@@ -57,6 +58,10 @@ namespace GrammarNazi.App.HostedServices
                 try
                 {
                     await OnMessageReceived(eventArgs);
+                }
+                catch (HttpException ex) when (ex.Message.Contains("50013"))
+                {
+                    _logger.LogWarning(ex, "Missing Permissions");
                 }
                 catch (Exception ex)
                 {
