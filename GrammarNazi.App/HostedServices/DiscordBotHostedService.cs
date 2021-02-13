@@ -63,7 +63,7 @@ namespace GrammarNazi.App.HostedServices
                     _logger.LogError(ex, ex.Message);
 
                     // fire and forget
-                    _ = _githubService.CreateBugIssue($"Application Exception: {ex.Message}", ex);
+                    _ = _githubService.CreateBugIssue($"Application Exception: {ex.Message}", ex, GithubIssueLabels.Discord);
                 }
             };
 

@@ -153,7 +153,7 @@ namespace GrammarNazi.App.HostedServices
                     _logger.LogError(ex, message);
 
                     // fire and forget
-                    _ = _githubService.CreateBugIssue($"Application Exception: {message}", ex);
+                    _ = _githubService.CreateBugIssue($"Application Exception: {message}", ex, GithubIssueLabels.Twitter);
                 }
 
                 await Task.Delay(_twitterBotSettings.HostedServiceIntervalMilliseconds);

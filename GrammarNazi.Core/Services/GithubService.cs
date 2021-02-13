@@ -1,5 +1,7 @@
-﻿using GrammarNazi.Domain.Constants;
+﻿using GrammarNazi.Core.Extensions;
+using GrammarNazi.Domain.Constants;
 using GrammarNazi.Domain.Entities.Settings;
+using GrammarNazi.Domain.Enums;
 using GrammarNazi.Domain.Services;
 using Microsoft.Extensions.Options;
 using Octokit;
@@ -21,7 +23,7 @@ namespace GrammarNazi.Core.Services
             _githubSettings = options.Value;
         }
 
-        public async Task CreateBugIssue(string title, Exception exception)
+        public async Task CreateBugIssue(string title, Exception exception, GithubIssueLabels githubIssueSection)
         {
             var issueTitle = GetTrimmedTitle(title);
 
@@ -39,6 +41,7 @@ namespace GrammarNazi.Core.Services
                 Body = bodyBuilder.ToString()
             };
             issue.Labels.Add("production-bug");
+            issue.Labels.Add(githubIssueSection.GetDescription());
 
             await _githubClient.Issue.Create(_githubSettings.Username, _githubSettings.RepositoryName, issue);
         }
