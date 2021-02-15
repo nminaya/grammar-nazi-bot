@@ -36,5 +36,30 @@ namespace GrammarNazi.Core.Utilities
 
             return Regex.Replace(str, regextPattern, "").Trim();
         }
+
+        /// <summary>
+        /// Remove codeblocks inside blackticks "```" from a string
+        /// </summary>
+        /// <param name="str"></param>
+        /// <returns></returns>
+        public static string RemoveCodeBlocks(string str)
+        {
+            const string backticks = "```";
+
+            var matches = Regex.Matches(str, backticks);
+
+            while (matches.Count > 1)
+            {
+                var startIndex = matches[0].Index;
+                var endIndex = matches[1].Index + backticks.Length;
+                var codeBlock = str[startIndex..endIndex];
+
+                str = str.Replace(codeBlock, "");
+
+                matches = Regex.Matches(str, backticks);
+            }
+
+            return str;
+        }
     }
 }
