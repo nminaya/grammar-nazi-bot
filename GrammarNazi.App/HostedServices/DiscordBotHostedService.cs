@@ -1,11 +1,12 @@
 ﻿using Discord;
-using Discord.Commands;
 using Discord.WebSocket;
+using GrammarNazi.Core.Utilities;
 using GrammarNazi.Domain.Constants;
 using GrammarNazi.Domain.Entities;
 using GrammarNazi.Domain.Entities.Settings;
 using GrammarNazi.Domain.Enums;
 using GrammarNazi.Domain.Services;
+using Markdig;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
@@ -93,7 +94,9 @@ namespace GrammarNazi.App.HostedServices
 
             var grammarService = GetConfiguredGrammarService(channelConfig);
 
-            var corretionResult = await grammarService.GetCorrections(message.Content);
+            var text = GetCleannedText(message.Content);
+
+            var corretionResult = await grammarService.GetCorrections(text);
 
             if (!corretionResult.HasCorrections)
                 return;
@@ -121,6 +124,12 @@ namespace GrammarNazi.App.HostedServices
             grammarService.SetStrictnessLevel(channelConfig.CorrectionStrictnessLevel);
 
             return grammarService;
+        }
+
+        private static string GetCleannedText(string text)
+        {
+            // TODO: Move ToPlainText to StringUtils
+            return Markdown.ToPlainText(StringUtils.RemoveCodeBlocks(text));
         }
 
         private async Task<DiscordChannelConfig> GetChatConfiguration(ulong channelId)
