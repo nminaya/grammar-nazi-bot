@@ -11,7 +11,7 @@
     <PackageReference Include="Microsoft.EntityFrameworkCore.Sqlite" Version="5.0.2" />
     <PackageReference Include="Microsoft.Extensions.Http" Version="5.0.0" />
     <PackageReference Include="NTextCat" Version="0.3.65" />
-    <PackageReference Include="Octokit" Version="0.48.0" />
+    <PackageReference Include="Octokit" Version="0.49.0" />
     <PackageReference Include="System.ServiceModel.Duplex" Version="4.8.1" />
     <PackageReference Include="System.ServiceModel.Http" Version="4.8.1" />
     <PackageReference Include="System.ServiceModel.NetTcp" Version="4.8.1" />
