@@ -12,5 +12,6 @@ namespace GrammarNazi.Domain.Constants
         public const double ValidPositiveSentimentScore = 0.60;
         public const int GithubIssueMaxTitleLength = 256;
         public const int TwitterTextMaxLength = 280;
+        public const int DiscordTextMaxLength = 2_000;
     }
 }

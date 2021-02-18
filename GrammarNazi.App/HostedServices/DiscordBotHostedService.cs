@@ -1,6 +1,7 @@
 ﻿using Discord;
 using Discord.Net;
 using Discord.WebSocket;
+using GrammarNazi.Core.Extensions;
 using GrammarNazi.Core.Utilities;
 using GrammarNazi.Domain.Constants;
 using GrammarNazi.Domain.Entities;
@@ -119,7 +120,24 @@ namespace GrammarNazi.App.HostedServices
                 messageBuilder.AppendLine($"*{correction.PossibleReplacements.First()} {correctionDetailMessage}");
             }
 
-            await message.Channel.SendMessageAsync(messageBuilder.ToString(), messageReference: new MessageReference(message.Id));
+            var replyMessage = messageBuilder.ToString();
+
+            if (replyMessage.Length < Defaults.DiscordTextMaxLength)
+            {
+                await message.Channel.SendMessageAsync(messageBuilder.ToString(), messageReference: new MessageReference(message.Id));
+            }
+            else // Split the reply in various messages
+            {
+                var replyMessages = replyMessage.SplitInParts(Defaults.DiscordTextMaxLength);
+
+                var replyMessageId = message.Id;
+
+                foreach (var reply in replyMessages)
+                {
+                    var result = await message.Channel.SendMessageAsync(reply, messageReference: new MessageReference(replyMessageId));
+                    replyMessageId = result.Id;
+                }
+            }
         }
 
         private IGrammarService GetConfiguredGrammarService(DiscordChannelConfig channelConfig)
