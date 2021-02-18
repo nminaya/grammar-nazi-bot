@@ -36,4 +36,4 @@ To run this project locally just follow this [instructions](https://github.com/n
 
 ## License
 
-This project uses the following license: [MIT](<https://choosealicense.com/licenses/mit/>)
+This project uses the following license: [MIT](LICENSE)

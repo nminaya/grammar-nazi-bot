@@ -112,24 +112,46 @@ namespace GrammarNazi.App.HostedServices
 
                         var correctionString = messageBuilder.ToString();
 
-                        // TODO: Separate corrections in various tweets when max characters exceeded https://github.com/nminaya/grammar-nazi-bot/issues/73
-                        if (correctionString.Length - mentionedUsers.Length > Defaults.TwitterTextMaxLength)
-                            continue;
-
                         _logger.LogInformation($"Sending reply to: {tweet.CreatedBy.ScreenName}");
-                        var publishTweetParameters = new PublishTweetParameters(correctionString)
-                        {
-                            InReplyToTweetId = tweet.Id
-                        };
-                        var replyTweet = await _twitterClient.Tweets.PublishTweetAsync(publishTweetParameters);
 
-                        if (replyTweet != null)
+                        if (correctionString.Length < Defaults.TwitterTextMaxLength)
                         {
-                            _logger.LogInformation("Reply sent successfuly");
-                            await _twitterLogService.LogReply(tweet.Id, replyTweet.Id);
+                            var publishTweetParameters = new PublishTweetParameters(correctionString)
+                            {
+                                InReplyToTweetId = tweet.Id
+                            };
+                            var replyTweet = await _twitterClient.Tweets.PublishTweetAsync(publishTweetParameters);
+
+                            if (replyTweet != null)
+                            {
+                                _logger.LogInformation("Reply sent successfuly");
+                                await _twitterLogService.LogReply(tweet.Id, replyTweet.Id);
+                            }
+
+                            await Task.Delay(_twitterBotSettings.PublishTweetDelayMilliseconds, stoppingToken);
                         }
+                        else
+                        {
+                            var replyTweets = correctionString.SplitInParts(Defaults.TwitterTextMaxLength);
 
-                        await Task.Delay(_twitterBotSettings.PublishTweetDelayMilliseconds);
+                            foreach (var (reply, index) in replyTweets.Select((reply, index) => (reply, index)))
+                            {
+                                var correctionStringSplitted = index == 0 ? reply : $"@{tweet.CreatedBy.ScreenName} {mentionedUsers} {reply}";
+                                var publishTweetsParameters = new PublishTweetParameters(correctionStringSplitted)
+                                {
+                                    InReplyToTweetId = tweet.Id
+                                };
+                                var replyTweetSplitted = await _twitterClient.Tweets.PublishTweetAsync(publishTweetsParameters);
+
+                                if (replyTweetSplitted != null)
+                                {
+                                    _logger.LogInformation("Reply sent successfuly");
+                                    await _twitterLogService.LogReply(tweet.Id, replyTweetSplitted.Id);
+                                }
+
+                                await Task.Delay(_twitterBotSettings.PublishTweetDelayMilliseconds, stoppingToken);
+                            }
+                        }
                     }
 
                     var followBackUsersTask = FollowBackUsers(followerIds);
