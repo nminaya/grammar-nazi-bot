@@ -127,6 +127,8 @@ namespace GrammarNazi.App.HostedServices
                                 _logger.LogInformation("Reply sent successfuly");
                                 await _twitterLogService.LogReply(tweet.Id, replyTweet.Id);
                             }
+
+                            await Task.Delay(_twitterBotSettings.PublishTweetDelayMilliseconds);
                         }
                         else
                         {
@@ -146,10 +148,10 @@ namespace GrammarNazi.App.HostedServices
                                     _logger.LogInformation("Reply sent successfuly");
                                     await _twitterLogService.LogReply(tweet.Id, replyTweetSplitted.Id);
                                 }
+
+                                await Task.Delay(_twitterBotSettings.PublishTweetDelayMilliseconds);
                             }
                         }
-
-                        await Task.Delay(_twitterBotSettings.PublishTweetDelayMilliseconds);
                     }
 
                     var followBackUsersTask = FollowBackUsers(followerIds);
