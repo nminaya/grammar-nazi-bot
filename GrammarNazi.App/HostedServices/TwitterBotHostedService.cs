@@ -128,7 +128,7 @@ namespace GrammarNazi.App.HostedServices
                                 await _twitterLogService.LogReply(tweet.Id, replyTweet.Id);
                             }
 
-                            await Task.Delay(_twitterBotSettings.PublishTweetDelayMilliseconds);
+                            await Task.Delay(_twitterBotSettings.PublishTweetDelayMilliseconds, stoppingToken);
                         }
                         else
                         {
@@ -149,7 +149,7 @@ namespace GrammarNazi.App.HostedServices
                                     await _twitterLogService.LogReply(tweet.Id, replyTweetSplitted.Id);
                                 }
 
-                                await Task.Delay(_twitterBotSettings.PublishTweetDelayMilliseconds);
+                                await Task.Delay(_twitterBotSettings.PublishTweetDelayMilliseconds, stoppingToken);
                             }
                         }
                     }
