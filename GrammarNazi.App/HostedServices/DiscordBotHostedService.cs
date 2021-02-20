@@ -124,7 +124,7 @@ namespace GrammarNazi.App.HostedServices
 
             if (replyMessage.Length < Defaults.DiscordTextMaxLength)
             {
-                await message.Channel.SendMessageAsync(messageBuilder.ToString(), messageReference: new MessageReference(message.Id));
+                await message.Channel.SendMessageAsync(replyMessage, messageReference: new MessageReference(message.Id));
             }
             else // Split the reply in various messages
             {
