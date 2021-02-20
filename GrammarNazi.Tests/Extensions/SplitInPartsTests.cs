@@ -18,6 +18,7 @@ namespace GrammarNazi.Tests.Extensions
         }
 
         [Theory]
+        [InlineData(0)]
         [InlineData(-1)]
         [InlineData(-10)]
         [InlineData(-500)]
