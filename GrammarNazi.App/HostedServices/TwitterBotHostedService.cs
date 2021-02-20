@@ -134,7 +134,7 @@ namespace GrammarNazi.App.HostedServices
                         {
                             var replyTweets = correctionString.SplitInParts(Defaults.TwitterTextMaxLength);
 
-                            foreach (var (reply, index) in replyTweets.Select((reply, index) => (reply, index)))
+                            foreach (var (reply, index) in replyTweets.WithIndex())
                             {
                                 var correctionStringSplitted = index == 0 ? reply : $"@{tweet.CreatedBy.ScreenName} {mentionedUsers} {reply}";
                                 var publishTweetsParameters = new PublishTweetParameters(correctionStringSplitted)
