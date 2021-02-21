@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Linq;
 
 namespace GrammarNazi.Core.Extensions
 {
@@ -31,6 +32,11 @@ namespace GrammarNazi.Core.Extensions
             {
                 yield return str.Substring(i, Math.Min(partLength, str.Length - i));
             }
+        }
+
+        public static IEnumerable<(T item, int index)> WithIndex<T>(this IEnumerable<T> source)
+        {
+            return source.Select((item, index) => (item, index));
         }
     }
 }
