@@ -348,7 +348,7 @@ namespace GrammarNazi.Core.Services
         {
             var embed = new EmbedBuilder
             {
-                Color = new Color(255, 100, 0),
+                Color = new Color(194, 12, 60),
                 Title = command,
                 Description = message
             };
