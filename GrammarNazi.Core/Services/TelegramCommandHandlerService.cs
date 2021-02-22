@@ -454,7 +454,7 @@ namespace GrammarNazi.Core.Services
                 return true;
 
             var chatAdministrators = await _client.GetChatAdministratorsAsync(message.Chat.Id);
-            var currentUserId = user == null ? message.From.Id : user.Id;
+            var currentUserId = user?.Id ?? message.From.Id;
 
             return chatAdministrators.Any(v => v.User.Id == currentUserId);
         }
