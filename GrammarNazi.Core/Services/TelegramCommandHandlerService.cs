@@ -1,6 +1,5 @@
 using GrammarNazi.Core.Extensions;
 using GrammarNazi.Domain.Constants;
-using GrammarNazi.Domain.Entities;
 using GrammarNazi.Domain.Enums;
 using GrammarNazi.Domain.Services;
 using System;
@@ -88,8 +87,10 @@ namespace GrammarNazi.Core.Services
                 var chatConfig = await _chatConfigurationService.GetConfigurationByChatId(message.Chat.Id);
 
                 var messageBuilder = new StringBuilder();
-                messageBuilder.AppendLine(GetAvailableOptions(chatConfig.GrammarAlgorithm, "Algorithms Available:"));
-                messageBuilder.AppendLine(GetAvailableOptions(chatConfig.SelectedLanguage, "Supported Languages:"));
+                messageBuilder.AppendLine("Algorithms Available:");
+                messageBuilder.AppendLine(GetAvailableOptions(chatConfig.GrammarAlgorithm));
+                messageBuilder.AppendLine("Supported Languages:");
+                messageBuilder.AppendLine(GetAvailableOptions(chatConfig.SelectedLanguage));
 
                 var showCorrectionDetailsIcon = chatConfig.HideCorrectionDetails ? "❌" : "✅";
                 messageBuilder.AppendLine($"Show correction details {showCorrectionDetailsIcon}").AppendLine();
@@ -483,12 +484,11 @@ namespace GrammarNazi.Core.Services
             await _client.SendChatActionAsync(message.Chat.Id, ChatAction.Typing);
         }
 
-        private static string GetAvailableOptions<T>(T selectedOption, string message) where T : Enum
+        private static string GetAvailableOptions<T>(T selectedOption) where T : Enum
         {
             var options = Enum.GetValues(typeof(T)).Cast<T>();
 
             var messageBuilder = new StringBuilder();
-            messageBuilder.AppendLine(message);
 
             foreach (var item in options)
             {
