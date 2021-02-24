@@ -39,10 +39,7 @@ namespace GrammarNazi.App
 
             // Hosted services
             services.AddHostedService<TelegramBotHostedService>();
-
-            // Disabled due to account suspension https://github.com/nminaya/grammar-nazi-bot/issues/76
-            //services.AddHostedService<TwitterBotHostedService>();
-
+            services.AddHostedService<TwitterBotHostedService>();
             services.AddHostedService<DiscordBotHostedService>();
 
             ConfigureDependencies(services);
