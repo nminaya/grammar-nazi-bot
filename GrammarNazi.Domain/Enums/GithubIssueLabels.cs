@@ -11,6 +11,9 @@ namespace GrammarNazi.Domain.Enums
         Twitter,
 
         [Description("discord")]
-        Discord
+        Discord,
+
+        [Description("production-bug")]
+        ProductionBug
     }
 }
