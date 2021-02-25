@@ -40,7 +40,7 @@ namespace GrammarNazi.Core.Services
             {
                 Body = bodyBuilder.ToString()
             };
-            issue.Labels.Add("production-bug");
+            issue.Labels.Add(GithubIssueLabels.ProductionBug.GetDescription());
             issue.Labels.Add(githubIssueSection.GetDescription());
 
             await _githubClient.Issue.Create(_githubSettings.Username, _githubSettings.RepositoryName, issue);
