@@ -14,6 +14,7 @@ using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 using Tweetinvi;
+using Tweetinvi.Exceptions;
 using Tweetinvi.Models;
 using Tweetinvi.Parameters;
 
@@ -112,19 +113,26 @@ namespace GrammarNazi.App.HostedServices
                         var correctionString = messageBuilder.ToString();
 
                         _logger.LogInformation($"Sending reply to: {tweet.CreatedBy.ScreenName}");
-                        var publishTweetParameters = new PublishTweetParameters(correctionString)
-                        {
-                            InReplyToTweetId = tweet.Id
-                        };
-                        var replyTweet = await _twitterClient.Tweets.PublishTweetAsync(publishTweetParameters);
 
-                        if (replyTweet != null)
+                        if (correctionString.Length < Defaults.TwitterTextMaxLength)
                         {
-                            _logger.LogInformation("Reply sent successfuly");
-                            await _twitterLogService.LogReply(tweet.Id, replyTweet.Id);
+                            await PublishReplyTweet(correctionString, tweet.Id);
+
+                            await Task.Delay(_twitterBotSettings.PublishTweetDelayMilliseconds, stoppingToken);
                         }
+                        else
+                        {
+                            var replyTweets = correctionString.SplitInParts(Defaults.TwitterTextMaxLength);
 
-                        await Task.Delay(_twitterBotSettings.PublishTweetDelayMilliseconds);
+                            foreach (var (reply, index) in replyTweets.WithIndex())
+                            {
+                                var correctionStringSplitted = index == 0 ? reply : $"@{tweet.CreatedBy.ScreenName} {mentionedUsers} {reply}";
+
+                                await PublishReplyTweet(correctionStringSplitted, tweet.Id);
+
+                                await Task.Delay(_twitterBotSettings.PublishTweetDelayMilliseconds, stoppingToken);
+                            }
+                        }
                     }
 
                     var followBackUsersTask = FollowBackUsers(followerIds);
@@ -143,10 +151,12 @@ namespace GrammarNazi.App.HostedServices
                 }
                 catch (Exception ex)
                 {
-                    _logger.LogError(ex, ex.Message);
+                    var message = ex is TwitterException tEx ? tEx.TwitterDescription : ex.Message;
+
+                    _logger.LogError(ex, message);
 
                     // fire and forget
-                    _ = _githubService.CreateBugIssue($"Application Exception: {ex.Message}", ex);
+                    _ = _githubService.CreateBugIssue($"Application Exception: {message}", ex, GithubIssueLabels.Twitter);
                 }
 
                 await Task.Delay(_twitterBotSettings.HostedServiceIntervalMilliseconds);
@@ -204,6 +214,24 @@ namespace GrammarNazi.App.HostedServices
                     await _twitterClient.Tweets.FavoriteTweetAsync(reply.Id);
                 }
             }
+        }
+
+        private async Task PublishReplyTweet(string text, long replyTo)
+        {
+            var publishTweetsParameters = new PublishTweetParameters(text)
+            {
+                InReplyToTweetId = replyTo
+            };
+            var replyTweet = await _twitterClient.Tweets.PublishTweetAsync(publishTweetsParameters);
+
+            if (replyTweet == null)
+            {
+                _logger.LogWarning("Not able to tweet Reply", text, replyTo);
+                return;
+            }
+
+            _logger.LogInformation("Reply sent successfuly");
+            await _twitterLogService.LogReply(replyTo, replyTweet.Id);
         }
     }
 }

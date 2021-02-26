@@ -1,6 +1,5 @@
 using GrammarNazi.Core.Extensions;
 using GrammarNazi.Domain.Constants;
-using GrammarNazi.Domain.Entities;
 using GrammarNazi.Domain.Enums;
 using GrammarNazi.Domain.Services;
 using System;
@@ -10,6 +9,7 @@ using System.Threading.Tasks;
 using Telegram.Bot;
 using Telegram.Bot.Types;
 using Telegram.Bot.Types.Enums;
+using Telegram.Bot.Types.ReplyMarkups;
 
 namespace GrammarNazi.Core.Services
 {
@@ -29,28 +29,14 @@ namespace GrammarNazi.Core.Services
         {
             var text = message.Text;
 
-            if (IsCommand(Commands.Start, text))
+            if (IsCommand(TelegramBotCommands.Start, text))
             {
+                await SendTypingNotification(message);
+
                 var chatConfig = await _chatConfigurationService.GetConfigurationByChatId(message.Chat.Id);
                 var messageBuilder = new StringBuilder();
 
-                if (chatConfig == null)
-                {
-                    messageBuilder.AppendLine("Hi, I'm GrammarNazi.");
-                    messageBuilder.AppendLine("I'm currently working and correcting all spelling errors in this chat.");
-                    messageBuilder.AppendLine($"Type {Commands.Help} to get useful commands.");
-
-                    var chatConfiguration = new ChatConfiguration
-                    {
-                        ChatId = message.Chat.Id,
-                        GrammarAlgorithm = Defaults.DefaultAlgorithm,
-                        CorrectionStrictnessLevel = CorrectionStrictnessLevels.Intolerant,
-                        SelectedLanguage = SupportedLanguages.Auto
-                    };
-
-                    await _chatConfigurationService.AddConfiguration(chatConfiguration);
-                }
-                else if (chatConfig.IsBotStopped)
+                if (chatConfig.IsBotStopped)
                 {
                     if (!await IsUserAdmin(message))
                     {
@@ -71,53 +57,57 @@ namespace GrammarNazi.Core.Services
                 await _client.SendTextMessageAsync(message.Chat.Id, messageBuilder.ToString());
                 await NotifyIfBotIsNotAdmin(message);
             }
-            else if (IsCommand(Commands.Help, text))
+            else if (IsCommand(TelegramBotCommands.Help, text))
             {
+                await SendTypingNotification(message);
+
                 var messageBuilder = new StringBuilder();
                 messageBuilder.AppendLine("Help").AppendLine();
                 messageBuilder.AppendLine("Useful commands:");
-                messageBuilder.AppendLine($"{Commands.Start} start/activate the Bot.");
-                messageBuilder.AppendLine($"{Commands.Stop} stop/disable the Bot.");
-                messageBuilder.AppendLine($"{Commands.Settings} get configured settings.");
-                messageBuilder.AppendLine($"{Commands.SetAlgorithm} <algorithm_number> to set an algorithm.");
-                messageBuilder.AppendLine($"{Commands.Language} <language_number> to set a language.");
-                messageBuilder.AppendLine($"{Commands.ShowDetails} Show correction details");
-                messageBuilder.AppendLine($"{Commands.HideDetails} Hide correction details");
-                messageBuilder.AppendLine($"{Commands.WhiteList} See list of ignored words.");
-                messageBuilder.AppendLine($"{Commands.AddWhiteList} <word> to add a Whitelist word.");
-                messageBuilder.AppendLine($"{Commands.RemoveWhiteList} <word> to remove a Whitelist word.");
-                messageBuilder.AppendLine($"{Commands.Tolerant} Set strictness level to {CorrectionStrictnessLevels.Tolerant.GetDescription()}");
-                messageBuilder.AppendLine($"{Commands.Intolerant} Set strictness level to {CorrectionStrictnessLevels.Intolerant.GetDescription()}");
+                messageBuilder.AppendLine($"{TelegramBotCommands.Start} start/activate the Bot.");
+                messageBuilder.AppendLine($"{TelegramBotCommands.Stop} stop/disable the Bot.");
+                messageBuilder.AppendLine($"{TelegramBotCommands.Settings} get configured settings.");
+                messageBuilder.AppendLine($"{TelegramBotCommands.SetAlgorithm} <algorithm_number> to set an algorithm.");
+                messageBuilder.AppendLine($"{TelegramBotCommands.Language} <language_number> to set a language.");
+                messageBuilder.AppendLine($"{TelegramBotCommands.ShowDetails} Show correction details");
+                messageBuilder.AppendLine($"{TelegramBotCommands.HideDetails} Hide correction details");
+                messageBuilder.AppendLine($"{TelegramBotCommands.WhiteList} See list of ignored words.");
+                messageBuilder.AppendLine($"{TelegramBotCommands.AddWhiteList} <word> to add a Whitelist word.");
+                messageBuilder.AppendLine($"{TelegramBotCommands.RemoveWhiteList} <word> to remove a Whitelist word.");
+                messageBuilder.AppendLine($"{TelegramBotCommands.Tolerant} Set strictness level to {CorrectionStrictnessLevels.Tolerant.GetDescription()}");
+                messageBuilder.AppendLine($"{TelegramBotCommands.Intolerant} Set strictness level to {CorrectionStrictnessLevels.Intolerant.GetDescription()}");
 
                 await _client.SendTextMessageAsync(message.Chat.Id, messageBuilder.ToString());
                 await NotifyIfBotIsNotAdmin(message);
             }
-            else if (IsCommand(Commands.Settings, text))
+            else if (IsCommand(TelegramBotCommands.Settings, text))
             {
+                await SendTypingNotification(message);
+
                 var chatConfig = await _chatConfigurationService.GetConfigurationByChatId(message.Chat.Id);
 
-                // TODO: Investigate how this could be null at this point https://github.com/nminaya/grammar-nazi-bot/issues/56
-                if (chatConfig == null)
-                    return;
-
                 var messageBuilder = new StringBuilder();
-                messageBuilder.AppendLine(GetAvailableAlgorithms(chatConfig.GrammarAlgorithm));
-                messageBuilder.AppendLine(GetSupportedLanguages(chatConfig.SelectedLanguage));
+                messageBuilder.AppendLine("Algorithms Available:");
+                messageBuilder.AppendLine(GetAvailableOptions(chatConfig.GrammarAlgorithm));
+                messageBuilder.AppendLine("Supported Languages:");
+                messageBuilder.AppendLine(GetAvailableOptions(chatConfig.SelectedLanguage));
 
                 var showCorrectionDetailsIcon = chatConfig.HideCorrectionDetails ? "❌" : "✅";
                 messageBuilder.AppendLine($"Show correction details {showCorrectionDetailsIcon}").AppendLine();
                 messageBuilder.AppendLine("Strictness level:").AppendLine($"{chatConfig.CorrectionStrictnessLevel.GetDescription()} ✅").AppendLine();
 
-                messageBuilder.AppendLine($"Whitelist Words:").AppendLine($"Type {Commands.WhiteList} to see Whitelist words configured.").AppendLine();
+                messageBuilder.AppendLine($"Whitelist Words:").AppendLine($"Type {TelegramBotCommands.WhiteList} to see Whitelist words configured.").AppendLine();
 
                 if (chatConfig.IsBotStopped)
-                    messageBuilder.AppendLine($"The bot is currently stopped. Type {Commands.Start} to activate the Bot.");
+                    messageBuilder.AppendLine($"The bot is currently stopped. Type {TelegramBotCommands.Start} to activate the Bot.");
 
                 await _client.SendTextMessageAsync(message.Chat.Id, messageBuilder.ToString());
                 await NotifyIfBotIsNotAdmin(message);
             }
-            else if (IsCommand(Commands.SetAlgorithm, text))
+            else if (IsCommand(TelegramBotCommands.SetAlgorithm, text))
             {
+                await SendTypingNotification(message);
+
                 var messageBuilder = new StringBuilder();
 
                 if (!await IsUserAdmin(message))
@@ -130,11 +120,7 @@ namespace GrammarNazi.Core.Services
                 var parameters = text.Split(" ");
                 if (parameters.Length == 1)
                 {
-                    var chatConfig = await _chatConfigurationService.GetConfigurationByChatId(message.Chat.Id);
-
-                    messageBuilder.AppendLine($"Parameter not received. Type {Commands.SetAlgorithm} <algorithm_numer> to set an algorithm").AppendLine();
-                    messageBuilder.AppendLine(GetAvailableAlgorithms(chatConfig.GrammarAlgorithm));
-                    await _client.SendTextMessageAsync(message.Chat.Id, messageBuilder.ToString());
+                    await ShowOptions<GrammarAlgorithms>(message, "Choose Algorithm");
                 }
                 else
                 {
@@ -151,14 +137,16 @@ namespace GrammarNazi.Core.Services
                     }
                     else
                     {
-                        await _client.SendTextMessageAsync(message.Chat.Id, $"Invalid parameter. Type {Commands.SetAlgorithm} <algorithm_numer> to set an algorithm.");
+                        await _client.SendTextMessageAsync(message.Chat.Id, $"Invalid parameter. Type {TelegramBotCommands.SetAlgorithm} <algorithm_numer> to set an algorithm.");
                     }
                 }
 
                 await NotifyIfBotIsNotAdmin(message);
             }
-            else if (IsCommand(Commands.Language, text))
+            else if (IsCommand(TelegramBotCommands.Language, text))
             {
+                await SendTypingNotification(message);
+
                 var messageBuilder = new StringBuilder();
 
                 if (!await IsUserAdmin(message))
@@ -172,11 +160,7 @@ namespace GrammarNazi.Core.Services
 
                 if (parameters.Length == 1)
                 {
-                    var chatConfig = await _chatConfigurationService.GetConfigurationByChatId(message.Chat.Id);
-
-                    messageBuilder.AppendLine($"Parameter not received. Type {Commands.Language} <language_number> to set a language.").AppendLine();
-                    messageBuilder.AppendLine(GetSupportedLanguages(chatConfig.SelectedLanguage));
-                    await _client.SendTextMessageAsync(message.Chat.Id, messageBuilder.ToString());
+                    await ShowOptions<SupportedLanguages>(message, "Choose Language");
                 }
                 else
                 {
@@ -193,14 +177,16 @@ namespace GrammarNazi.Core.Services
                     }
                     else
                     {
-                        await _client.SendTextMessageAsync(message.Chat.Id, $"Invalid parameter. Type {Commands.Language} <language_number> to set a language.");
+                        await _client.SendTextMessageAsync(message.Chat.Id, $"Invalid parameter. Type {TelegramBotCommands.Language} <language_number> to set a language.");
                     }
                 }
 
                 await NotifyIfBotIsNotAdmin(message);
             }
-            else if (IsCommand(Commands.Stop, text))
+            else if (IsCommand(TelegramBotCommands.Stop, text))
             {
+                await SendTypingNotification(message);
+
                 if (!await IsUserAdmin(message))
                 {
                     await _client.SendTextMessageAsync(message.Chat.Id, "Only admins can use this command.", replyToMessageId: message.MessageId);
@@ -215,8 +201,10 @@ namespace GrammarNazi.Core.Services
 
                 await _client.SendTextMessageAsync(message.Chat.Id, "Bot stopped");
             }
-            else if (IsCommand(Commands.HideDetails, text))
+            else if (IsCommand(TelegramBotCommands.HideDetails, text))
             {
+                await SendTypingNotification(message);
+
                 if (!await IsUserAdmin(message))
                 {
                     await _client.SendTextMessageAsync(message.Chat.Id, "Only admins can use this command.", replyToMessageId: message.MessageId);
@@ -233,8 +221,10 @@ namespace GrammarNazi.Core.Services
 
                 await NotifyIfBotIsNotAdmin(message);
             }
-            else if (IsCommand(Commands.ShowDetails, text))
+            else if (IsCommand(TelegramBotCommands.ShowDetails, text))
             {
+                await SendTypingNotification(message);
+
                 if (!await IsUserAdmin(message))
                 {
                     await _client.SendTextMessageAsync(message.Chat.Id, "Only admins can use this command.", replyToMessageId: message.MessageId);
@@ -251,8 +241,10 @@ namespace GrammarNazi.Core.Services
 
                 await NotifyIfBotIsNotAdmin(message);
             }
-            else if (IsCommand(Commands.Tolerant, text))
+            else if (IsCommand(TelegramBotCommands.Tolerant, text))
             {
+                await SendTypingNotification(message);
+
                 if (!await IsUserAdmin(message))
                 {
                     await _client.SendTextMessageAsync(message.Chat.Id, "Only admins can use this command.", replyToMessageId: message.MessageId);
@@ -269,8 +261,10 @@ namespace GrammarNazi.Core.Services
 
                 await NotifyIfBotIsNotAdmin(message);
             }
-            else if (IsCommand(Commands.Intolerant, text))
+            else if (IsCommand(TelegramBotCommands.Intolerant, text))
             {
+                await SendTypingNotification(message);
+
                 if (!await IsUserAdmin(message))
                 {
                     await _client.SendTextMessageAsync(message.Chat.Id, "Only admins can use this command.", replyToMessageId: message.MessageId);
@@ -287,8 +281,10 @@ namespace GrammarNazi.Core.Services
 
                 await NotifyIfBotIsNotAdmin(message);
             }
-            else if (IsCommand(Commands.WhiteList, text))
+            else if (IsCommand(TelegramBotCommands.WhiteList, text))
             {
+                await SendTypingNotification(message);
+
                 var chatConfig = await _chatConfigurationService.GetConfigurationByChatId(message.Chat.Id);
 
                 if (chatConfig.WhiteListWords?.Any() == true)
@@ -306,12 +302,14 @@ namespace GrammarNazi.Core.Services
                     return;
                 }
 
-                await _client.SendTextMessageAsync(message.Chat.Id, $"You don't have Whitelist words configured. Use {Commands.AddWhiteList} to add words to the WhiteList.");
+                await _client.SendTextMessageAsync(message.Chat.Id, $"You don't have Whitelist words configured. Use {TelegramBotCommands.AddWhiteList} to add words to the WhiteList.");
 
                 await NotifyIfBotIsNotAdmin(message);
             }
-            else if (IsCommand(Commands.AddWhiteList, text))
+            else if (IsCommand(TelegramBotCommands.AddWhiteList, text))
             {
+                await SendTypingNotification(message);
+
                 if (!await IsUserAdmin(message))
                 {
                     await _client.SendTextMessageAsync(message.Chat.Id, "Only admins can use this command.", replyToMessageId: message.MessageId);
@@ -322,7 +320,7 @@ namespace GrammarNazi.Core.Services
 
                 if (parameters.Length == 1)
                 {
-                    await _client.SendTextMessageAsync(message.Chat.Id, $"Parameter not received. Type {Commands.AddWhiteList} <word> to add a Whitelist word.");
+                    await _client.SendTextMessageAsync(message.Chat.Id, $"Parameter not received. Type {TelegramBotCommands.AddWhiteList} <word> to add a Whitelist word.");
                 }
                 else
                 {
@@ -345,8 +343,10 @@ namespace GrammarNazi.Core.Services
 
                 await NotifyIfBotIsNotAdmin(message);
             }
-            else if (IsCommand(Commands.RemoveWhiteList, text))
+            else if (IsCommand(TelegramBotCommands.RemoveWhiteList, text))
             {
+                await SendTypingNotification(message);
+
                 if (!await IsUserAdmin(message))
                 {
                     await _client.SendTextMessageAsync(message.Chat.Id, "Only admins can use this command.", replyToMessageId: message.MessageId);
@@ -357,7 +357,7 @@ namespace GrammarNazi.Core.Services
 
                 if (parameters.Length == 1)
                 {
-                    await _client.SendTextMessageAsync(message.Chat.Id, $"Parameter not received. Type {Commands.RemoveWhiteList} <word> to remove a Whitelist word.");
+                    await _client.SendTextMessageAsync(message.Chat.Id, $"Parameter not received. Type {TelegramBotCommands.RemoveWhiteList} <word> to remove a Whitelist word.");
                 }
                 else
                 {
@@ -382,6 +382,61 @@ namespace GrammarNazi.Core.Services
             }
         }
 
+        public async Task HandleCallBackQuery(CallbackQuery callbackQuery)
+        {
+            var message = callbackQuery.Message;
+
+            if (!await IsUserAdmin(callbackQuery.Message, callbackQuery.From))
+            {
+                var userMention = $"[{callbackQuery.From.FirstName} {callbackQuery.From.LastName}](tg://user?id={callbackQuery.From.Id})";
+
+                await _client.SendTextMessageAsync(message.Chat.Id, $"{userMention} Only admins can use this command.", ParseMode.Markdown);
+                return;
+            }
+
+            var chatConfig = await _chatConfigurationService.GetConfigurationByChatId(message.Chat.Id);
+
+            var enumTypeString = callbackQuery.Data.Split(".")[0];
+
+            if (enumTypeString == nameof(SupportedLanguages))
+            {
+                var languageSelectedString = callbackQuery.Data.Split(".")[1];
+
+                var languageSelected = Enum.GetValues(typeof(SupportedLanguages)).Cast<SupportedLanguages>().First(v => v.ToString() == languageSelectedString);
+
+                chatConfig.SelectedLanguage = languageSelected;
+
+                await _client.SendTextMessageAsync(message.Chat.Id, $"Language updated: {languageSelected}");
+            }
+            else
+            {
+                var algorithmSelectedString = callbackQuery.Data.Split(".")[1];
+
+                var algorithmSelected = Enum.GetValues(typeof(GrammarAlgorithms)).Cast<GrammarAlgorithms>().First(v => v.ToString() == algorithmSelectedString);
+
+                chatConfig.GrammarAlgorithm = algorithmSelected;
+
+                await _client.SendTextMessageAsync(message.Chat.Id, $"Algorithm updated: {algorithmSelected}");
+            }
+
+            await _chatConfigurationService.Update(chatConfig);
+
+            await _client.DeleteMessageAsync(callbackQuery.Message.Chat.Id, callbackQuery.Message.MessageId);
+        }
+
+        private async Task ShowOptions<T>(Message message, string messageTitle) where T : Enum
+        {
+            var enumType = typeof(T);
+
+            var options = Enum.GetValues(enumType)
+                            .Cast<T>()
+                            .Select(v => new[] { InlineKeyboardButton.WithCallbackData($"{Convert.ToInt32(v)} - {v.GetDescription()}", $"{enumType.Name}.{v}") });
+
+            var inlineOptions = new InlineKeyboardMarkup(options);
+
+            await _client.SendTextMessageAsync(message.Chat.Id, messageTitle, replyMarkup: inlineOptions);
+        }
+
         private static bool IsCommand(string expected, string actual)
         {
             if (actual.Contains("@"))
@@ -394,13 +449,13 @@ namespace GrammarNazi.Core.Services
             return actual.StartsWith(expected);
         }
 
-        private async Task<bool> IsUserAdmin(Message message)
+        private async Task<bool> IsUserAdmin(Message message, User user = null)
         {
             if (message.Chat.Type == ChatType.Private)
                 return true;
 
             var chatAdministrators = await _client.GetChatAdministratorsAsync(message.Chat.Id);
-            var currentUserId = message.From.Id;
+            var currentUserId = user?.Id ?? message.From.Id;
 
             return chatAdministrators.Any(v => v.User.Id == currentUserId);
         }
@@ -424,33 +479,21 @@ namespace GrammarNazi.Core.Services
             }
         }
 
-        private static string GetAvailableAlgorithms(GrammarAlgorithms selectedAlgorith)
+        private async Task SendTypingNotification(Message message)
         {
-            var algorithms = Enum.GetValues(typeof(GrammarAlgorithms)).Cast<GrammarAlgorithms>();
-
-            var messageBuilder = new StringBuilder();
-            messageBuilder.AppendLine("Algorithms available:");
-
-            foreach (var item in algorithms)
-            {
-                var selected = item == selectedAlgorith ? "✅" : "";
-                messageBuilder.AppendLine($"{(int)item} - {item.GetDescription()} {selected}");
-            }
-
-            return messageBuilder.ToString();
+            await _client.SendChatActionAsync(message.Chat.Id, ChatAction.Typing);
         }
 
-        private static string GetSupportedLanguages(SupportedLanguages selectedLanguage)
+        private static string GetAvailableOptions<T>(T selectedOption) where T : Enum
         {
-            var languages = Enum.GetValues(typeof(SupportedLanguages)).Cast<SupportedLanguages>();
+            var options = Enum.GetValues(typeof(T)).Cast<T>();
 
             var messageBuilder = new StringBuilder();
-            messageBuilder.AppendLine("Supported Languages:");
 
-            foreach (var item in languages)
+            foreach (var item in options)
             {
-                var selected = item == selectedLanguage ? "✅" : "";
-                messageBuilder.AppendLine($"{(int)item} - {item} {selected}");
+                var selected = item.Equals(selectedOption) ? "✅" : "";
+                messageBuilder.AppendLine($"{Convert.ToInt32(item)} - {item.GetDescription()} {selected}");
             }
 
             return messageBuilder.ToString();

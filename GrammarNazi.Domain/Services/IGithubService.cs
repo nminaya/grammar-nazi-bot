@@ -1,10 +1,11 @@
-﻿using System;
+﻿using GrammarNazi.Domain.Enums;
+using System;
 using System.Threading.Tasks;
 
 namespace GrammarNazi.Domain.Services
 {
     public interface IGithubService
     {
-        Task CreateBugIssue(string title, Exception exception);
+        Task CreateBugIssue(string title, Exception exception, GithubIssueLabels githubIssueSection);
     }
 }

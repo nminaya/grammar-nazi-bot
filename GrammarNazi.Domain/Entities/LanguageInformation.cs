@@ -8,11 +8,11 @@
         /// <summary>
         /// The ISO 639-2 two-letter language code
         /// </summary>
-        public string TwoLetterISOLanguageName { get; set; }
+        public string TwoLetterISOLanguageName { get; init; }
 
         /// <summary>
         /// The ISO 639-3 three-letter language code
         /// </summary>
-        public string ThreeLetterISOLanguageName { get; set; }
+        public string ThreeLetterISOLanguageName { get; init; }
     }
 }

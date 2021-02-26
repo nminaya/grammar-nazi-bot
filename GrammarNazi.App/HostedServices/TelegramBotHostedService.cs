@@ -78,7 +78,22 @@ namespace GrammarNazi.App.HostedServices
                     _logger.LogError(ex, ex.Message);
 
                     // fire and forget
-                    _ = _githubService.CreateBugIssue($"Application Exception: {ex.Message}", ex);
+                    _ = _githubService.CreateBugIssue($"Application Exception: {ex.Message}", ex, GithubIssueLabels.Telegram);
+                }
+            };
+
+            _client.OnCallbackQuery += async (obj, eventArgs) =>
+            {
+                try
+                {
+                    await _telegramCommandHandlerService.HandleCallBackQuery(eventArgs.CallbackQuery);
+                }
+                catch (Exception ex)
+                {
+                    _logger.LogError(ex, ex.Message);
+
+                    // fire and forget
+                    _ = _githubService.CreateBugIssue($"Application Exception: {ex.Message}", ex, GithubIssueLabels.Telegram);
                 }
             };
 
@@ -95,13 +110,13 @@ namespace GrammarNazi.App.HostedServices
 
             _logger.LogInformation($"Message received from chat id: {message.Chat.Id}");
 
+            var chatConfig = await GetChatConfiguration(message.Chat.Id);
+
             if (message.Text.StartsWith('/')) // Text is a command
             {
                 await _telegramCommandHandlerService.HandleCommand(message);
                 return;
             }
-
-            var chatConfig = await GetChatConfiguration(message.Chat.Id);
 
             if (chatConfig.IsBotStopped)
                 return;
@@ -115,6 +130,9 @@ namespace GrammarNazi.App.HostedServices
 
             if (!corretionResult.HasCorrections)
                 return;
+
+            // Send "Typing..." notification
+            await _client.SendChatActionAsync(message.Chat.Id, ChatAction.Typing);
 
             var messageBuilder = new StringBuilder();
 
@@ -136,6 +154,11 @@ namespace GrammarNazi.App.HostedServices
 
             if (chatConfig != null)
                 return chatConfig;
+            var messageBuilder = new StringBuilder();
+
+            messageBuilder.AppendLine("Hi, I'm GrammarNazi.");
+            messageBuilder.AppendLine("I'm currently working and correcting all spelling errors in this chat.");
+            messageBuilder.AppendLine($"Type {TelegramBotCommands.Help} to get useful commands.");
 
             var chatConfiguration = new ChatConfiguration
             {
@@ -145,6 +168,7 @@ namespace GrammarNazi.App.HostedServices
             };
 
             await _chatConfigurationService.AddConfiguration(chatConfiguration);
+            await _client.SendTextMessageAsync(chatId, messageBuilder.ToString());
 
             return chatConfiguration;
         }

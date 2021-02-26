@@ -51,6 +51,7 @@ namespace GrammarNazi.Tests.Utilities
         }
 
         [Theory]
+        [InlineData("bored🔫😡😆😡❤️😡😡❤️", "bored")]
         [InlineData("This is fun 😂", "This is fun")]
         [InlineData("😀😁😂🤣😃😄😅😆💋👏😜💖😢😎🎶😉😍😒😘🤞😊😩😬👍", "")]
         [InlineData("Test😁Test1", "TestTest1")]
@@ -62,6 +63,43 @@ namespace GrammarNazi.Tests.Utilities
 
             // Assert
             Assert.Equal(expected, result);
+        }
+
+        [Fact]
+        public void RemoveCodeBlocks_GivenStringWithSingleCodeBlock_Should_RemoveCodeBlock()
+        {
+            const string test = @"```cs
+                                private void Test() => Console.WriteLine(""Method param"");
+                                ```
+                                This is a test";
+
+            var result = StringUtils.RemoveCodeBlocks(test);
+
+            Assert.DoesNotContain("private void Test() => Console.WriteLine", result);
+            Assert.Contains("This is a test", result);
+        }
+
+        [Fact]
+        public void RemoveCodeBlocks_GivenStringWithMultipleCodeBlocks_Should_RemoveAllCodeBlocks()
+        {
+            const string test = @"```cs
+                                private void Test() => Console.WriteLine(""Method param"");
+                                ```
+                                This is a test1
+                                ```javascript
+                                function test() {
+                                 console.log(""Method param"");
+                                }
+                                ```
+                                This is a test2
+                                ";
+
+            var result = StringUtils.RemoveCodeBlocks(test);
+
+            Assert.DoesNotContain("private void Test() => Console.WriteLine", result);
+            Assert.DoesNotContain("console.log", result);
+            Assert.Contains("This is a test", result);
+            Assert.Contains("This is a test2", result);
         }
     }
 }

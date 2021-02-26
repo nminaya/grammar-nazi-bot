@@ -11,25 +11,25 @@ namespace GrammarNazi.Core.Utilities
         /// <summary>
         /// Get TwoLetterISOLanguageName with the given ThreeLetterISOLanguageName
         /// </summary>
-        /// <param name="langCode"></param>
+        /// <param name="threeLetterLanguageName"></param>
         /// <returns>TwoLetterISOLanguageName</returns>
-        public static string GetLanguageCode(string langCode)
+        public static string GetLanguageCode(string threeLetterLanguageName)
         {
             var culture = CultureInfo.GetCultures(CultureTypes.AllCultures)
-                            .FirstOrDefault(v => v.ThreeLetterISOLanguageName == langCode || v.ThreeLetterWindowsLanguageName.ToLower() == langCode);
+                            .FirstOrDefault(v => v.ThreeLetterISOLanguageName == threeLetterLanguageName || v.ThreeLetterWindowsLanguageName.ToLower() == threeLetterLanguageName);
 
             return culture.TwoLetterISOLanguageName;
         }
 
         /// <summary>
-        /// Get string array of supported languages
+        /// Get string array of three letter supported languages
         /// </summary>
         /// <returns></returns>
         public static string[] GetSupportedLanguages()
         {
             return Enum.GetValues(typeof(SupportedLanguages))
                     .Cast<SupportedLanguages>()
-                    .Select(v => v.GetDescription())
+                    .Select(v => v.GetLanguageInformation()?.ThreeLetterISOLanguageName)
                     .Where(v => !string.IsNullOrEmpty(v))
                     .ToArray();
         }

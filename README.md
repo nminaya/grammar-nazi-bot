@@ -2,16 +2,19 @@
 Bot that corrects spelling mistakes.
 
 #### Telegram Bot
-[@grammarNz_Bot](https://t.me/grammarNz_Bot): This bot analyzes each message that is sent in a Telegram chat, and if it finds any spelling or grammar errors, it responds to the message with its corrections using the asterisk symbol (*).
+[@grammarNz_Bot](https://t.me/grammarNz_Bot): This bot analyzes each message that is sent in a Telegram chat, and if it finds any spelling or grammar errors, it replies to the message with its corrections using the asterisk symbol (*).
 
 #### Twitter Bot
-[@GrammarNazi_Bot](https://twitter.com/GrammarNazi_Bot) This Twitter bot analyzes the latest tweets of its followers, and if it finds any spelling or grammar errors, it will tweet a reply with its corrections using the asterisk symbol (*).
+[@GrammarNBot](https://twitter.com/GrammarNBot) This Twitter bot analyzes the latest tweets of its followers, and if it finds any spelling or grammar errors, it will tweet a reply with its corrections using the asterisk symbol (*).
+
+#### Discord Bot
+[Add Bot to Server](https://discord.com/oauth2/authorize?client_id=800422872770150431&permissions=523328&scope=bot): This bot analyzes each message that is sent in a Discord channel, and if it finds any spelling or grammar errors, it replies to the message with its corrections using the asterisk symbol (*).
 
 ## Features
 #### Twitter Bot
 - Evaluates Tweets of followers.
 - Multiple language support (English and Spanish).
-#### Telegram Bot
+#### Telegram and Discord Bot
 - Configurable grammar analyzer algorithm or provider.
 - Multiple language support (English and Spanish).
 - Strictness Level.
@@ -33,4 +36,4 @@ To run this project locally just follow this [instructions](https://github.com/n
 
 ## License
 
-This project uses the following license: [MIT](<https://choosealicense.com/licenses/mit/>)
+This project uses the following license: [MIT](LICENSE)

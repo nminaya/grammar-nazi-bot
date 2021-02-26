@@ -1,3 +1,4 @@
+using Discord.WebSocket;
 using Firebase.Database;
 using GrammarNazi.App.HostedServices;
 using GrammarNazi.Core.Clients;
@@ -39,6 +40,7 @@ namespace GrammarNazi.App
             // Hosted services
             services.AddHostedService<TelegramBotHostedService>();
             services.AddHostedService<TwitterBotHostedService>();
+            services.AddHostedService<DiscordBotHostedService>();
 
             ConfigureDependencies(services);
         }
@@ -48,6 +50,7 @@ namespace GrammarNazi.App
             // Settings
             services.Configure<TwitterBotSettings>(Configuration.GetSection("AppSettings:TwitterBotSettings"));
             services.Configure<GithubSettings>(Configuration.GetSection("AppSettings:GithubSettings"));
+            services.Configure<DiscordSettings>(d => d.Token = Environment.GetEnvironmentVariable("DISCORD_API_KEY"));
             services.Configure<MeaningCloudSettings>(m =>
             {
                 m.MeaningCloudHostUrl = Configuration.GetSection("AppSettings:MeaningCloudSettings:MeaningCloudHostUrl").Value;
@@ -55,7 +58,7 @@ namespace GrammarNazi.App
             });
 
             // Repository
-            services.AddTransient(typeof(IRepository<>), typeof(FirebaseRepository<>)); // Use Firebase for now
+            services.AddTransient(typeof(IRepository<>), typeof(FirebaseRepository<>));
 
             // Services
             services.AddSingleton<IFileService, FileService>();
@@ -76,6 +79,8 @@ namespace GrammarNazi.App
             services.AddTransient<IGithubService, GithubService>();
             services.AddTransient<ITelegramCommandHandlerService, TelegramCommandHandlerService>();
             services.AddTransient<ISentimentAnalysisService, SentimentAnalysisService>();
+            services.AddTransient<IDiscordChannelConfigService, DiscordChannelConfigService>();
+            services.AddTransient<IDiscordCommandHandlerService, DiscordCommandHandlerService>();
 
             // HttpClient
             services.AddHttpClient();
@@ -124,6 +129,9 @@ namespace GrammarNazi.App
                     Credentials = new Credentials(githubToken)
                 };
             });
+
+            // Discord Client
+            services.AddSingleton<BaseSocketClient, DiscordSocketClient>();
         }
 
         public void Configure(IApplicationBuilder app, IWebHostEnvironment env)

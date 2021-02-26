@@ -1,4 +1,7 @@
-﻿using GrammarNazi.Domain.Entities.Settings;
+﻿using GrammarNazi.Core.Extensions;
+using GrammarNazi.Domain.Constants;
+using GrammarNazi.Domain.Entities.Settings;
+using GrammarNazi.Domain.Enums;
 using GrammarNazi.Domain.Services;
 using Microsoft.Extensions.Options;
 using Octokit;
@@ -20,10 +23,12 @@ namespace GrammarNazi.Core.Services
             _githubSettings = options.Value;
         }
 
-        public async Task CreateBugIssue(string title, Exception exception)
+        public async Task CreateBugIssue(string title, Exception exception, GithubIssueLabels githubIssueSection)
         {
+            var issueTitle = GetTrimmedTitle(title);
+
             // Do not duplicate the issue if exist
-            if (await IssueExist(title))
+            if (await IssueExist(issueTitle))
                 return;
 
             var bodyBuilder = new StringBuilder();
@@ -31,11 +36,12 @@ namespace GrammarNazi.Core.Services
             bodyBuilder.AppendLine($"Date (UTC): {DateTime.UtcNow}\n\n");
             bodyBuilder.AppendLine("Exception:\n\n").AppendLine(exception.ToString());
 
-            var issue = new NewIssue(title)
+            var issue = new NewIssue(issueTitle)
             {
                 Body = bodyBuilder.ToString()
             };
-            issue.Labels.Add("production-bug");
+            issue.Labels.Add(GithubIssueLabels.ProductionBug.GetDescription());
+            issue.Labels.Add(githubIssueSection.GetDescription());
 
             await _githubClient.Issue.Create(_githubSettings.Username, _githubSettings.RepositoryName, issue);
         }
@@ -45,6 +51,16 @@ namespace GrammarNazi.Core.Services
             var issues = await _githubClient.Issue.GetAllForRepository(_githubSettings.Username, _githubSettings.RepositoryName);
 
             return issues.Any(v => v.Title == title);
+        }
+
+        private static string GetTrimmedTitle(string title)
+        {
+            if (title.Length <= Defaults.GithubIssueMaxTitleLength)
+                return title;
+
+            const string dots = "...";
+
+            return title[0..(Defaults.GithubIssueMaxTitleLength - dots.Length)] + dots;
         }
     }
 }
