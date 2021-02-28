@@ -28,7 +28,7 @@ namespace GrammarNazi.Core.Services
         public async Task<GrammarCheckResult> GetCorrections(string text)
         {
             // Do not evalulate long texts or empty texts
-            if (string.IsNullOrWhiteSpace(text) || text.Length >= Defaults.MaxLengthText)
+            if (string.IsNullOrWhiteSpace(text) || text.Length >= Defaults.LanguageToolApiMaxTextLength)
             {
                 return new(default);
             }
