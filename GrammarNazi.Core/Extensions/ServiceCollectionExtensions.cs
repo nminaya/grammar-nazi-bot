@@ -37,6 +37,7 @@ namespace GrammarNazi.Core.Extensions
             serviceCollection.AddTransient<IDiscordBotCommand, LanguageCommand>();
             serviceCollection.AddTransient<IDiscordBotCommand, StopCommand>();
             serviceCollection.AddTransient<IDiscordBotCommand, HideDetailsCommand>();
+            serviceCollection.AddTransient<IDiscordBotCommand, ShowDetailsCommand>();
 
             return serviceCollection;
         }
