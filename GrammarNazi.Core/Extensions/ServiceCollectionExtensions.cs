@@ -1,4 +1,6 @@
-﻿using Microsoft.EntityFrameworkCore;
+﻿using GrammarNazi.Core.BotCommands.Discord;
+using GrammarNazi.Domain.BotCommands;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using NTextCat;
 
@@ -24,6 +26,13 @@ namespace GrammarNazi.Core.Extensions
             using var scope = serviceCollection.BuildServiceProvider().CreateScope();
             var context = scope.ServiceProvider.GetService<DbContext>();
             context.Database.EnsureCreated();
+        }
+
+        public static IServiceCollection AddDiscordCommands(this IServiceCollection serviceCollection)
+        {
+            serviceCollection.AddTransient<IBotCommand, StartCommand>();
+
+            return serviceCollection;
         }
     }
 }
