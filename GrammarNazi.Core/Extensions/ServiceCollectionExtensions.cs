@@ -41,6 +41,7 @@ namespace GrammarNazi.Core.Extensions
             serviceCollection.AddTransient<IDiscordBotCommand, TolerantCommand>();
             serviceCollection.AddTransient<IDiscordBotCommand, IntolerantCommand>();
             serviceCollection.AddTransient<IDiscordBotCommand, WhiteListCommand>();
+            serviceCollection.AddTransient<IDiscordBotCommand, AddWhiteListCommand>();
 
             return serviceCollection;
         }
