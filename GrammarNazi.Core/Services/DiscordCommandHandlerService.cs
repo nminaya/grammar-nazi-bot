@@ -1,10 +1,12 @@
 ﻿using Discord;
 using Discord.WebSocket;
 using GrammarNazi.Core.Extensions;
+using GrammarNazi.Domain.BotCommands;
 using GrammarNazi.Domain.Constants;
 using GrammarNazi.Domain.Enums;
 using GrammarNazi.Domain.Services;
 using System;
+using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
@@ -14,13 +16,26 @@ namespace GrammarNazi.Core.Services
     public class DiscordCommandHandlerService : IDiscordCommandHandlerService
     {
         private readonly IDiscordChannelConfigService _channelConfigService;
+        private readonly IEnumerable<IDiscordBotCommand> _botCommands;
 
-        public DiscordCommandHandlerService(IDiscordChannelConfigService channelConfigService)
+        public DiscordCommandHandlerService(IDiscordChannelConfigService channelConfigService,
+            IEnumerable<IDiscordBotCommand> botCommands)
         {
             _channelConfigService = channelConfigService;
+            _botCommands = botCommands;
         }
 
         public async Task HandleCommand(SocketUserMessage message)
+        {
+            var command = _botCommands.FirstOrDefault(v => message.Content.StartsWith(v.Command));
+
+            if (command != null)
+            {
+                await command.Handle(message);
+            }
+        }
+
+        public async Task HandleCommand2(SocketUserMessage message)
         {
             var text = message.Content;
 

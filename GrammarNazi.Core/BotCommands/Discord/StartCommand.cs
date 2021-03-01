@@ -7,7 +7,7 @@ using System.Threading.Tasks;
 
 namespace GrammarNazi.Core.BotCommands.Discord
 {
-    public class StartCommand : BaseDiscordCommand, IBotCommand
+    public class StartCommand : BaseDiscordCommand, IDiscordBotCommand
     {
         private readonly IDiscordChannelConfigService _channelConfigService;
 

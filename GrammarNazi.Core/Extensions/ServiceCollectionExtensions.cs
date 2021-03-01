@@ -30,7 +30,7 @@ namespace GrammarNazi.Core.Extensions
 
         public static IServiceCollection AddDiscordCommands(this IServiceCollection serviceCollection)
         {
-            serviceCollection.AddTransient<IBotCommand, StartCommand>();
+            serviceCollection.AddTransient<IDiscordBotCommand, StartCommand>();
 
             return serviceCollection;
         }
