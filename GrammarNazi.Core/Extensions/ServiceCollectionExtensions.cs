@@ -40,6 +40,7 @@ namespace GrammarNazi.Core.Extensions
             serviceCollection.AddTransient<IDiscordBotCommand, ShowDetailsCommand>();
             serviceCollection.AddTransient<IDiscordBotCommand, TolerantCommand>();
             serviceCollection.AddTransient<IDiscordBotCommand, IntolerantCommand>();
+            serviceCollection.AddTransient<IDiscordBotCommand, WhiteListCommand>();
 
             return serviceCollection;
         }
