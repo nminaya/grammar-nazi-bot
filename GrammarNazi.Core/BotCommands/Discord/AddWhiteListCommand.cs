@@ -20,15 +20,13 @@ namespace GrammarNazi.Core.BotCommands.Discord
 
         public async Task Handle(SocketUserMessage message)
         {
-            var text = message.Content;
-
             if (!IsUserAdmin(message))
             {
                 await message.Channel.SendMessageAsync("Only admins can use this command.", messageReference: new MessageReference(message.Id));
                 return;
             }
 
-            var parameters = text.Split(" ");
+            var parameters = message.Content.Split(" ");
 
             if (parameters.Length == 1)
             {

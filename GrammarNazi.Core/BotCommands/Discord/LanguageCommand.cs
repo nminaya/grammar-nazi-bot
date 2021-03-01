@@ -23,8 +23,6 @@ namespace GrammarNazi.Core.BotCommands.Discord
 
         public async Task Handle(SocketUserMessage message)
         {
-            var text = message.Content;
-
             var messageBuilder = new StringBuilder();
 
             if (!IsUserAdmin(message))
@@ -34,7 +32,7 @@ namespace GrammarNazi.Core.BotCommands.Discord
                 return;
             }
 
-            var parameters = text.Split(" ");
+            var parameters = message.Content.Split(" ");
 
             if (parameters.Length == 1)
             {
