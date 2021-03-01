@@ -1,4 +1,4 @@
-﻿using Discord.WebSocket;
+﻿using Discord;
 using GrammarNazi.Domain.BotCommands;
 using GrammarNazi.Domain.Constants;
 using GrammarNazi.Domain.Services;
@@ -18,7 +18,7 @@ namespace GrammarNazi.Core.BotCommands.Discord
             _channelConfigService = channelConfigService;
         }
 
-        public async Task Handle(SocketUserMessage message)
+        public async Task Handle(IMessage message)
         {
             var channelConfig = await _channelConfigService.GetConfigurationByChannelId(message.Channel.Id);
             var messageBuilder = new StringBuilder();

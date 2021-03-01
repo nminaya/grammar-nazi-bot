@@ -1,4 +1,5 @@
-﻿using Discord.WebSocket;
+﻿using Discord;
+using Discord.WebSocket;
 using System.Threading.Tasks;
 
 namespace GrammarNazi.Domain.BotCommands
@@ -7,6 +8,6 @@ namespace GrammarNazi.Domain.BotCommands
     {
         string Command { get; }
 
-        Task Handle(SocketUserMessage message);
+        Task Handle(IMessage message);
     }
 }

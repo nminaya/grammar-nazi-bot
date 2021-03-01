@@ -11,16 +11,16 @@ namespace GrammarNazi.Core.BotCommands.Discord
 {
     public abstract class BaseDiscordCommand
     {
-        protected bool IsUserAdmin(SocketUserMessage message)
+        protected bool IsUserAdmin(IMessage message)
         {
             if (message.Channel is IPrivateChannel)
                 return true;
 
-            var user = message.Author as SocketGuildUser;
+            var user = message.Author as IGuildUser;
             return user.GuildPermissions.Administrator || user.GuildPermissions.ManageChannels;
         }
 
-        protected async Task SendMessage(SocketUserMessage socketUserMessage, string message, string command)
+        protected async Task SendMessage(IMessage socketUserMessage, string message, string command)
         {
             var embed = new EmbedBuilder
             {

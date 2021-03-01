@@ -19,7 +19,7 @@ namespace GrammarNazi.Core.BotCommands.Discord
             _channelConfigService = discordChannelConfigService;
         }
 
-        public async Task Handle(SocketUserMessage message)
+        public async Task Handle(IMessage message)
         {
             if (!IsUserAdmin(message))
             {

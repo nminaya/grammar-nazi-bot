@@ -1,4 +1,4 @@
-﻿using Discord.WebSocket;
+﻿using Discord;
 using GrammarNazi.Core.Extensions;
 using GrammarNazi.Domain.BotCommands;
 using GrammarNazi.Domain.Constants;
@@ -12,7 +12,7 @@ namespace GrammarNazi.Core.BotCommands.Discord
     {
         public string Command => DiscordBotCommands.Help;
 
-        public async Task Handle(SocketUserMessage message)
+        public async Task Handle(IMessage message)
         {
             var messageBuilder = new StringBuilder();
             messageBuilder.AppendLine("Useful commands:");
