@@ -11,7 +11,41 @@ namespace GrammarNazi.Tests.BotCommands.Discord
     public class StopCommandTests
     {
         [Fact]
-        public async Task Stop_UserIsAdmin_Should_ChangeChatConfig_And_ReplyMessage()
+        public async Task UserNotAdmin_Should_ReplyMessage()
+        {
+            // Arrange
+            var chatConfigurationServiceMock = new Mock<IDiscordChannelConfigService>();
+            var command = new StopCommand(chatConfigurationServiceMock.Object);
+            const string replyMessage = "Only admins can use this command.";
+
+            var chatConfig = new DiscordChannelConfig
+            {
+                IsBotStopped = false
+            };
+
+            var channelMock = new Mock<IMessageChannel>();
+            var user = new Mock<IGuildUser>();
+            user.Setup(v => v.GuildPermissions).Returns(GuildPermissions.None);
+            var message = new Mock<IMessage>();
+
+            message.Setup(v => v.Author).Returns(user.Object);
+            message.Setup(v => v.Channel).Returns(channelMock.Object);
+
+            chatConfigurationServiceMock.Setup(v => v.GetConfigurationByChannelId(message.Object.Channel.Id))
+                .ReturnsAsync(chatConfig);
+
+            // Act
+            await command.Handle(message.Object);
+
+            // Assert
+
+            // Verify SendMessageAsync was called with the reply message "Only admins can use this command"
+            channelMock.Verify(v => v.SendMessageAsync(replyMessage, false, null, null, null, It.Is<MessageReference>(m => m.MessageId.Value == message.Object.Id)));
+            Assert.False(chatConfig.IsBotStopped); // Make sure IsBotStopped is still false
+        }
+
+        [Fact]
+        public async Task UserIsAdmin_Should_ChangeChatConfig_And_ReplyMessage()
         {
             // Arrange
             var chatConfigurationServiceMock = new Mock<IDiscordChannelConfigService>();
