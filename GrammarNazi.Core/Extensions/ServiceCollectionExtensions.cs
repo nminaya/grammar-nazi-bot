@@ -29,7 +29,7 @@ namespace GrammarNazi.Core.Extensions
             context.Database.EnsureCreated();
         }
 
-        public static IServiceCollection AddDiscordCommands(this IServiceCollection serviceCollection)
+        public static IServiceCollection AddDiscordBotCommands(this IServiceCollection serviceCollection)
         {
             // All IDiscordBotCommand classes in the current Assembly
             var commandClassTypes = Assembly
