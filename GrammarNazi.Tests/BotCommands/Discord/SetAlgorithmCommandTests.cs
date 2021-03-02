@@ -118,6 +118,12 @@ namespace GrammarNazi.Tests.BotCommands.Discord
             Assert.Equal(GrammarAlgorithms.InternalAlgorithm, chatConfig.GrammarAlgorithm); // Make sure SelectedLanguage is still Auto
         }
 
+        [Fact]
+        public async Task UserNotAdmin_Should_ReplyNotAdminMessage()
+        {
+            await TestUtilities.TestDiscordNotAdminUser(new SetAlgorithmCommand(null));
+        }
+
         [Theory]
         [InlineData(GrammarAlgorithms.InternalAlgorithm)]
         [InlineData(GrammarAlgorithms.DatamuseApi)]

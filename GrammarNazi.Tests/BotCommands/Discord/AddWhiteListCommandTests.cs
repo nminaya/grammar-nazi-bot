@@ -80,6 +80,12 @@ namespace GrammarNazi.Tests.BotCommands.Discord
         }
 
         [Fact]
+        public async Task UserNotAdmin_Should_ReplyNotAdminMessage()
+        {
+            await TestUtilities.TestDiscordNotAdminUser(new AddWhiteListCommand(null));
+        }
+
+        [Fact]
         public async Task NoWordExist_Should_ChangeChatConfig_And_ReplyMessage()
         {
             // Arrange

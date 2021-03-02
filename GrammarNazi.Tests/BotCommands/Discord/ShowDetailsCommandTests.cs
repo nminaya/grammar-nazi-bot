@@ -44,5 +44,11 @@ namespace GrammarNazi.Tests.BotCommands.Discord
             channelConfigurationServiceMock.Verify(v => v.Update(chatConfig));
             Assert.False(chatConfig.HideCorrectionDetails);
         }
+
+        [Fact]
+        public async Task UserNotAdmin_Should_ReplyNotAdminMessage()
+        {
+            await TestUtilities.TestDiscordNotAdminUser(new ShowDetailsCommand(null));
+        }
     }
 }

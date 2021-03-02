@@ -45,5 +45,11 @@ namespace GrammarNazi.Tests.BotCommands.Discord
             channelConfigurationServiceMock.Verify(v => v.Update(chatConfig));
             Assert.Equal(CorrectionStrictnessLevels.Intolerant, chatConfig.CorrectionStrictnessLevel);
         }
+
+        [Fact]
+        public async Task UserNotAdmin_Should_ReplyNotAdminMessage()
+        {
+            await TestUtilities.TestDiscordNotAdminUser(new IntolerantCommand(null));
+        }
     }
 }
