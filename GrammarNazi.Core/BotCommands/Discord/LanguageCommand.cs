@@ -39,7 +39,8 @@ namespace GrammarNazi.Core.BotCommands.Discord
                 var channelConfig = await _channelConfigService.GetConfigurationByChannelId(message.Channel.Id);
 
                 messageBuilder.AppendLine($"Parameter not received. Type `{DiscordBotCommands.Language}` <language_number> to set a language.").AppendLine();
-                messageBuilder.AppendLine(GetSupportedLanguages(channelConfig.SelectedLanguage));
+                messageBuilder.AppendLine("Languages:");
+                messageBuilder.AppendLine(GetAvailableOptions(channelConfig.SelectedLanguage));
                 await SendMessage(message, messageBuilder.ToString(), DiscordBotCommands.Language);
                 return;
             }

@@ -31,6 +31,7 @@ namespace GrammarNazi.Core.Extensions
 
         public static IServiceCollection AddDiscordCommands(this IServiceCollection serviceCollection)
         {
+            // All IDiscordBotCommand classes in the current Assembly
             var commandClassTypes = Assembly
                 .GetExecutingAssembly()
                 .GetTypes()

@@ -39,7 +39,8 @@ namespace GrammarNazi.Core.BotCommands.Discord
                 var channelConfig = await _channelConfigService.GetConfigurationByChannelId(message.Channel.Id);
 
                 messageBuilder.AppendLine($"Parameter not received. Type `{DiscordBotCommands.SetAlgorithm}` <algorithm_numer> to set an algorithm").AppendLine();
-                messageBuilder.AppendLine(GetAvailableAlgorithms(channelConfig.GrammarAlgorithm));
+                messageBuilder.AppendLine($"Algorithms:");
+                messageBuilder.AppendLine(GetAvailableOptions(channelConfig.GrammarAlgorithm));
                 await SendMessage(message, messageBuilder.ToString(), DiscordBotCommands.SetAlgorithm);
                 return;
             }

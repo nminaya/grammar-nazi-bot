@@ -1,7 +1,5 @@
 ﻿using Discord;
-using Discord.WebSocket;
 using GrammarNazi.Core.Extensions;
-using GrammarNazi.Domain.Enums;
 using System;
 using System.Linq;
 using System.Text;
@@ -32,33 +30,16 @@ namespace GrammarNazi.Core.BotCommands.Discord
             await socketUserMessage.Channel.SendMessageAsync(embed: embed.Build());
         }
 
-        protected string GetAvailableAlgorithms(GrammarAlgorithms selectedAlgorith)
+        protected string GetAvailableOptions<T>(T selectedOption) where T : Enum
         {
-            var algorithms = Enum.GetValues(typeof(GrammarAlgorithms)).Cast<GrammarAlgorithms>();
+            var options = Enum.GetValues(typeof(T)).Cast<T>();
 
             var messageBuilder = new StringBuilder();
-            messageBuilder.AppendLine("Algorithms available:");
 
-            foreach (var item in algorithms)
+            foreach (var item in options)
             {
-                var selected = item == selectedAlgorith ? "✅" : "";
-                messageBuilder.AppendLine($"{(int)item} - {item.GetDescription()} {selected}");
-            }
-
-            return messageBuilder.ToString();
-        }
-
-        protected string GetSupportedLanguages(SupportedLanguages selectedLanguage)
-        {
-            var languages = Enum.GetValues(typeof(SupportedLanguages)).Cast<SupportedLanguages>();
-
-            var messageBuilder = new StringBuilder();
-            messageBuilder.AppendLine("Supported Languages:");
-
-            foreach (var item in languages)
-            {
-                var selected = item == selectedLanguage ? "✅" : "";
-                messageBuilder.AppendLine($"{(int)item} - {item} {selected}");
+                var selected = item.Equals(selectedOption) ? "✅" : "";
+                messageBuilder.AppendLine($"{Convert.ToInt32(item)} - {item.GetDescription()} {selected}");
             }
 
             return messageBuilder.ToString();

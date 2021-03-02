@@ -25,8 +25,10 @@ namespace GrammarNazi.Core.BotCommands.Discord
             var channelConfig = await _channelConfigService.GetConfigurationByChannelId(message.Channel.Id);
 
             var messageBuilder = new StringBuilder();
-            messageBuilder.AppendLine(GetAvailableAlgorithms(channelConfig.GrammarAlgorithm));
-            messageBuilder.AppendLine(GetSupportedLanguages(channelConfig.SelectedLanguage));
+            messageBuilder.AppendLine("Algorithms:");
+            messageBuilder.AppendLine(GetAvailableOptions(channelConfig.GrammarAlgorithm));
+            messageBuilder.AppendLine("Languages:");
+            messageBuilder.AppendLine(GetAvailableOptions(channelConfig.SelectedLanguage));
 
             var showCorrectionDetailsIcon = channelConfig.HideCorrectionDetails ? "❌" : "✅";
             messageBuilder.AppendLine($"Show correction details {showCorrectionDetailsIcon}").AppendLine();
