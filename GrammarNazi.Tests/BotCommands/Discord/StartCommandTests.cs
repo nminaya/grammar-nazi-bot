@@ -1,5 +1,4 @@
 ﻿using Discord;
-using Discord.WebSocket;
 using GrammarNazi.Core.BotCommands.Discord;
 using GrammarNazi.Domain.Entities;
 using GrammarNazi.Domain.Services;
@@ -72,6 +71,7 @@ namespace GrammarNazi.Tests.BotCommands.Discord
 
             // Verify SendMessageAsync was called with the reply message "Only admins can use this command"
             channelMock.Verify(v => v.SendMessageAsync(null, false, It.Is<Embed>(e => e.Description.Contains(replyMessage)), null, null, null));
+            Assert.True(chatConfig.IsBotStopped); // Make sure IsBotStopped is still true
         }
 
         [Fact]
