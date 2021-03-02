@@ -10,7 +10,7 @@ using Xunit;
 
 namespace GrammarNazi.Tests.BotCommands.Discord
 {
-    public class LanguageCommandTests
+    public class SetAlgorithmCommandTests
     {
         [Theory]
         [InlineData("fad123")]
@@ -19,19 +19,19 @@ namespace GrammarNazi.Tests.BotCommands.Discord
         {
             // Arrange
             var channelConfigurationServiceMock = new Mock<IDiscordChannelConfigService>();
-            var command = new LanguageCommand(channelConfigurationServiceMock.Object);
+            var command = new SetAlgorithmCommand(channelConfigurationServiceMock.Object);
             const string replyMessage = "Invalid parameter";
 
             var chatConfig = new DiscordChannelConfig
             {
-                SelectedLanguage = SupportedLanguages.Auto
+                GrammarAlgorithm = GrammarAlgorithms.InternalAlgorithm
             };
 
             var channelMock = new Mock<IMessageChannel>();
             var user = new Mock<IGuildUser>();
             user.Setup(v => v.GuildPermissions).Returns(GuildPermissions.All);
             var message = new Mock<IMessage>();
-            message.Setup(v => v.Content).Returns($"{DiscordBotCommands.Language} {parameter}");
+            message.Setup(v => v.Content).Returns($"{DiscordBotCommands.SetAlgorithm} {parameter}");
             message.Setup(v => v.Author).Returns(user.Object);
             message.Setup(v => v.Channel).Returns(channelMock.Object);
 
@@ -45,7 +45,7 @@ namespace GrammarNazi.Tests.BotCommands.Discord
 
             // Verify SendMessageAsync was called with the reply message "Invalid parameter"
             channelMock.Verify(v => v.SendMessageAsync(null, false, It.Is<Embed>(e => e.Description.Contains(replyMessage)), null, null, null));
-            Assert.Equal(SupportedLanguages.Auto, chatConfig.SelectedLanguage); // Make sure SelectedLanguage is still Auto
+            Assert.Equal(GrammarAlgorithms.InternalAlgorithm, chatConfig.GrammarAlgorithm);
         }
 
         [Theory]
@@ -55,19 +55,19 @@ namespace GrammarNazi.Tests.BotCommands.Discord
         {
             // Arrange
             var channelConfigurationServiceMock = new Mock<IDiscordChannelConfigService>();
-            var command = new LanguageCommand(channelConfigurationServiceMock.Object);
+            var command = new SetAlgorithmCommand(channelConfigurationServiceMock.Object);
             const string replyMessage = "Invalid parameter";
 
             var chatConfig = new DiscordChannelConfig
             {
-                SelectedLanguage = SupportedLanguages.Auto
+                GrammarAlgorithm = GrammarAlgorithms.InternalAlgorithm
             };
 
             var channelMock = new Mock<IMessageChannel>();
             var user = new Mock<IGuildUser>();
             user.Setup(v => v.GuildPermissions).Returns(GuildPermissions.All);
             var message = new Mock<IMessage>();
-            message.Setup(v => v.Content).Returns($"{DiscordBotCommands.Language} {parameter}");
+            message.Setup(v => v.Content).Returns($"{DiscordBotCommands.SetAlgorithm} {parameter}");
             message.Setup(v => v.Author).Returns(user.Object);
             message.Setup(v => v.Channel).Returns(channelMock.Object);
 
@@ -81,29 +81,30 @@ namespace GrammarNazi.Tests.BotCommands.Discord
 
             // Verify SendMessageAsync was called with the reply message "Invalid parameter"
             channelMock.Verify(v => v.SendMessageAsync(null, false, It.Is<Embed>(e => e.Description.Contains(replyMessage)), null, null, null));
-            Assert.Equal(SupportedLanguages.Auto, chatConfig.SelectedLanguage); // Make sure SelectedLanguage is still Auto
+            Assert.Equal(GrammarAlgorithms.InternalAlgorithm, chatConfig.GrammarAlgorithm); // Make sure SelectedLanguage is still Auto
         }
 
         [Theory]
-        [InlineData(SupportedLanguages.English)]
-        [InlineData(SupportedLanguages.Spanish)]
-        public async Task ValidParameter_Should_ChangeChatConfig_And_ReplyMessage(SupportedLanguages languageParameter)
+        [InlineData(GrammarAlgorithms.InternalAlgorithm)]
+        [InlineData(GrammarAlgorithms.DatamuseApi)]
+        [InlineData(GrammarAlgorithms.LanguageToolApi)]
+        public async Task ValidParameter_Should_ChangeChatConfig_And_ReplyMessage(GrammarAlgorithms algorithmParameter)
         {
             // Arrange
             var channelConfigurationServiceMock = new Mock<IDiscordChannelConfigService>();
-            var command = new LanguageCommand(channelConfigurationServiceMock.Object);
-            const string replyMessage = "Language updated";
+            var command = new SetAlgorithmCommand(channelConfigurationServiceMock.Object);
+            const string replyMessage = "Algorithm updated";
 
             var chatConfig = new DiscordChannelConfig
             {
-                SelectedLanguage = SupportedLanguages.Auto
+                GrammarAlgorithm = GrammarAlgorithms.YandexSpellerApi
             };
 
             var channelMock = new Mock<IMessageChannel>();
             var user = new Mock<IGuildUser>();
             user.Setup(v => v.GuildPermissions).Returns(GuildPermissions.All);
             var message = new Mock<IMessage>();
-            message.Setup(v => v.Content).Returns($"{DiscordBotCommands.Language} {(int)languageParameter}");
+            message.Setup(v => v.Content).Returns($"{DiscordBotCommands.SetAlgorithm} {(int)algorithmParameter}");
             message.Setup(v => v.Author).Returns(user.Object);
             message.Setup(v => v.Channel).Returns(channelMock.Object);
 
@@ -115,9 +116,9 @@ namespace GrammarNazi.Tests.BotCommands.Discord
 
             // Assert
 
-            // Verify SendMessageAsync was called with the reply message "Language updated"
+            // Verify SendMessageAsync was called with the reply message "Algorithm updated"
             channelMock.Verify(v => v.SendMessageAsync(null, false, It.Is<Embed>(e => e.Description.Contains(replyMessage)), null, null, null));
-            Assert.Equal(languageParameter, chatConfig.SelectedLanguage);
+            Assert.Equal(algorithmParameter, chatConfig.GrammarAlgorithm);
         }
     }
 }
