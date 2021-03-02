@@ -1,5 +1,4 @@
 ﻿using Discord;
-using Discord.WebSocket;
 using GrammarNazi.Domain.BotCommands;
 using GrammarNazi.Domain.Constants;
 using GrammarNazi.Domain.Services;
@@ -24,22 +23,21 @@ namespace GrammarNazi.Core.BotCommands.Discord
         {
             var channelConfig = await _channelConfigService.GetConfigurationByChannelId(message.Channel.Id);
 
-            if (channelConfig.WhiteListWords?.Any() == true)
+            if (channelConfig.WhiteListWords?.Any() != true)
             {
-                var messageBuilder = new StringBuilder();
-                messageBuilder.AppendLine("Whitelist Words:\n");
-
-                foreach (var word in channelConfig.WhiteListWords)
-                {
-                    messageBuilder.AppendLine($"- {word}");
-                }
-
-                await SendMessage(message, messageBuilder.ToString(), DiscordBotCommands.WhiteList);
-
+                await SendMessage(message, $"You don't have Whitelist words configured. Use `{DiscordBotCommands.AddWhiteList}` to add words to the WhiteList.", DiscordBotCommands.WhiteList);
                 return;
             }
 
-            await SendMessage(message, $"You don't have Whitelist words configured. Use `{DiscordBotCommands.AddWhiteList}` to add words to the WhiteList.", DiscordBotCommands.WhiteList);
+            var messageBuilder = new StringBuilder();
+            messageBuilder.AppendLine("Whitelist Words:\n");
+
+            foreach (var word in channelConfig.WhiteListWords)
+            {
+                messageBuilder.AppendLine($"- {word}");
+            }
+
+            await SendMessage(message, messageBuilder.ToString(), DiscordBotCommands.WhiteList);
         }
     }
 }
