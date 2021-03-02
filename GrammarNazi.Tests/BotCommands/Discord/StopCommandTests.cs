@@ -14,8 +14,8 @@ namespace GrammarNazi.Tests.BotCommands.Discord
         public async Task UserNotAdmin_Should_ReplyMessage()
         {
             // Arrange
-            var chatConfigurationServiceMock = new Mock<IDiscordChannelConfigService>();
-            var command = new StopCommand(chatConfigurationServiceMock.Object);
+            var channelConfigurationServiceMock = new Mock<IDiscordChannelConfigService>();
+            var command = new StopCommand(channelConfigurationServiceMock.Object);
             const string replyMessage = "Only admins can use this command.";
 
             var chatConfig = new DiscordChannelConfig
@@ -31,7 +31,7 @@ namespace GrammarNazi.Tests.BotCommands.Discord
             message.Setup(v => v.Author).Returns(user.Object);
             message.Setup(v => v.Channel).Returns(channelMock.Object);
 
-            chatConfigurationServiceMock.Setup(v => v.GetConfigurationByChannelId(message.Object.Channel.Id))
+            channelConfigurationServiceMock.Setup(v => v.GetConfigurationByChannelId(message.Object.Channel.Id))
                 .ReturnsAsync(chatConfig);
 
             // Act
@@ -48,8 +48,8 @@ namespace GrammarNazi.Tests.BotCommands.Discord
         public async Task UserIsAdmin_Should_ChangeChatConfig_And_ReplyMessage()
         {
             // Arrange
-            var chatConfigurationServiceMock = new Mock<IDiscordChannelConfigService>();
-            var command = new StopCommand(chatConfigurationServiceMock.Object);
+            var channelConfigurationServiceMock = new Mock<IDiscordChannelConfigService>();
+            var command = new StopCommand(channelConfigurationServiceMock.Object);
             const string replyMessage = "Bot stopped";
 
             var chatConfig = new DiscordChannelConfig
@@ -65,7 +65,7 @@ namespace GrammarNazi.Tests.BotCommands.Discord
             message.Setup(v => v.Author).Returns(user.Object);
             message.Setup(v => v.Channel).Returns(channelMock.Object);
 
-            chatConfigurationServiceMock.Setup(v => v.GetConfigurationByChannelId(message.Object.Channel.Id))
+            channelConfigurationServiceMock.Setup(v => v.GetConfigurationByChannelId(message.Object.Channel.Id))
                 .ReturnsAsync(chatConfig);
 
             // Act
