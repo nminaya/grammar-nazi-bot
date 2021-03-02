@@ -1,8 +1,9 @@
-﻿using GrammarNazi.Core.BotCommands.Discord;
-using GrammarNazi.Domain.BotCommands;
+﻿using GrammarNazi.Domain.BotCommands;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using NTextCat;
+using System.Linq;
+using System.Reflection;
 
 namespace GrammarNazi.Core.Extensions
 {
@@ -30,19 +31,15 @@ namespace GrammarNazi.Core.Extensions
 
         public static IServiceCollection AddDiscordCommands(this IServiceCollection serviceCollection)
         {
-            serviceCollection.AddTransient<IDiscordBotCommand, StartCommand>();
-            serviceCollection.AddTransient<IDiscordBotCommand, SettingsCommand>();
-            serviceCollection.AddTransient<IDiscordBotCommand, HelpCommand>();
-            serviceCollection.AddTransient<IDiscordBotCommand, SetAlgorithmCommand>();
-            serviceCollection.AddTransient<IDiscordBotCommand, LanguageCommand>();
-            serviceCollection.AddTransient<IDiscordBotCommand, StopCommand>();
-            serviceCollection.AddTransient<IDiscordBotCommand, HideDetailsCommand>();
-            serviceCollection.AddTransient<IDiscordBotCommand, ShowDetailsCommand>();
-            serviceCollection.AddTransient<IDiscordBotCommand, TolerantCommand>();
-            serviceCollection.AddTransient<IDiscordBotCommand, IntolerantCommand>();
-            serviceCollection.AddTransient<IDiscordBotCommand, WhiteListCommand>();
-            serviceCollection.AddTransient<IDiscordBotCommand, AddWhiteListCommand>();
-            serviceCollection.AddTransient<IDiscordBotCommand, RemoveWhiteListCommand>();
+            var commandClassTypes = Assembly
+                .GetExecutingAssembly()
+                .GetTypes()
+                .Where(v => v.IsAssignableTo(typeof(IDiscordBotCommand)));
+
+            foreach (var commandClassType in commandClassTypes)
+            {
+                serviceCollection.AddTransient(typeof(IDiscordBotCommand), commandClassType);
+            }
 
             return serviceCollection;
         }
