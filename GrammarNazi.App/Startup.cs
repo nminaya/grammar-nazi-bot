@@ -82,6 +82,9 @@ namespace GrammarNazi.App
             services.AddTransient<IDiscordChannelConfigService, DiscordChannelConfigService>();
             services.AddTransient<IDiscordCommandHandlerService, DiscordCommandHandlerService>();
 
+            // Discord Bot Commands
+            services.AddDiscordBotCommands();
+
             // HttpClient
             services.AddHttpClient();
 
