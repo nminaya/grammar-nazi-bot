@@ -104,5 +104,18 @@ namespace GrammarNazi.Tests.Utilities
             Assert.Contains("This is a test", result);
             Assert.Contains("This is a test2", result);
         }
+
+        [Theory]
+        [InlineData("This is a **test**", "This is a test")]
+        [InlineData("This is a _test_", "This is a test")]
+        [InlineData("**This** is *a* _test_", "This is a test")]
+        public void MarkDownToPlainText_GivenString_Should_ReturnsExpectedResult(string actual, string expected)
+        {
+            // Arrange > Act
+            var result = StringUtils.MarkDownToPlainText(actual);
+
+            // Assert
+            Assert.Equal(expected, result);
+        }
     }
 }
