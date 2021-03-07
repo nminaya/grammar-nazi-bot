@@ -68,6 +68,14 @@ namespace GrammarNazi.Core.Utilities
         /// Converts Markdown to plain text
         /// </summary>
         /// <param name="text"></param>
-        public static string MarkDownToPlainText(string text) => Markdown.ToPlainText(text);
+        public static string MarkDownToPlainText(string text)
+        {
+            // config to avoid new lines (\n) in parsed text
+            var markDownConfig = new MarkdownPipelineBuilder()
+                                        .ConfigureNewLine("")
+                                        .Build();
+
+            return Markdown.ToPlainText(text, markDownConfig);
+        }
     }
 }
