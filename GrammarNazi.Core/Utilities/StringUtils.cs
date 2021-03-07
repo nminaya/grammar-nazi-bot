@@ -1,4 +1,5 @@
-﻿using System.Text.RegularExpressions;
+﻿using Markdig;
+using System.Text.RegularExpressions;
 
 namespace GrammarNazi.Core.Utilities
 {
@@ -62,5 +63,11 @@ namespace GrammarNazi.Core.Utilities
 
             return str;
         }
+
+        /// <summary>
+        /// Converts Markdown to plain text
+        /// </summary>
+        /// <param name="text"></param>
+        public static string MarkDownToPlainText(string text) => Markdown.ToPlainText(text);
     }
 }
