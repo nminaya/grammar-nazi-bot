@@ -8,7 +8,6 @@ using GrammarNazi.Domain.Entities;
 using GrammarNazi.Domain.Entities.Settings;
 using GrammarNazi.Domain.Enums;
 using GrammarNazi.Domain.Services;
-using Markdig;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
@@ -151,8 +150,7 @@ namespace GrammarNazi.App.HostedServices
 
         private static string GetCleannedText(string text)
         {
-            // TODO: Move ToPlainText to StringUtils
-            return Markdown.ToPlainText(StringUtils.RemoveCodeBlocks(text));
+            return StringUtils.MarkDownToPlainText(StringUtils.RemoveCodeBlocks(text));
         }
 
         private async Task<DiscordChannelConfig> GetChatConfiguration(SocketUserMessage message)
