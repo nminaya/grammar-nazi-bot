@@ -144,6 +144,7 @@ namespace GrammarNazi.App.HostedServices
             var grammarService = _grammarServices.First(v => v.GrammarAlgorith == channelConfig.GrammarAlgorithm);
             grammarService.SetSelectedLanguage(channelConfig.SelectedLanguage);
             grammarService.SetStrictnessLevel(channelConfig.CorrectionStrictnessLevel);
+            grammarService.SetWhiteListWords(channelConfig.WhiteListWords);
 
             return grammarService;
         }
