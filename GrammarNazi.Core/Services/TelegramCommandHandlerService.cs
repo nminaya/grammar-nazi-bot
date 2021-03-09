@@ -421,7 +421,8 @@ namespace GrammarNazi.Core.Services
 
             await _chatConfigurationService.Update(chatConfig);
 
-            await _client.DeleteMessageAsync(callbackQuery.Message.Chat.Id, callbackQuery.Message.MessageId);
+            // Fire and forget
+            _ = _client.DeleteMessageAsync(callbackQuery.Message.Chat.Id, callbackQuery.Message.MessageId);
         }
 
         private async Task ShowOptions<T>(Message message, string messageTitle) where T : Enum
