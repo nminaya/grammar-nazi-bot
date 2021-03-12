@@ -1,8 +1,10 @@
 using GrammarNazi.Core.Extensions;
+using GrammarNazi.Domain.BotCommands;
 using GrammarNazi.Domain.Constants;
 using GrammarNazi.Domain.Enums;
 using GrammarNazi.Domain.Services;
 using System;
+using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
@@ -17,15 +19,29 @@ namespace GrammarNazi.Core.Services
     {
         private readonly IChatConfigurationService _chatConfigurationService;
         private readonly ITelegramBotClient _client;
+        private readonly IEnumerable<ITelegramBotCommand> _botCommands;
 
         public TelegramCommandHandlerService(IChatConfigurationService chatConfigurationService,
-            ITelegramBotClient telegramBotClient)
+            ITelegramBotClient telegramBotClient, 
+            IEnumerable<ITelegramBotCommand> botCommands)
         {
             _chatConfigurationService = chatConfigurationService;
             _client = telegramBotClient;
+            _botCommands = botCommands;
         }
 
-        public async Task HandleCommand(Message message)
+
+        public async Task HandleCommand(Message message) 
+        {
+            var command = _botCommands.FirstOrDefault(v => IsCommand(v.Command, message.Text));
+
+            if (command != null)
+            {
+                await command.Handle(message);
+            }
+        }
+
+        public async Task HandleCommand2(Message message)
         {
             var text = message.Text;
 
