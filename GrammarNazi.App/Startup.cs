@@ -85,6 +85,9 @@ namespace GrammarNazi.App
             // Discord Bot Commands
             services.AddDiscordBotCommands();
 
+            // Telegram Bot Commands
+            services.AddTelegramBotCommands();
+
             // HttpClient
             services.AddHttpClient();
 
