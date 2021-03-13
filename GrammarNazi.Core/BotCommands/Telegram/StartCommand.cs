@@ -16,6 +16,7 @@ namespace GrammarNazi.Core.BotCommands.Telegram
 
         public StartCommand(IChatConfigurationService chatConfigurationService,
             ITelegramBotClient telegramBotClient)
+            : base(telegramBotClient)
         {
             _chatConfigurationService = chatConfigurationService;
             _client = telegramBotClient;
@@ -28,7 +29,7 @@ namespace GrammarNazi.Core.BotCommands.Telegram
 
             if (chatConfig.IsBotStopped)
             {
-                if (!await IsUserAdmin(_client, message))
+                if (!await IsUserAdmin(message))
                 {
                     messageBuilder.AppendLine("Only admins can use this command.");
                 }
@@ -45,7 +46,7 @@ namespace GrammarNazi.Core.BotCommands.Telegram
             }
 
             await _client.SendTextMessageAsync(message.Chat.Id, messageBuilder.ToString());
-            await NotifyIfBotIsNotAdmin(_client, message);
+            await NotifyIfBotIsNotAdmin(message);
         }
     }
 }
