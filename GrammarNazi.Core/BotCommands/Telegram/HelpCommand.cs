@@ -12,6 +12,7 @@ namespace GrammarNazi.Core.BotCommands.Telegram
     public class HelpCommand : BaseTelegramCommand, ITelegramBotCommand
     {
         private readonly ITelegramBotClient _client;
+
         public string Command => TelegramBotCommands.Help;
 
         public HelpCommand(ITelegramBotClient telegramBotClient)
@@ -19,6 +20,7 @@ namespace GrammarNazi.Core.BotCommands.Telegram
         {
             _client = telegramBotClient;
         }
+
         public async Task Handle(Message message)
         {
             var messageBuilder = new StringBuilder();

@@ -13,10 +13,12 @@ namespace GrammarNazi.Core.BotCommands.Telegram
     public abstract class BaseTelegramCommand
     {
         private readonly ITelegramBotClient _client;
+
         public BaseTelegramCommand(ITelegramBotClient telegramBotClient)
         {
             _client = telegramBotClient;
         }
+
         protected async Task ShowOptions<T>(Message message, string messageTitle) where T : Enum
         {
             var enumType = typeof(T);

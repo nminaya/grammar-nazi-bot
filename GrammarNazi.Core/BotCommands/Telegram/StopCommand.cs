@@ -11,7 +11,9 @@ namespace GrammarNazi.Core.BotCommands.Telegram
     {
         private readonly IChatConfigurationService _chatConfigurationService;
         private readonly ITelegramBotClient _client;
+
         public string Command => TelegramBotCommands.Stop;
+
         public StopCommand(IChatConfigurationService chatConfigurationService,
             ITelegramBotClient telegramBotClient)
             : base(telegramBotClient)
