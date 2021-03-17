@@ -1,6 +1,7 @@
 ﻿using Firebase.Database;
 using Firebase.Database.Query;
 using GrammarNazi.Domain.Repositories;
+using Microsoft.Extensions.Logging;
 using Newtonsoft.Json;
 using System;
 using System.Collections.Generic;
@@ -15,22 +16,26 @@ namespace GrammarNazi.Core.Repositories
     public class FirebaseRepository<T> : IRepository<T> where T : class
     {
         private readonly FirebaseClient _firebaseClient;
+        private readonly ILogger<T> _logger;
 
-        public FirebaseRepository(FirebaseClient firebaseClient)
+        private string TypeName => typeof(T).Name;
+
+        public FirebaseRepository(FirebaseClient firebaseClient, ILogger<T> logger)
         {
             _firebaseClient = firebaseClient;
+            _logger = logger;
         }
 
         public async Task Add(T entity)
         {
-            await ExecuteFirebaseQuery(() => _firebaseClient.Child(typeof(T).Name).PostAsync(JsonConvert.SerializeObject(entity)));
+            await ExecuteFirebaseQuery(() => _firebaseClient.Child(TypeName).PostAsync(JsonConvert.SerializeObject(entity)));
         }
 
         public async Task<bool> Any(Expression<Func<T, bool>> filter = default)
         {
             if (filter == default)
             {
-                var items = await ExecuteFirebaseQuery(() => _firebaseClient.Child(typeof(T).Name).OrderByKey().LimitToFirst(1).OnceAsync<T>());
+                var items = await ExecuteFirebaseQuery(() => _firebaseClient.Child(TypeName).OrderByKey().LimitToFirst(1).OnceAsync<T>());
                 return items.Count > 0;
             }
 
@@ -41,13 +46,13 @@ namespace GrammarNazi.Core.Repositories
 
         public async Task Delete(T entity)
         {
-            var results = await _firebaseClient.Child(typeof(T).Name).OnceAsync<T>();
+            var results = await _firebaseClient.Child(TypeName).OnceAsync<T>();
 
             var firebaseObject = results.FirstOrDefault(v => v.Object.Equals(entity));
 
             if (firebaseObject != default)
             {
-                await ExecuteFirebaseQuery(() => _firebaseClient.Child(typeof(T).Name).Child(firebaseObject.Key).DeleteAsync());
+                await ExecuteFirebaseQuery(() => _firebaseClient.Child(TypeName).Child(firebaseObject.Key).DeleteAsync());
             }
         }
 
@@ -67,21 +72,21 @@ namespace GrammarNazi.Core.Repositories
 
         public async Task Update(T entity, Expression<Func<T, bool>> identifier)
         {
-            var results = await ExecuteFirebaseQuery(() => _firebaseClient.Child(typeof(T).Name).OnceAsync<T>());
+            var results = await ExecuteFirebaseQuery(() => _firebaseClient.Child(TypeName).OnceAsync<T>());
 
             var firebaseObject = results.FirstOrDefault(v => v.Object.Equals(entity));
 
             if (firebaseObject == default)
             {
-                throw new InvalidOperationException($"Firebase object not found. {typeof(T).Name}:{entity}");
+                throw new InvalidOperationException($"Firebase object not found. {TypeName}:{entity}");
             }
 
-            await ExecuteFirebaseQuery(() => _firebaseClient.Child(typeof(T).Name).Child(firebaseObject.Key).PutAsync(JsonConvert.SerializeObject(entity)));
+            await ExecuteFirebaseQuery(() => _firebaseClient.Child(TypeName).Child(firebaseObject.Key).PutAsync(JsonConvert.SerializeObject(entity)));
         }
 
         private async Task<IEnumerable<T>> GetAllItems()
         {
-            var allItems = await ExecuteFirebaseQuery(() => _firebaseClient.Child(typeof(T).Name).OnceAsync<T>());
+            var allItems = await ExecuteFirebaseQuery(() => _firebaseClient.Child(TypeName).OnceAsync<T>());
 
             return allItems.Select(v => v.Object);
         }
@@ -101,7 +106,11 @@ namespace GrammarNazi.Core.Repositories
             }
             catch (FirebaseException ex)
             {
-                throw new InvalidOperationException($"Error on {callerMemberName}", ex);
+                _logger.LogError(ex, $"Error on {callerMemberName}: {ex.Message}");
+
+                // wrap FirebaseException in InvalidOperationException with a different message
+                // to avoid exposing database data
+                throw new InvalidOperationException($"Error on {callerMemberName}", ex.InnerException);
             }
         }
 
@@ -114,3 +123,4 @@ namespace GrammarNazi.Core.Repositories
             }, callerMemberName);
         }
     }
+}
