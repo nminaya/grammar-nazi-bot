@@ -106,7 +106,7 @@ namespace GrammarNazi.Core.Repositories
             }
             catch (FirebaseException ex)
             {
-                _logger.LogError(ex, $"Error on {callerMemberName}: {ex.Message}");
+                _logger.LogWarning(ex, $"Error on {callerMemberName}: {ex.Message}");
 
                 // wrap FirebaseException in InvalidOperationException with a different message
                 // to avoid exposing database data
