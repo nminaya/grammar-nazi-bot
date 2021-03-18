@@ -82,25 +82,28 @@ namespace GrammarNazi.Tests.BotCommands.Discord
             await TestUtilities.TestDiscordNotAdminUser(new RemoveWhiteListCommand(null));
         }
 
-        [Fact]
-        public async Task WordExist_Should_RemoveWordFromWhiteList_And_ReplyMessage()
+        [Theory]
+        [InlineData("Word", "Word")]
+        [InlineData("Word", "word")]
+        [InlineData("Word", "WORD")]
+        [InlineData("Word", "WoRd")]
+        public async Task WordExist_Should_RemoveWordFromWhiteList_And_ReplyMessage(string existingWord, string wordToRemove)
         {
             // Arrange
             var channelConfigurationServiceMock = new Mock<IDiscordChannelConfigService>();
             var command = new RemoveWhiteListCommand(channelConfigurationServiceMock.Object);
-            const string word = "Word";
             const string replyMessage = "removed from the WhiteList";
 
             var chatConfig = new DiscordChannelConfig
             {
-                WhiteListWords = new() { word }
+                WhiteListWords = new() { existingWord }
             };
 
             var channelMock = new Mock<IMessageChannel>();
             var user = new Mock<IGuildUser>();
             user.Setup(v => v.GuildPermissions).Returns(GuildPermissions.All);
             var message = new Mock<IMessage>();
-            message.Setup(v => v.Content).Returns($"{DiscordBotCommands.AddWhiteList} {word}");
+            message.Setup(v => v.Content).Returns($"{DiscordBotCommands.RemoveWhiteList} {wordToRemove}");
             message.Setup(v => v.Author).Returns(user.Object);
             message.Setup(v => v.Channel).Returns(channelMock.Object);
 
