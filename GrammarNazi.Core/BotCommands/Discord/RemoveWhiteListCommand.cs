@@ -3,6 +3,7 @@ using GrammarNazi.Core.Utilities;
 using GrammarNazi.Domain.BotCommands;
 using GrammarNazi.Domain.Constants;
 using GrammarNazi.Domain.Services;
+using System;
 using System.Linq;
 using System.Threading.Tasks;
 
@@ -45,7 +46,7 @@ namespace GrammarNazi.Core.BotCommands.Discord
                 return;
             }
 
-            channelConfig.WhiteListWords.Remove(word);
+            channelConfig.WhiteListWords.RemoveAll(v => v.Equals(word, StringComparison.OrdinalIgnoreCase));
 
             await _channelConfigService.Update(channelConfig);
 
