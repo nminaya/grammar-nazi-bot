@@ -3,7 +3,7 @@ using System.Diagnostics.CodeAnalysis;
 
 namespace GrammarNazi.Core.Utilities
 {
-    public class CaseInsensitiveEqualityComparer : IEqualityComparer<string>
+    internal class CaseInsensitiveEqualityComparer : IEqualityComparer<string>
     {
         public bool Equals(string x, string y)
         {
