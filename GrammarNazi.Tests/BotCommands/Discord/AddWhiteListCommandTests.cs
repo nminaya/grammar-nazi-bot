@@ -44,25 +44,28 @@ namespace GrammarNazi.Tests.BotCommands.Discord
             channelMock.Verify(v => v.SendMessageAsync(null, false, It.Is<Embed>(e => e.Description.Contains(replyMessage)), null, null, null));
         }
 
-        [Fact]
-        public async Task WordExist_Should_ReplyMessage()
+        [Theory]
+        [InlineData("Word", "Word")]
+        [InlineData("Word", "word")]
+        [InlineData("Word", "WORD")]
+        [InlineData("Word", "WoRd")]
+        public async Task WordExist_Should_ReplyMessage(string existingWord, string wordToAdd)
         {
             // Arrange
             var channelConfigurationServiceMock = new Mock<IDiscordChannelConfigService>();
             var command = new AddWhiteListCommand(channelConfigurationServiceMock.Object);
-            const string word = "Word";
             const string replyMessage = "is already on the WhiteList";
 
             var chatConfig = new DiscordChannelConfig
             {
-                WhiteListWords = new() { word }
+                WhiteListWords = new() { existingWord }
             };
 
             var channelMock = new Mock<IMessageChannel>();
             var user = new Mock<IGuildUser>();
             user.Setup(v => v.GuildPermissions).Returns(GuildPermissions.All);
             var message = new Mock<IMessage>();
-            message.Setup(v => v.Content).Returns($"{DiscordBotCommands.AddWhiteList} {word}");
+            message.Setup(v => v.Content).Returns($"{DiscordBotCommands.AddWhiteList} {wordToAdd}");
             message.Setup(v => v.Author).Returns(user.Object);
             message.Setup(v => v.Channel).Returns(channelMock.Object);
 
