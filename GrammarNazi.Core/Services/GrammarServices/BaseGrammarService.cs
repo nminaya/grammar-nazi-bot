@@ -1,5 +1,4 @@
 ﻿using GrammarNazi.Core.Extensions;
-using GrammarNazi.Core.Utilities;
 using GrammarNazi.Domain.Enums;
 using System;
 using System.Collections.Generic;
@@ -25,7 +24,7 @@ namespace GrammarNazi.Core.Services
 
         public void SetWhiteListWords(IEnumerable<string> whiteListWords)
         {
-            WhiteListWords.Clear();
+            WhiteListWords.RemoveAll(_ => true);
 
             if (whiteListWords?.Any() == true)
             {
