@@ -7,9 +7,6 @@ namespace GrammarNazi.Core.Utilities
     {
         public bool Equals(string x, string y)
         {
-            if (x == null && y == null)
-                return true;
-
             return x?.ToLower() == y?.ToLower();
         }
 
