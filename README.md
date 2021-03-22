@@ -14,13 +14,14 @@ Bot that corrects spelling mistakes.
 #### Twitter Bot
 - Evaluates Tweets of followers.
 - Multiple language support (English and Spanish).
+- Follow back automatically.
 #### Telegram and Discord Bot
 - Configurable grammar analyzer algorithm or provider.
 - Multiple language support (English and Spanish).
 - Strictness Level.
 - Whitelist Words.
 
-Take a look at the [Telegram Bot Documentation](https://github.com/nminaya/grammar-nazi-bot/wiki/GrammarNazi-Telegram-Bot).
+Take a look at the [Telegram Bot](https://github.com/nminaya/grammar-nazi-bot/wiki/GrammarNazi-Telegram-Bot) and [Discord Bot](https://github.com/nminaya/grammar-nazi-bot/wiki/GrammarNazi-Discord-Bot) documentation.
 
 ## Solution Design
 The solution design focuses on a basic Domain Driven Design techniques and implementation, while keeping the things as simple as possible but can be extended as needed. Multiple assemblies are used for separation of concerns to keep logic isolated from the other components. **.NET 5 C#** is the default framework and language for this application.
@@ -30,9 +31,6 @@ The solution design focuses on a basic Domain Driven Design techniques and imple
 -   **GrammarNazi.Core**  - This assembly contains all domain implementations.
 -   **GrammarNazi.Tests**  - This assembly contains unit test classes based on the xunit test framework.
 -   **GrammarNazi.App**  - This assembly is the web-based application host.
-
-## Run the Project
-To run this project locally just follow this [instructions](https://github.com/nminaya/grammar-nazi-bot/wiki/Run-the-Project).
 
 ## License
 
