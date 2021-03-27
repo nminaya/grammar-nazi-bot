@@ -62,11 +62,6 @@ namespace GrammarNazi.Core.BotCommands.Telegram
             }
         }
 
-        protected async Task SendTypingNotification(Message message)
-        {
-            await _client.SendChatActionAsync(message.Chat.Id, ChatAction.Typing);
-        }
-
         protected static string GetAvailableOptions<T>(T selectedOption) where T : Enum
         {
             var options = Enum.GetValues(typeof(T)).Cast<T>();

@@ -1,4 +1,3 @@
-using GrammarNazi.Core.Extensions;
 using GrammarNazi.Domain.BotCommands;
 using GrammarNazi.Domain.Constants;
 using GrammarNazi.Domain.Enums;
@@ -6,12 +5,10 @@ using GrammarNazi.Domain.Services;
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Text;
 using System.Threading.Tasks;
 using Telegram.Bot;
 using Telegram.Bot.Types;
 using Telegram.Bot.Types.Enums;
-using Telegram.Bot.Types.ReplyMarkups;
 
 namespace GrammarNazi.Core.Services
 {
@@ -22,7 +19,7 @@ namespace GrammarNazi.Core.Services
         private readonly IEnumerable<ITelegramBotCommand> _botCommands;
 
         public TelegramCommandHandlerService(IChatConfigurationService chatConfigurationService,
-            ITelegramBotClient telegramBotClient, 
+            ITelegramBotClient telegramBotClient,
             IEnumerable<ITelegramBotCommand> botCommands)
         {
             _chatConfigurationService = chatConfigurationService;
@@ -30,8 +27,7 @@ namespace GrammarNazi.Core.Services
             _botCommands = botCommands;
         }
 
-
-        public async Task HandleCommand(Message message) 
+        public async Task HandleCommand(Message message)
         {
             var command = _botCommands.FirstOrDefault(v => IsCommand(v.Command, message.Text));
 
