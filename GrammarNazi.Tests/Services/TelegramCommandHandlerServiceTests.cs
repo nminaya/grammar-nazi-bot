@@ -1,9 +1,11 @@
 ﻿using GrammarNazi.Core.Services;
+using GrammarNazi.Domain.BotCommands;
 using GrammarNazi.Domain.Constants;
 using GrammarNazi.Domain.Entities;
 using GrammarNazi.Domain.Enums;
 using GrammarNazi.Domain.Services;
 using Moq;
+using System.Collections.Generic;
 using System.Threading.Tasks;
 using Telegram.Bot;
 using Telegram.Bot.Types;
@@ -22,7 +24,8 @@ namespace GrammarNazi.Tests.Services
             // Arrange
             var chatConfigurationServiceMock = new Mock<IChatConfigurationService>();
             var telegramBotClientMock = new Mock<ITelegramBotClient>();
-            var service = new TelegramCommandHandlerService(chatConfigurationServiceMock.Object, telegramBotClientMock.Object);
+            var botCommandsMock = new Mock<IEnumerable<ITelegramBotCommand>>();
+            var service = new TelegramCommandHandlerService(chatConfigurationServiceMock.Object, telegramBotClientMock.Object, botCommandsMock.Object);
             const string replyMessage = "Bot is already started";
 
             var chatConfig = new ChatConfiguration
@@ -61,7 +64,8 @@ namespace GrammarNazi.Tests.Services
             // Arrange
             var chatConfigurationServiceMock = new Mock<IChatConfigurationService>();
             var telegramBotClientMock = new Mock<ITelegramBotClient>();
-            var service = new TelegramCommandHandlerService(chatConfigurationServiceMock.Object, telegramBotClientMock.Object);
+            var botCommandsMock = new Mock<IEnumerable<ITelegramBotCommand>>();
+            var service = new TelegramCommandHandlerService(chatConfigurationServiceMock.Object, telegramBotClientMock.Object, botCommandsMock.Object);
             const string replyMessage = "The bot needs admin rights";
 
             var chatConfig = new ChatConfiguration
@@ -97,7 +101,8 @@ namespace GrammarNazi.Tests.Services
             // Arrange
             var chatConfigurationServiceMock = new Mock<IChatConfigurationService>();
             var telegramBotClientMock = new Mock<ITelegramBotClient>();
-            var service = new TelegramCommandHandlerService(chatConfigurationServiceMock.Object, telegramBotClientMock.Object);
+            var botCommandsMock = new Mock<IEnumerable<ITelegramBotCommand>>();
+            var service = new TelegramCommandHandlerService(chatConfigurationServiceMock.Object, telegramBotClientMock.Object, botCommandsMock.Object);
             const string replyMessage = "Only admins can use this command";
 
             var chatConfig = new ChatConfiguration
@@ -137,7 +142,8 @@ namespace GrammarNazi.Tests.Services
             // Arrange
             var chatConfigurationServiceMock = new Mock<IChatConfigurationService>();
             var telegramBotClientMock = new Mock<ITelegramBotClient>();
-            var service = new TelegramCommandHandlerService(chatConfigurationServiceMock.Object, telegramBotClientMock.Object);
+            var botCommandsMock = new Mock<IEnumerable<ITelegramBotCommand>>();
+            var service = new TelegramCommandHandlerService(chatConfigurationServiceMock.Object, telegramBotClientMock.Object, botCommandsMock.Object);
             const string replyMessage = "Bot started";
 
             var chatConfig = new ChatConfiguration
@@ -190,7 +196,8 @@ namespace GrammarNazi.Tests.Services
             // Arrange
             var chatConfigurationServiceMock = new Mock<IChatConfigurationService>();
             var telegramBotClientMock = new Mock<ITelegramBotClient>();
-            var service = new TelegramCommandHandlerService(chatConfigurationServiceMock.Object, telegramBotClientMock.Object);
+            var botCommandsMock = new Mock<IEnumerable<ITelegramBotCommand>>();
+            var service = new TelegramCommandHandlerService(chatConfigurationServiceMock.Object, telegramBotClientMock.Object, botCommandsMock.Object);
             const string replyMessage = "Bot stopped";
 
             var chatConfig = new ChatConfiguration
@@ -240,7 +247,8 @@ namespace GrammarNazi.Tests.Services
             // Arrange
             var chatConfigurationServiceMock = new Mock<IChatConfigurationService>();
             var telegramBotClientMock = new Mock<ITelegramBotClient>();
-            var service = new TelegramCommandHandlerService(chatConfigurationServiceMock.Object, telegramBotClientMock.Object);
+            var botCommandsMock = new Mock<IEnumerable<ITelegramBotCommand>>();
+            var service = new TelegramCommandHandlerService(chatConfigurationServiceMock.Object, telegramBotClientMock.Object, botCommandsMock.Object);
             const string replyMessage = "Correction details hidden";
 
             var chatConfig = new ChatConfiguration
@@ -293,7 +301,8 @@ namespace GrammarNazi.Tests.Services
             // Arrange
             var chatConfigurationServiceMock = new Mock<IChatConfigurationService>();
             var telegramBotClientMock = new Mock<ITelegramBotClient>();
-            var service = new TelegramCommandHandlerService(chatConfigurationServiceMock.Object, telegramBotClientMock.Object);
+            var botCommandsMock = new Mock<IEnumerable<ITelegramBotCommand>>();
+            var service = new TelegramCommandHandlerService(chatConfigurationServiceMock.Object, telegramBotClientMock.Object, botCommandsMock.Object);
             const string replyMessage = "Show correction details";
 
             var chatConfig = new ChatConfiguration
@@ -348,7 +357,8 @@ namespace GrammarNazi.Tests.Services
             // Arrange
             var chatConfigurationServiceMock = new Mock<IChatConfigurationService>();
             var telegramBotClientMock = new Mock<ITelegramBotClient>();
-            var service = new TelegramCommandHandlerService(chatConfigurationServiceMock.Object, telegramBotClientMock.Object);
+            var botCommandsMock = new Mock<IEnumerable<ITelegramBotCommand>>();
+            var service = new TelegramCommandHandlerService(chatConfigurationServiceMock.Object, telegramBotClientMock.Object, botCommandsMock.Object);
             const string replyMessage = "Invalid parameter";
 
             var chatConfig = new ChatConfiguration
@@ -393,7 +403,8 @@ namespace GrammarNazi.Tests.Services
             // Arrange
             var chatConfigurationServiceMock = new Mock<IChatConfigurationService>();
             var telegramBotClientMock = new Mock<ITelegramBotClient>();
-            var service = new TelegramCommandHandlerService(chatConfigurationServiceMock.Object, telegramBotClientMock.Object);
+            var botCommandsMock = new Mock<IEnumerable<ITelegramBotCommand>>();
+            var service = new TelegramCommandHandlerService(chatConfigurationServiceMock.Object, telegramBotClientMock.Object, botCommandsMock.Object);
             const string replyMessage = "Invalid parameter";
 
             var chatConfig = new ChatConfiguration
@@ -438,7 +449,8 @@ namespace GrammarNazi.Tests.Services
             // Arrange
             var chatConfigurationServiceMock = new Mock<IChatConfigurationService>();
             var telegramBotClientMock = new Mock<ITelegramBotClient>();
-            var service = new TelegramCommandHandlerService(chatConfigurationServiceMock.Object, telegramBotClientMock.Object);
+            var botCommandsMock = new Mock<IEnumerable<ITelegramBotCommand>>();
+            var service = new TelegramCommandHandlerService(chatConfigurationServiceMock.Object, telegramBotClientMock.Object, botCommandsMock.Object);
             const string replyMessage = "Language updated";
 
             var chatConfig = new ChatConfiguration
@@ -492,7 +504,8 @@ namespace GrammarNazi.Tests.Services
             // Arrange
             var chatConfigurationServiceMock = new Mock<IChatConfigurationService>();
             var telegramBotClientMock = new Mock<ITelegramBotClient>();
-            var service = new TelegramCommandHandlerService(chatConfigurationServiceMock.Object, telegramBotClientMock.Object);
+            var botCommandsMock = new Mock<IEnumerable<ITelegramBotCommand>>();
+            var service = new TelegramCommandHandlerService(chatConfigurationServiceMock.Object, telegramBotClientMock.Object, botCommandsMock.Object);
             const string replyMessage = "Invalid parameter";
 
             var chatConfig = new ChatConfiguration
@@ -537,7 +550,8 @@ namespace GrammarNazi.Tests.Services
             // Arrange
             var chatConfigurationServiceMock = new Mock<IChatConfigurationService>();
             var telegramBotClientMock = new Mock<ITelegramBotClient>();
-            var service = new TelegramCommandHandlerService(chatConfigurationServiceMock.Object, telegramBotClientMock.Object);
+            var botCommandsMock = new Mock<IEnumerable<ITelegramBotCommand>>();
+            var service = new TelegramCommandHandlerService(chatConfigurationServiceMock.Object, telegramBotClientMock.Object, botCommandsMock.Object);
             const string replyMessage = "Invalid parameter";
 
             var chatConfig = new ChatConfiguration
@@ -582,7 +596,8 @@ namespace GrammarNazi.Tests.Services
             // Arrange
             var chatConfigurationServiceMock = new Mock<IChatConfigurationService>();
             var telegramBotClientMock = new Mock<ITelegramBotClient>();
-            var service = new TelegramCommandHandlerService(chatConfigurationServiceMock.Object, telegramBotClientMock.Object);
+            var botCommandsMock = new Mock<IEnumerable<ITelegramBotCommand>>();
+            var service = new TelegramCommandHandlerService(chatConfigurationServiceMock.Object, telegramBotClientMock.Object, botCommandsMock.Object);
             const string replyMessage = "Algorithm updated";
 
             var chatConfig = new ChatConfiguration
@@ -634,7 +649,8 @@ namespace GrammarNazi.Tests.Services
             // Arrange
             var chatConfigurationServiceMock = new Mock<IChatConfigurationService>();
             var telegramBotClientMock = new Mock<ITelegramBotClient>();
-            var service = new TelegramCommandHandlerService(chatConfigurationServiceMock.Object, telegramBotClientMock.Object);
+            var botCommandsMock = new Mock<IEnumerable<ITelegramBotCommand>>();
+            var service = new TelegramCommandHandlerService(chatConfigurationServiceMock.Object, telegramBotClientMock.Object, botCommandsMock.Object);
             const string replyMessage = "Tolerant ✅";
 
             var chatConfig = new ChatConfiguration
@@ -687,7 +703,8 @@ namespace GrammarNazi.Tests.Services
             // Arrange
             var chatConfigurationServiceMock = new Mock<IChatConfigurationService>();
             var telegramBotClientMock = new Mock<ITelegramBotClient>();
-            var service = new TelegramCommandHandlerService(chatConfigurationServiceMock.Object, telegramBotClientMock.Object);
+            var botCommandsMock = new Mock<IEnumerable<ITelegramBotCommand>>();
+            var service = new TelegramCommandHandlerService(chatConfigurationServiceMock.Object, telegramBotClientMock.Object, botCommandsMock.Object);
             const string replyMessage = "Intolerant ✅";
 
             var chatConfig = new ChatConfiguration
@@ -732,7 +749,8 @@ namespace GrammarNazi.Tests.Services
             // Arrange
             var chatConfigurationServiceMock = new Mock<IChatConfigurationService>();
             var telegramBotClientMock = new Mock<ITelegramBotClient>();
-            var service = new TelegramCommandHandlerService(chatConfigurationServiceMock.Object, telegramBotClientMock.Object);
+            var botCommandsMock = new Mock<IEnumerable<ITelegramBotCommand>>();
+            var service = new TelegramCommandHandlerService(chatConfigurationServiceMock.Object, telegramBotClientMock.Object, botCommandsMock.Object);
             const string replyMessage = "You don't have Whitelist words configured";
 
             var chatConfig = new ChatConfiguration
@@ -775,7 +793,8 @@ namespace GrammarNazi.Tests.Services
             // Arrange
             var chatConfigurationServiceMock = new Mock<IChatConfigurationService>();
             var telegramBotClientMock = new Mock<ITelegramBotClient>();
-            var service = new TelegramCommandHandlerService(chatConfigurationServiceMock.Object, telegramBotClientMock.Object);
+            var botCommandsMock = new Mock<IEnumerable<ITelegramBotCommand>>();
+            var service = new TelegramCommandHandlerService(chatConfigurationServiceMock.Object, telegramBotClientMock.Object, botCommandsMock.Object);
             const string replyMessage = "Whitelist Words";
 
             var chatConfig = new ChatConfiguration
@@ -823,7 +842,8 @@ namespace GrammarNazi.Tests.Services
             // Arrange
             var chatConfigurationServiceMock = new Mock<IChatConfigurationService>();
             var telegramBotClientMock = new Mock<ITelegramBotClient>();
-            var service = new TelegramCommandHandlerService(chatConfigurationServiceMock.Object, telegramBotClientMock.Object);
+            var botCommandsMock = new Mock<IEnumerable<ITelegramBotCommand>>();
+            var service = new TelegramCommandHandlerService(chatConfigurationServiceMock.Object, telegramBotClientMock.Object, botCommandsMock.Object);
             const string replyMessage = "Parameter not received";
 
             var chatConfig = new ChatConfiguration
@@ -866,7 +886,8 @@ namespace GrammarNazi.Tests.Services
             // Arrange
             var chatConfigurationServiceMock = new Mock<IChatConfigurationService>();
             var telegramBotClientMock = new Mock<ITelegramBotClient>();
-            var service = new TelegramCommandHandlerService(chatConfigurationServiceMock.Object, telegramBotClientMock.Object);
+            var botCommandsMock = new Mock<IEnumerable<ITelegramBotCommand>>();
+            var service = new TelegramCommandHandlerService(chatConfigurationServiceMock.Object, telegramBotClientMock.Object, botCommandsMock.Object);
             const string replyMessage = "is already on the WhiteList";
 
             var chatConfig = new ChatConfiguration
@@ -906,7 +927,8 @@ namespace GrammarNazi.Tests.Services
             // Arrange
             var chatConfigurationServiceMock = new Mock<IChatConfigurationService>();
             var telegramBotClientMock = new Mock<ITelegramBotClient>();
-            var service = new TelegramCommandHandlerService(chatConfigurationServiceMock.Object, telegramBotClientMock.Object);
+            var botCommandsMock = new Mock<IEnumerable<ITelegramBotCommand>>();
+            var service = new TelegramCommandHandlerService(chatConfigurationServiceMock.Object, telegramBotClientMock.Object, botCommandsMock.Object);
             const string replyMessage = "added to the WhiteList";
 
             var chatConfig = new ChatConfiguration
@@ -958,7 +980,8 @@ namespace GrammarNazi.Tests.Services
             // Arrange
             var chatConfigurationServiceMock = new Mock<IChatConfigurationService>();
             var telegramBotClientMock = new Mock<ITelegramBotClient>();
-            var service = new TelegramCommandHandlerService(chatConfigurationServiceMock.Object, telegramBotClientMock.Object);
+            var botCommandsMock = new Mock<IEnumerable<ITelegramBotCommand>>();
+            var service = new TelegramCommandHandlerService(chatConfigurationServiceMock.Object, telegramBotClientMock.Object, botCommandsMock.Object);
             const string replyMessage = "Parameter not received";
 
             var chatConfig = new ChatConfiguration
@@ -1001,7 +1024,8 @@ namespace GrammarNazi.Tests.Services
             // Arrange
             var chatConfigurationServiceMock = new Mock<IChatConfigurationService>();
             var telegramBotClientMock = new Mock<ITelegramBotClient>();
-            var service = new TelegramCommandHandlerService(chatConfigurationServiceMock.Object, telegramBotClientMock.Object);
+            var botCommandsMock = new Mock<IEnumerable<ITelegramBotCommand>>();
+            var service = new TelegramCommandHandlerService(chatConfigurationServiceMock.Object, telegramBotClientMock.Object, botCommandsMock.Object);
             const string replyMessage = "is not in the WhiteList";
 
             var chatConfig = new ChatConfiguration
@@ -1041,7 +1065,8 @@ namespace GrammarNazi.Tests.Services
             // Arrange
             var chatConfigurationServiceMock = new Mock<IChatConfigurationService>();
             var telegramBotClientMock = new Mock<ITelegramBotClient>();
-            var service = new TelegramCommandHandlerService(chatConfigurationServiceMock.Object, telegramBotClientMock.Object);
+            var botCommandsMock = new Mock<IEnumerable<ITelegramBotCommand>>();
+            var service = new TelegramCommandHandlerService(chatConfigurationServiceMock.Object, telegramBotClientMock.Object, botCommandsMock.Object);
             const string replyMessage = "removed from the WhiteList";
 
             var chatConfig = new ChatConfiguration
@@ -1085,7 +1110,8 @@ namespace GrammarNazi.Tests.Services
             // Arrange
             var chatConfigurationServiceMock = new Mock<IChatConfigurationService>();
             var telegramBotClientMock = new Mock<ITelegramBotClient>();
-            var service = new TelegramCommandHandlerService(chatConfigurationServiceMock.Object, telegramBotClientMock.Object);
+            var botCommandsMock = new Mock<IEnumerable<ITelegramBotCommand>>();
+            var service = new TelegramCommandHandlerService(chatConfigurationServiceMock.Object, telegramBotClientMock.Object, botCommandsMock.Object);
 
             var chatConfig = new ChatConfiguration
             {
@@ -1130,7 +1156,8 @@ namespace GrammarNazi.Tests.Services
             // Arrange
             var chatConfigurationServiceMock = new Mock<IChatConfigurationService>();
             var telegramBotClientMock = new Mock<ITelegramBotClient>();
-            var service = new TelegramCommandHandlerService(chatConfigurationServiceMock.Object, telegramBotClientMock.Object);
+            var botCommandsMock = new Mock<IEnumerable<ITelegramBotCommand>>();
+            var service = new TelegramCommandHandlerService(chatConfigurationServiceMock.Object, telegramBotClientMock.Object, botCommandsMock.Object);
 
             var chatConfig = new ChatConfiguration
             {
@@ -1171,7 +1198,8 @@ namespace GrammarNazi.Tests.Services
             // Arrange
             var chatConfigurationServiceMock = new Mock<IChatConfigurationService>();
             var telegramBotClientMock = new Mock<ITelegramBotClient>();
-            var service = new TelegramCommandHandlerService(chatConfigurationServiceMock.Object, telegramBotClientMock.Object);
+            var botCommandsMock = new Mock<IEnumerable<ITelegramBotCommand>>();
+            var service = new TelegramCommandHandlerService(chatConfigurationServiceMock.Object, telegramBotClientMock.Object, botCommandsMock.Object);
             const string replyMessage = "Only admins can use this command.";
 
             var chatConfig = new ChatConfiguration
@@ -1215,7 +1243,7 @@ namespace GrammarNazi.Tests.Services
         {
             // Arrange
             var telegramBotClientMock = new Mock<ITelegramBotClient>();
-            var service = new TelegramCommandHandlerService(null, telegramBotClientMock.Object);
+            var service = new TelegramCommandHandlerService(null, telegramBotClientMock.Object, null);
 
             var message = new Message
             {
@@ -1249,7 +1277,7 @@ namespace GrammarNazi.Tests.Services
         {
             // Arrange
             var telegramBotClientMock = new Mock<ITelegramBotClient>();
-            var service = new TelegramCommandHandlerService(null, telegramBotClientMock.Object);
+            var service = new TelegramCommandHandlerService(null, telegramBotClientMock.Object, null);
 
             var message = new Message
             {
@@ -1279,7 +1307,8 @@ namespace GrammarNazi.Tests.Services
             // Arrange
             var chatConfigurationServiceMock = new Mock<IChatConfigurationService>();
             var telegramBotClientMock = new Mock<ITelegramBotClient>();
-            var service = new TelegramCommandHandlerService(chatConfigurationServiceMock.Object, telegramBotClientMock.Object);
+            var botCommandsMock = new Mock<IEnumerable<ITelegramBotCommand>>();
+            var service = new TelegramCommandHandlerService(chatConfigurationServiceMock.Object, telegramBotClientMock.Object, botCommandsMock.Object);
             const string replyMessage = "Only admins can use this command.";
 
             var message = new Message
