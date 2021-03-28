@@ -13,7 +13,6 @@ namespace GrammarNazi.Core.BotCommands.Telegram
     public class SetAlgorithmCommand : BaseTelegramCommand, ITelegramBotCommand
     {
         private readonly IChatConfigurationService _chatConfigurationService;
-        private readonly ITelegramBotClient _client;
 
         public string Command => TelegramBotCommands.SetAlgorithm;
 
@@ -22,11 +21,12 @@ namespace GrammarNazi.Core.BotCommands.Telegram
             : base(telegramBotClient)
         {
             _chatConfigurationService = chatConfigurationService;
-            _client = telegramBotClient;
         }
 
         public async Task Handle(Message message)
         {
+            await SendTypingNotification(message);
+
             var messageBuilder = new StringBuilder();
 
             if (!await IsUserAdmin(message))

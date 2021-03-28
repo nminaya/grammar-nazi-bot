@@ -11,18 +11,16 @@ namespace GrammarNazi.Core.BotCommands.Telegram
 {
     public class HelpCommand : BaseTelegramCommand, ITelegramBotCommand
     {
-        private readonly ITelegramBotClient _client;
-
         public string Command => TelegramBotCommands.Help;
 
         public HelpCommand(ITelegramBotClient telegramBotClient)
             : base(telegramBotClient)
-        {
-            _client = telegramBotClient;
-        }
+        {}
 
         public async Task Handle(Message message)
         {
+            await SendTypingNotification(message);
+
             var messageBuilder = new StringBuilder();
             messageBuilder.AppendLine("Help").AppendLine();
             messageBuilder.AppendLine("Useful commands:");

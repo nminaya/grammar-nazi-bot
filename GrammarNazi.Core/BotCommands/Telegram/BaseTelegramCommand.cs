@@ -12,7 +12,7 @@ namespace GrammarNazi.Core.BotCommands.Telegram
 {
     public abstract class BaseTelegramCommand
     {
-        private readonly ITelegramBotClient _client;
+        protected readonly ITelegramBotClient _client;
 
         public BaseTelegramCommand(ITelegramBotClient telegramBotClient)
         {
@@ -60,6 +60,11 @@ namespace GrammarNazi.Core.BotCommands.Telegram
             {
                 await _client.SendTextMessageAsync(message.Chat.Id, "NOTE: The bot needs admin rights in order to read messages from this chat.");
             }
+        }
+
+        protected async Task SendTypingNotification(Message message)
+        {
+            await _client.SendChatActionAsync(message.Chat.Id, ChatAction.Typing);
         }
 
         protected static string GetAvailableOptions<T>(T selectedOption) where T : Enum
