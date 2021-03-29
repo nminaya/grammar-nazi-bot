@@ -44,5 +44,21 @@ namespace GrammarNazi.Core.Extensions
 
             return serviceCollection;
         }
+
+        public static IServiceCollection AddTelegramBotCommands(this IServiceCollection serviceCollection)
+        {
+            // All ITelegramBotCommand classes in the current Assembly
+            var commandClassTypes = Assembly
+                .GetExecutingAssembly()
+                .GetTypes()
+                .Where(v => v.IsAssignableTo(typeof(ITelegramBotCommand)));
+
+            foreach (var commandClassType in commandClassTypes)
+            {
+                serviceCollection.AddTransient(typeof(ITelegramBotCommand), commandClassType);
+            }
+
+            return serviceCollection;
+        }
     }
 }
