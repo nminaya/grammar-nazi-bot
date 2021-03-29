@@ -1,6 +1,9 @@
-﻿using GrammarNazi.Domain.BotCommands;
+﻿using GrammarNazi.Core.Utilities;
+using GrammarNazi.Domain.BotCommands;
 using GrammarNazi.Domain.Constants;
 using GrammarNazi.Domain.Services;
+using System;
+using System.Linq;
 using System.Threading.Tasks;
 using Telegram.Bot;
 using Telegram.Bot.Types;
@@ -42,13 +45,13 @@ namespace GrammarNazi.Core.BotCommands.Telegram
 
                 var word = parameters[1].Trim();
 
-                if (!chatConfig.WhiteListWords.Contains(word))
+                if (!chatConfig.WhiteListWords.Contains(word, new CaseInsensitiveEqualityComparer()))
                 {
                     await Client.SendTextMessageAsync(message.Chat.Id, $"The word '{word}' is not in the WhiteList.");
                     return;
                 }
 
-                chatConfig.WhiteListWords.Remove(word);
+                chatConfig.WhiteListWords.RemoveAll(v => v.Equals(word, StringComparison.OrdinalIgnoreCase));
 
                 await _chatConfigurationService.Update(chatConfig);
 
