@@ -634,60 +634,6 @@ namespace GrammarNazi.Tests.Services
         }
 
         [Theory]
-        [InlineData(TelegramBotCommands.Intolerant)]
-        [InlineData(TelegramBotCommands.Intolerant + "@" + Defaults.TelegramBotUser)]
-        public async Task Intolerant_UserIsNotAdmin_Should_ReplyMessage(string command)
-        {
-            await TestNotAdminUser(command);
-        }
-
-        [Theory]
-        [InlineData(TelegramBotCommands.Intolerant)]
-        [InlineData(TelegramBotCommands.Intolerant + "@" + Defaults.TelegramBotUser)]
-        public async Task Intolerant_UserIsAdmin_Should_ChangeChatConfig_And_ReplyMessage(string command)
-        {
-            // Arrange
-            var chatConfigurationServiceMock = new Mock<IChatConfigurationService>();
-            var telegramBotClientMock = new Mock<ITelegramBotClient>();
-            var botCommandsMock = new Mock<IEnumerable<ITelegramBotCommand>>();
-            var service = new TelegramCommandHandlerService(chatConfigurationServiceMock.Object, telegramBotClientMock.Object, botCommandsMock.Object);
-            const string replyMessage = "Intolerant ✅";
-
-            var chatConfig = new ChatConfiguration
-            {
-                CorrectionStrictnessLevel = CorrectionStrictnessLevels.Tolerant
-            };
-
-            var message = new Message
-            {
-                Text = command,
-                From = new User { Id = 2 },
-                Chat = new Chat
-                {
-                    Id = 1,
-                    Type = ChatType.Group
-                }
-            };
-
-            telegramBotClientMock.Setup(v => v.GetChatAdministratorsAsync(It.IsAny<ChatId>(), default))
-                .ReturnsAsync(new[] { new ChatMember { User = new() { Id = message.From.Id } } });
-
-            chatConfigurationServiceMock.Setup(v => v.GetConfigurationByChatId(message.Chat.Id))
-                .ReturnsAsync(chatConfig);
-
-            telegramBotClientMock.Setup(v => v.GetMeAsync(default))
-                .ReturnsAsync(new User { Id = 123456 });
-
-            // Act
-            await service.HandleCommand(message);
-
-            // Assert
-            Assert.Equal(CorrectionStrictnessLevels.Intolerant, chatConfig.CorrectionStrictnessLevel);
-            chatConfigurationServiceMock.Verify(v => v.Update(chatConfig));
-            telegramBotClientMock.Verify(v => v.SendTextMessageAsync(It.IsAny<ChatId>(), It.Is<string>(s => s.Contains(replyMessage)), ParseMode.Default, false, false, 0, null, default));
-        }
-
-        [Theory]
         [InlineData(TelegramBotCommands.WhiteList)]
         [InlineData(TelegramBotCommands.WhiteList + "@" + Defaults.TelegramBotUser)]
         public async Task WhiteList_NoWhiteListsConfigured_Should_ReplyMessage(string command)
