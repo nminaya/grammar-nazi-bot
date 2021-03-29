@@ -38,12 +38,12 @@ namespace GrammarNazi.Core.BotCommands.Telegram
                     messageBuilder.AppendLine($"- {word}");
                 }
 
-                await _client.SendTextMessageAsync(message.Chat.Id, messageBuilder.ToString());
+                await Client.SendTextMessageAsync(message.Chat.Id, messageBuilder.ToString());
 
                 return;
             }
 
-            await _client.SendTextMessageAsync(message.Chat.Id, $"You don't have Whitelist words configured. Use {TelegramBotCommands.AddWhiteList} to add words to the WhiteList.");
+            await Client.SendTextMessageAsync(message.Chat.Id, $"You don't have Whitelist words configured. Use {TelegramBotCommands.AddWhiteList} to add words to the WhiteList.");
 
             await NotifyIfBotIsNotAdmin(message);
         }

@@ -37,7 +37,7 @@ namespace GrammarNazi.Core.BotCommands.Telegram
             messageBuilder.AppendLine($"{TelegramBotCommands.Tolerant} Set strictness level to {CorrectionStrictnessLevels.Tolerant.GetDescription()}");
             messageBuilder.AppendLine($"{TelegramBotCommands.Intolerant} Set strictness level to {CorrectionStrictnessLevels.Intolerant.GetDescription()}");
 
-            await _client.SendTextMessageAsync(message.Chat.Id, messageBuilder.ToString());
+            await Client.SendTextMessageAsync(message.Chat.Id, messageBuilder.ToString());
             await NotifyIfBotIsNotAdmin(message);
         }
     }

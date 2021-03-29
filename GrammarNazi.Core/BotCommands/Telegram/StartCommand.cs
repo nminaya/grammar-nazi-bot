@@ -46,7 +46,7 @@ namespace GrammarNazi.Core.BotCommands.Telegram
                 messageBuilder.AppendLine("Bot is already started");
             }
 
-            await _client.SendTextMessageAsync(message.Chat.Id, messageBuilder.ToString());
+            await Client.SendTextMessageAsync(message.Chat.Id, messageBuilder.ToString());
             await NotifyIfBotIsNotAdmin(message);
         }
     }

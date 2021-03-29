@@ -26,7 +26,7 @@ namespace GrammarNazi.Core.BotCommands.Telegram
 
             if (!await IsUserAdmin(message))
             {
-                await _client.SendTextMessageAsync(message.Chat.Id, "Only admins can use this command.", replyToMessageId: message.MessageId);
+                await Client.SendTextMessageAsync(message.Chat.Id, "Only admins can use this command.", replyToMessageId: message.MessageId);
                 return;
             }
 
@@ -34,7 +34,7 @@ namespace GrammarNazi.Core.BotCommands.Telegram
 
             if (parameters.Length == 1)
             {
-                await _client.SendTextMessageAsync(message.Chat.Id, $"Parameter not received. Type {TelegramBotCommands.RemoveWhiteList} <word> to remove a Whitelist word.");
+                await Client.SendTextMessageAsync(message.Chat.Id, $"Parameter not received. Type {TelegramBotCommands.RemoveWhiteList} <word> to remove a Whitelist word.");
             }
             else
             {
@@ -44,7 +44,7 @@ namespace GrammarNazi.Core.BotCommands.Telegram
 
                 if (!chatConfig.WhiteListWords.Contains(word))
                 {
-                    await _client.SendTextMessageAsync(message.Chat.Id, $"The word '{word}' is not in the WhiteList.");
+                    await Client.SendTextMessageAsync(message.Chat.Id, $"The word '{word}' is not in the WhiteList.");
                     return;
                 }
 
@@ -52,7 +52,7 @@ namespace GrammarNazi.Core.BotCommands.Telegram
 
                 await _chatConfigurationService.Update(chatConfig);
 
-                await _client.SendTextMessageAsync(message.Chat.Id, $"Word '{word}' removed from the WhiteList.");
+                await Client.SendTextMessageAsync(message.Chat.Id, $"Word '{word}' removed from the WhiteList.");
             }
 
             await NotifyIfBotIsNotAdmin(message);

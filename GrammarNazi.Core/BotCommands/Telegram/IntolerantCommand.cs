@@ -27,7 +27,7 @@ namespace GrammarNazi.Core.BotCommands.Telegram
 
             if (!await IsUserAdmin(message))
             {
-                await _client.SendTextMessageAsync(message.Chat.Id, "Only admins can use this command.", replyToMessageId: message.MessageId);
+                await Client.SendTextMessageAsync(message.Chat.Id, "Only admins can use this command.", replyToMessageId: message.MessageId);
                 return;
             }
 
@@ -37,7 +37,7 @@ namespace GrammarNazi.Core.BotCommands.Telegram
 
             await _chatConfigurationService.Update(chatConfig);
 
-            await _client.SendTextMessageAsync(message.Chat.Id, "Intolerant ✅");
+            await Client.SendTextMessageAsync(message.Chat.Id, "Intolerant ✅");
 
             await NotifyIfBotIsNotAdmin(message);
         }

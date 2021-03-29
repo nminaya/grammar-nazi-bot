@@ -32,7 +32,7 @@ namespace GrammarNazi.Core.BotCommands.Telegram
             if (!await IsUserAdmin(message))
             {
                 messageBuilder.AppendLine("Only admins can use this command.");
-                await _client.SendTextMessageAsync(message.Chat.Id, messageBuilder.ToString(), replyToMessageId: message.MessageId);
+                await Client.SendTextMessageAsync(message.Chat.Id, messageBuilder.ToString(), replyToMessageId: message.MessageId);
                 return;
             }
 
@@ -52,11 +52,11 @@ namespace GrammarNazi.Core.BotCommands.Telegram
 
                     await _chatConfigurationService.Update(chatConfig);
 
-                    await _client.SendTextMessageAsync(message.Chat.Id, "Algorithm updated.");
+                    await Client.SendTextMessageAsync(message.Chat.Id, "Algorithm updated.");
                 }
                 else
                 {
-                    await _client.SendTextMessageAsync(message.Chat.Id, $"Invalid parameter. Type {TelegramBotCommands.SetAlgorithm} <algorithm_numer> to set an algorithm.");
+                    await Client.SendTextMessageAsync(message.Chat.Id, $"Invalid parameter. Type {TelegramBotCommands.SetAlgorithm} <algorithm_numer> to set an algorithm.");
                 }
             }
 

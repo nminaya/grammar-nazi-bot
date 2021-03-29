@@ -32,7 +32,7 @@ namespace GrammarNazi.Core.BotCommands.Telegram
             if (!await IsUserAdmin(message))
             {
                 messageBuilder.AppendLine("Only admins can use this command.");
-                await _client.SendTextMessageAsync(message.Chat.Id, messageBuilder.ToString(), replyToMessageId: message.MessageId);
+                await Client.SendTextMessageAsync(message.Chat.Id, messageBuilder.ToString(), replyToMessageId: message.MessageId);
                 return;
             }
 
@@ -53,11 +53,11 @@ namespace GrammarNazi.Core.BotCommands.Telegram
 
                     await _chatConfigurationService.Update(chatConfig);
 
-                    await _client.SendTextMessageAsync(message.Chat.Id, "Language updated.");
+                    await Client.SendTextMessageAsync(message.Chat.Id, "Language updated.");
                 }
                 else
                 {
-                    await _client.SendTextMessageAsync(message.Chat.Id, $"Invalid parameter. Type {TelegramBotCommands.Language} <language_number> to set a language.");
+                    await Client.SendTextMessageAsync(message.Chat.Id, $"Invalid parameter. Type {TelegramBotCommands.Language} <language_number> to set a language.");
                 }
             }
 

@@ -43,7 +43,7 @@ namespace GrammarNazi.Core.BotCommands.Telegram
             if (chatConfig.IsBotStopped)
                 messageBuilder.AppendLine($"The bot is currently stopped. Type {TelegramBotCommands.Start} to activate the Bot.");
 
-            await _client.SendTextMessageAsync(message.Chat.Id, messageBuilder.ToString());
+            await Client.SendTextMessageAsync(message.Chat.Id, messageBuilder.ToString());
             await NotifyIfBotIsNotAdmin(message);
         }
     }
