@@ -54,24 +54,27 @@ namespace GrammarNazi.Tests.BotCommands.Telegram
             telegramBotClientMock.Verify(v => v.SendTextMessageAsync(It.IsAny<ChatId>(), It.Is<string>(s => s.Contains(replyMessage)), ParseMode.Default, false, false, 0, null, default));
         }
 
-        [Fact]
-        public async Task WordExist_Should_ReplyMessage()
+        [Theory]
+        [InlineData("Word", "Word")]
+        [InlineData("Word", "word")]
+        [InlineData("Word", "WORD")]
+        [InlineData("Word", "WoRd")]
+        public async Task WordExist_Should_ReplyMessage(string existingWord, string wordToAdd)
         {
             // Arrange
             var chatConfigurationServiceMock = new Mock<IChatConfigurationService>();
             var telegramBotClientMock = new Mock<ITelegramBotClient>();
             var command = new AddWhiteListCommand(chatConfigurationServiceMock.Object, telegramBotClientMock.Object);
-            const string word = "Word";
             const string replyMessage = "is already on the WhiteList";
 
             var chatConfig = new ChatConfiguration
             {
-                WhiteListWords = new() { word }
+                WhiteListWords = new() { existingWord }
             };
 
             var message = new Message
             {
-                Text = $"{TelegramBotCommands.AddWhiteList} {word}",
+                Text = $"{TelegramBotCommands.AddWhiteList} {wordToAdd}",
                 From = new User { Id = 2 },
                 Chat = new Chat
                 {
