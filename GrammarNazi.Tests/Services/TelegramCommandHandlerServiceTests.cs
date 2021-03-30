@@ -4,7 +4,10 @@ using GrammarNazi.Domain.Entities;
 using GrammarNazi.Domain.Enums;
 using GrammarNazi.Domain.Services;
 using Moq;
+using System;
 using System.Collections.Generic;
+using System.Linq;
+using System.Reflection;
 using System.Threading.Tasks;
 using Telegram.Bot;
 using Telegram.Bot.Types;
@@ -146,6 +149,90 @@ namespace GrammarNazi.Tests.Services
 
             // Assert
             telegramBotClientMock.Verify(v => v.SendTextMessageAsync(It.IsAny<ChatId>(), It.Is<string>(s => s.Contains(replyMessage)), ParseMode.Markdown, false, false, 0, null, default));
+        }
+
+        [Theory]
+        [InlineData("/start@botTest")]
+        [InlineData("/stop@botUsername")]
+        [InlineData("/settings@botUsername")]
+        public async Task CommandForAnotherBot_Should_Not_DoAnything(string command)
+        {
+            // Arrange
+            var telegramBotClientMock = new Mock<ITelegramBotClient>();
+            var service = new TelegramCommandHandlerService(null, telegramBotClientMock.Object, GetAllCommands().ToList());
+
+            var message = new Message
+            {
+                Text = command,
+                From = new User { Id = 2 },
+                Chat = new Chat
+                {
+                    Id = 1,
+                    Type = ChatType.Group
+                }
+            };
+
+            telegramBotClientMock.Setup(v => v.GetChatAdministratorsAsync(It.IsAny<ChatId>(), default))
+                .ReturnsAsync(new[] { new ChatMember { User = new() { Id = message.From.Id } } });
+
+            // Act
+            await service.HandleCommand(message);
+
+            // Assert
+
+            // Make sure SendTextMessageAsync method was never called
+            telegramBotClientMock.Verify(v => v.SendTextMessageAsync(It.IsAny<ChatId>(), It.IsAny<string>(), ParseMode.Default, false, false, 0, null, default), Times.Never);
+        }
+
+        [Theory]
+        [InlineData("/test_command")]
+        [InlineData("/command")]
+        [InlineData("/bot_command")]
+        [InlineData("/another_command")]
+        public async Task UnknownCommand_Should_Not_DoAnything(string command)
+        {
+            // Arrange
+            var telegramBotClientMock = new Mock<ITelegramBotClient>();
+            var service = new TelegramCommandHandlerService(null, telegramBotClientMock.Object, GetAllCommands());
+
+            var message = new Message
+            {
+                Text = command,
+                From = new User { Id = 2 },
+                Chat = new Chat
+                {
+                    Id = 1,
+                    Type = ChatType.Group
+                }
+            };
+
+            telegramBotClientMock.Setup(v => v.GetChatAdministratorsAsync(It.IsAny<ChatId>(), default))
+                .ReturnsAsync(new[] { new ChatMember { User = new() { Id = message.From.Id } } });
+
+            // Act
+            await service.HandleCommand(message);
+
+            // Assert
+
+            // Make sure SendTextMessageAsync method was never called
+            telegramBotClientMock.Verify(v => v.SendTextMessageAsync(It.IsAny<ChatId>(), It.IsAny<string>(), ParseMode.Default, false, false, 0, null, default), Times.Never);
+        }
+
+        private IEnumerable<ITelegramBotCommand> GetAllCommands()
+        {
+            var commandClassTypes = Assembly.GetExecutingAssembly()
+                                    .GetReferencedAssemblies()
+                                    .SelectMany(v => Assembly.Load(v).GetTypes())
+                                    .Where(v => !v.IsAbstract && v.IsAssignableTo(typeof(ITelegramBotCommand)));
+
+            foreach (var item in commandClassTypes)
+            {
+                var constructorParameters = item.GetConstructors().First().GetParameters();
+
+                var command = (ITelegramBotCommand)Activator.CreateInstance(item, new object[constructorParameters.Length]);
+
+                yield return command;
+            }
         }
     }
 }
