@@ -159,7 +159,7 @@ namespace GrammarNazi.Tests.Services
         {
             // Arrange
             var telegramBotClientMock = new Mock<ITelegramBotClient>();
-            var service = new TelegramCommandHandlerService(null, telegramBotClientMock.Object, GetAllCommands().ToList());
+            var service = new TelegramCommandHandlerService(null, telegramBotClientMock.Object, GetAllCommands());
 
             var message = new Message
             {
