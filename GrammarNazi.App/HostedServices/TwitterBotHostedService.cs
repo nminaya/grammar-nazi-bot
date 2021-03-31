@@ -183,15 +183,18 @@ namespace GrammarNazi.App.HostedServices
             {
                 var tweet = await _twitterClient.Tweets.PublishTweetAsync(scheduledTweet.TweetText);
 
-                if (tweet != null)
+                if (tweet == null)
                 {
-                    scheduledTweet.TweetId = tweet.Id;
-                    scheduledTweet.IsPublished = true;
-                    scheduledTweet.PublishDate = DateTime.Now;
-
-                    await _scheduledTweetService.Update(scheduledTweet);
-                    await Task.Delay(_twitterBotSettings.PublishTweetDelayMilliseconds);
+                    _logger.LogWarning($"Not able to tweet Schedule Tweet {scheduledTweet}");
+                    continue;
                 }
+
+                scheduledTweet.TweetId = tweet.Id;
+                scheduledTweet.IsPublished = true;
+                scheduledTweet.PublishDate = DateTime.Now;
+
+                await _scheduledTweetService.Update(scheduledTweet);
+                await Task.Delay(_twitterBotSettings.PublishTweetDelayMilliseconds);
             }
         }
 
