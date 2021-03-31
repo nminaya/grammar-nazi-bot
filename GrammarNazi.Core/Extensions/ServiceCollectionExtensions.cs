@@ -32,30 +32,27 @@ namespace GrammarNazi.Core.Extensions
         public static IServiceCollection AddDiscordBotCommands(this IServiceCollection serviceCollection)
         {
             // All IDiscordBotCommand classes in the current Assembly
-            var commandClassTypes = Assembly
-                .GetExecutingAssembly()
-                .GetTypes()
-                .Where(v => v.IsAssignableTo(typeof(IDiscordBotCommand)));
-
-            foreach (var commandClassType in commandClassTypes)
-            {
-                serviceCollection.AddTransient(typeof(IDiscordBotCommand), commandClassType);
-            }
-
-            return serviceCollection;
+            return AddTransientInstancesOf<IDiscordBotCommand>(serviceCollection);
         }
 
         public static IServiceCollection AddTelegramBotCommands(this IServiceCollection serviceCollection)
         {
             // All ITelegramBotCommand classes in the current Assembly
+            return AddTransientInstancesOf<ITelegramBotCommand>(serviceCollection);
+        }
+
+        private static IServiceCollection AddTransientInstancesOf<T>(IServiceCollection serviceCollection)
+        {
+            var type = typeof(T);
+
             var commandClassTypes = Assembly
                 .GetExecutingAssembly()
                 .GetTypes()
-                .Where(v => v.IsAssignableTo(typeof(ITelegramBotCommand)));
+                .Where(v => v.IsAssignableTo(type));
 
             foreach (var commandClassType in commandClassTypes)
             {
-                serviceCollection.AddTransient(typeof(ITelegramBotCommand), commandClassType);
+                serviceCollection.AddTransient(type, commandClassType);
             }
 
             return serviceCollection;
