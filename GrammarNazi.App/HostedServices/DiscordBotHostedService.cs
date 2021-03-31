@@ -121,11 +121,7 @@ namespace GrammarNazi.App.HostedServices
 
             var replyMessage = messageBuilder.ToString();
 
-            if (replyMessage.Length < Defaults.DiscordTextMaxLength)
-            {
-                await message.Channel.SendMessageAsync(replyMessage, messageReference: new MessageReference(message.Id));
-            }
-            else // Split the reply in various messages
+            if (replyMessage.Length >= Defaults.DiscordTextMaxLength) // Split the reply in various messages
             {
                 var replyMessages = replyMessage.SplitInParts(Defaults.DiscordTextMaxLength);
 
@@ -136,7 +132,11 @@ namespace GrammarNazi.App.HostedServices
                     var result = await message.Channel.SendMessageAsync(reply, messageReference: new MessageReference(replyMessageId));
                     replyMessageId = result.Id;
                 }
+
+                return;
             }
+
+            await message.Channel.SendMessageAsync(replyMessage, messageReference: new MessageReference(message.Id));
         }
 
         private IGrammarService GetConfiguredGrammarService(DiscordChannelConfig channelConfig)

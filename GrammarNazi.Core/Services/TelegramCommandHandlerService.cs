@@ -1,3 +1,4 @@
+using GrammarNazi.Core.Extensions;
 using GrammarNazi.Domain.BotCommands;
 using GrammarNazi.Domain.Constants;
 using GrammarNazi.Domain.Enums;
@@ -9,6 +10,7 @@ using System.Threading.Tasks;
 using Telegram.Bot;
 using Telegram.Bot.Types;
 using Telegram.Bot.Types.Enums;
+using static GrammarNazi.Core.Utilities.TelegramBotHelper;
 
 namespace GrammarNazi.Core.Services
 {
@@ -41,7 +43,7 @@ namespace GrammarNazi.Core.Services
         {
             var message = callbackQuery.Message;
 
-            if (!await IsUserAdmin(callbackQuery.Message, callbackQuery.From))
+            if (!await IsUserAdmin(_client, callbackQuery.Message, callbackQuery.From))
             {
                 var userMention = $"[{callbackQuery.From.FirstName} {callbackQuery.From.LastName}](tg://user?id={callbackQuery.From.Id})";
 
@@ -61,7 +63,7 @@ namespace GrammarNazi.Core.Services
 
                 chatConfig.SelectedLanguage = languageSelected;
 
-                await _client.SendTextMessageAsync(message.Chat.Id, $"Language updated: {languageSelected}");
+                await _client.SendTextMessageAsync(message.Chat.Id, $"Language updated: {languageSelected.GetDescription()}");
             }
             else
             {
@@ -71,7 +73,7 @@ namespace GrammarNazi.Core.Services
 
                 chatConfig.GrammarAlgorithm = algorithmSelected;
 
-                await _client.SendTextMessageAsync(message.Chat.Id, $"Algorithm updated: {algorithmSelected}");
+                await _client.SendTextMessageAsync(message.Chat.Id, $"Algorithm updated: {algorithmSelected.GetDescription()}");
             }
 
             await _chatConfigurationService.Update(chatConfig);
@@ -90,17 +92,6 @@ namespace GrammarNazi.Core.Services
             }
 
             return actual.StartsWith(expected);
-        }
-
-        private async Task<bool> IsUserAdmin(Message message, User user = null)
-        {
-            if (message.Chat.Type == ChatType.Private)
-                return true;
-
-            var chatAdministrators = await _client.GetChatAdministratorsAsync(message.Chat.Id);
-            var currentUserId = user?.Id ?? message.From.Id;
-
-            return chatAdministrators.Any(v => v.User.Id == currentUserId);
         }
     }
 }

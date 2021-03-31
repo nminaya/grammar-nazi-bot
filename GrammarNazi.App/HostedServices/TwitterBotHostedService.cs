@@ -114,13 +114,7 @@ namespace GrammarNazi.App.HostedServices
 
                         _logger.LogInformation($"Sending reply to: {tweet.CreatedBy.ScreenName}");
 
-                        if (correctionString.Length < Defaults.TwitterTextMaxLength)
-                        {
-                            await PublishReplyTweet(correctionString, tweet.Id);
-
-                            await Task.Delay(_twitterBotSettings.PublishTweetDelayMilliseconds, stoppingToken);
-                        }
-                        else
+                        if (correctionString.Length >= Defaults.TwitterTextMaxLength)
                         {
                             var replyTweets = correctionString.SplitInParts(Defaults.TwitterTextMaxLength);
 
@@ -132,7 +126,13 @@ namespace GrammarNazi.App.HostedServices
 
                                 await Task.Delay(_twitterBotSettings.PublishTweetDelayMilliseconds, stoppingToken);
                             }
+
+                            continue;
                         }
+
+                        await PublishReplyTweet(correctionString, tweet.Id);
+
+                        await Task.Delay(_twitterBotSettings.PublishTweetDelayMilliseconds, stoppingToken);
                     }
 
                     var followBackUsersTask = FollowBackUsers(followerIds);
@@ -183,15 +183,18 @@ namespace GrammarNazi.App.HostedServices
             {
                 var tweet = await _twitterClient.Tweets.PublishTweetAsync(scheduledTweet.TweetText);
 
-                if (tweet != null)
+                if (tweet == null)
                 {
-                    scheduledTweet.TweetId = tweet.Id;
-                    scheduledTweet.IsPublished = true;
-                    scheduledTweet.PublishDate = DateTime.Now;
-
-                    await _scheduledTweetService.Update(scheduledTweet);
-                    await Task.Delay(_twitterBotSettings.PublishTweetDelayMilliseconds);
+                    _logger.LogWarning($"Not able to tweet Schedule Tweet {scheduledTweet}");
+                    continue;
                 }
+
+                scheduledTweet.TweetId = tweet.Id;
+                scheduledTweet.IsPublished = true;
+                scheduledTweet.PublishDate = DateTime.Now;
+
+                await _scheduledTweetService.Update(scheduledTweet);
+                await Task.Delay(_twitterBotSettings.PublishTweetDelayMilliseconds);
             }
         }
 
