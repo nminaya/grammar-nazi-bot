@@ -1,4 +1,4 @@
-﻿using Discord.WebSocket;
+﻿using Discord;
 using GrammarNazi.Domain.BotCommands;
 using GrammarNazi.Domain.Services;
 using System.Collections.Generic;
@@ -16,7 +16,7 @@ namespace GrammarNazi.Core.Services
             _botCommands = botCommands;
         }
 
-        public async Task HandleCommand(SocketUserMessage message)
+        public async Task HandleCommand(IMessage message)
         {
             var command = _botCommands.FirstOrDefault(v => message.Content.StartsWith(v.Command));
 
