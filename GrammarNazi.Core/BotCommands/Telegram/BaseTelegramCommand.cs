@@ -14,7 +14,7 @@ namespace GrammarNazi.Core.BotCommands.Telegram
     {
         protected readonly ITelegramBotClient Client;
 
-        public BaseTelegramCommand(ITelegramBotClient telegramBotClient)
+        protected BaseTelegramCommand(ITelegramBotClient telegramBotClient)
         {
             Client = telegramBotClient;
         }
