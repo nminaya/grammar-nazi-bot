@@ -1,11 +1,9 @@
-﻿using System.Threading.Tasks;
-using Telegram.Bot.Types;
+﻿using Telegram.Bot.Types;
 
 namespace GrammarNazi.Domain.BotCommands
 {
-    public interface ITelegramBotCommand
+    public interface ITelegramBotCommand : IBotCommand<Message>
     {
         string Command { get; }
-        Task Handle(Message message);
     }
 }

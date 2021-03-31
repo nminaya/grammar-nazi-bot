@@ -1,13 +1,9 @@
 ﻿using Discord;
-using Discord.WebSocket;
-using System.Threading.Tasks;
 
 namespace GrammarNazi.Domain.BotCommands
 {
-    public interface IDiscordBotCommand
+    public interface IDiscordBotCommand : IBotCommand<IMessage>
     {
         string Command { get; }
-
-        Task Handle(IMessage message);
     }
 }
