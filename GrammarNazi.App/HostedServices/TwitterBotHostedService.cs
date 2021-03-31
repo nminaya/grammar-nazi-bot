@@ -114,13 +114,7 @@ namespace GrammarNazi.App.HostedServices
 
                         _logger.LogInformation($"Sending reply to: {tweet.CreatedBy.ScreenName}");
 
-                        if (correctionString.Length < Defaults.TwitterTextMaxLength)
-                        {
-                            await PublishReplyTweet(correctionString, tweet.Id);
-
-                            await Task.Delay(_twitterBotSettings.PublishTweetDelayMilliseconds, stoppingToken);
-                        }
-                        else
+                        if (correctionString.Length >= Defaults.TwitterTextMaxLength)
                         {
                             var replyTweets = correctionString.SplitInParts(Defaults.TwitterTextMaxLength);
 
@@ -132,7 +126,13 @@ namespace GrammarNazi.App.HostedServices
 
                                 await Task.Delay(_twitterBotSettings.PublishTweetDelayMilliseconds, stoppingToken);
                             }
+
+                            continue;
                         }
+
+                        await PublishReplyTweet(correctionString, tweet.Id);
+
+                        await Task.Delay(_twitterBotSettings.PublishTweetDelayMilliseconds, stoppingToken);
                     }
 
                     var followBackUsersTask = FollowBackUsers(followerIds);
