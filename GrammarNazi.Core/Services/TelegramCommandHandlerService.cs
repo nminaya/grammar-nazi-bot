@@ -1,3 +1,4 @@
+using GrammarNazi.Core.Extensions;
 using GrammarNazi.Domain.BotCommands;
 using GrammarNazi.Domain.Constants;
 using GrammarNazi.Domain.Enums;
@@ -62,7 +63,7 @@ namespace GrammarNazi.Core.Services
 
                 chatConfig.SelectedLanguage = languageSelected;
 
-                await _client.SendTextMessageAsync(message.Chat.Id, $"Language updated: {languageSelected}");
+                await _client.SendTextMessageAsync(message.Chat.Id, $"Language updated: {languageSelected.GetDescription()}");
             }
             else
             {
@@ -72,7 +73,7 @@ namespace GrammarNazi.Core.Services
 
                 chatConfig.GrammarAlgorithm = algorithmSelected;
 
-                await _client.SendTextMessageAsync(message.Chat.Id, $"Algorithm updated: {algorithmSelected}");
+                await _client.SendTextMessageAsync(message.Chat.Id, $"Algorithm updated: {algorithmSelected.GetDescription()}");
             }
 
             await _chatConfigurationService.Update(chatConfig);
