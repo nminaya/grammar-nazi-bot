@@ -9,6 +9,7 @@ using System.Threading.Tasks;
 using Telegram.Bot;
 using Telegram.Bot.Types;
 using Telegram.Bot.Types.Enums;
+using static GrammarNazi.Core.Utilities.TelegramBotHelper;
 
 namespace GrammarNazi.Core.Services
 {
@@ -41,7 +42,7 @@ namespace GrammarNazi.Core.Services
         {
             var message = callbackQuery.Message;
 
-            if (!await IsUserAdmin(callbackQuery.Message, callbackQuery.From))
+            if (!await IsUserAdmin(_client, callbackQuery.Message, callbackQuery.From))
             {
                 var userMention = $"[{callbackQuery.From.FirstName} {callbackQuery.From.LastName}](tg://user?id={callbackQuery.From.Id})";
 
@@ -90,17 +91,6 @@ namespace GrammarNazi.Core.Services
             }
 
             return actual.StartsWith(expected);
-        }
-
-        private async Task<bool> IsUserAdmin(Message message, User user = null)
-        {
-            if (message.Chat.Type == ChatType.Private)
-                return true;
-
-            var chatAdministrators = await _client.GetChatAdministratorsAsync(message.Chat.Id);
-            var currentUserId = user?.Id ?? message.From.Id;
-
-            return chatAdministrators.Any(v => v.User.Id == currentUserId);
         }
     }
 }

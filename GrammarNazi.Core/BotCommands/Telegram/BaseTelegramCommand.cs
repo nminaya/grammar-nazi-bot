@@ -1,4 +1,5 @@
 ﻿using GrammarNazi.Core.Extensions;
+using GrammarNazi.Core.Utilities;
 using System;
 using System.Linq;
 using System.Text;
@@ -32,15 +33,9 @@ namespace GrammarNazi.Core.BotCommands.Telegram
             await Client.SendTextMessageAsync(message.Chat.Id, messageTitle, replyMarkup: inlineOptions);
         }
 
-        protected async Task<bool> IsUserAdmin(Message message, User user = null)
+        protected Task<bool> IsUserAdmin(Message message, User user = null)
         {
-            if (message.Chat.Type == ChatType.Private)
-                return true;
-
-            var chatAdministrators = await Client.GetChatAdministratorsAsync(message.Chat.Id);
-            var currentUserId = user?.Id ?? message.From.Id;
-
-            return chatAdministrators.Any(v => v.User.Id == currentUserId);
+            return TelegramBotHelper.IsUserAdmin(Client, message, user);
         }
 
         protected async Task<bool> IsBotAdmin(Message message)
