@@ -74,20 +74,28 @@ namespace GrammarNazi.App.HostedServices
 
                     foreach (var followerId in followerIds)
                     {
-                        var getTimeLineParameters = new GetUserTimelineParameters(followerId);
+                        try
+                        {
+                            var getTimeLineParameters = new GetUserTimelineParameters(followerId);
 
-                        if (sinceTweetId == 0)
-                            getTimeLineParameters.PageSize = _twitterBotSettings.TimelineFirstLoadPageSize;
-                        else
-                            getTimeLineParameters.SinceId = sinceTweetId;
+                            if (sinceTweetId == 0)
+                                getTimeLineParameters.PageSize = _twitterBotSettings.TimelineFirstLoadPageSize;
+                            else
+                                getTimeLineParameters.SinceId = sinceTweetId;
 
-                        var timeLine = await _twitterClient.Timelines.GetUserTimelineAsync(getTimeLineParameters);
+                            var timeLine = await _twitterClient.Timelines.GetUserTimelineAsync(getTimeLineParameters);
 
-                        if (timeLine.Length == 0)
-                            continue;
+                            if (timeLine.Length == 0)
+                                continue;
 
-                        // Avoid Retweets.
-                        tweets.AddRange(timeLine.Where(v => !v.Text.StartsWith("RT")));
+                            // Avoid Retweets.
+                            tweets.AddRange(timeLine.Where(v => !v.Text.StartsWith("RT")));
+                        }
+                        catch (TwitterException ex)
+                        {
+                            // TODO: refactor this workaround https://github.com/nminaya/grammar-nazi-bot/issues/179
+                            _logger.LogWarning(ex, ex.TwitterDescription);
+                        }
                     }
 
                     foreach (var tweet in tweets)
