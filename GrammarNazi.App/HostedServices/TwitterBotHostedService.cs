@@ -175,9 +175,9 @@ namespace GrammarNazi.App.HostedServices
         {
             var friendIds = await _twitterClient.Users.GetFriendIdsAsync(_twitterBotSettings.BotUsername);
 
-            var userIdsPendingFollow = await _twitterClient.Users.GetUserIdsYouRequestedToFollowAsync();
+            var userIdsPendingToFollow = await _twitterClient.Users.GetUserIdsYouRequestedToFollowAsync();
 
-            var userIdsToFollow = followerdIds.Except(friendIds).Except(userIdsPendingFollow);
+            var userIdsToFollow = followerdIds.Except(friendIds).Except(userIdsPendingToFollow);
 
             foreach (var userId in userIdsToFollow)
             {
