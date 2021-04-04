@@ -175,19 +175,13 @@ namespace GrammarNazi.App.HostedServices
         {
             var friendIds = await _twitterClient.Users.GetFriendIdsAsync(_twitterBotSettings.BotUsername);
 
-            var userIdsToFollow = followerdIds.Except(friendIds);
+            var userIdsPendingFollow = await _twitterClient.Users.GetUserIdsYouRequestedToFollowAsync();
+
+            var userIdsToFollow = followerdIds.Except(friendIds).Except(userIdsPendingFollow);
 
             foreach (var userId in userIdsToFollow)
             {
-                try
-                {
-                    await _twitterClient.Users.FollowUserAsync(userId);
-                }
-                catch (TwitterException ex)
-                {
-                    // TODO: refactor this workaround https://github.com/nminaya/grammar-nazi-bot/issues/180
-                    _logger.LogWarning(ex, ex.TwitterDescription);
-                }
+                await _twitterClient.Users.FollowUserAsync(userId);
             }
         }
 
