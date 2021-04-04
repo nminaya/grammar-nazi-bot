@@ -12,7 +12,7 @@
     <PackageReference Include="Microsoft.VisualStudio.Azure.Containers.Tools.Targets" Version="1.10.8" />
     <PackageReference Include="Octokit" Version="0.50.0" />
     <PackageReference Include="Telegram.Bot" Version="15.7.1" />
-    <PackageReference Include="TweetinviAPI" Version="5.0.3" />
+    <PackageReference Include="TweetinviAPI" Version="5.0.4" />
   </ItemGroup>
 
   <ItemGroup>
