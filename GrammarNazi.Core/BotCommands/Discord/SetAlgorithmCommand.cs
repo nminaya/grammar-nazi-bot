@@ -1,11 +1,9 @@
 ﻿using Discord;
-using Discord.WebSocket;
 using GrammarNazi.Core.Extensions;
 using GrammarNazi.Domain.BotCommands;
 using GrammarNazi.Domain.Constants;
 using GrammarNazi.Domain.Enums;
 using GrammarNazi.Domain.Services;
-using System;
 using System.Text;
 using System.Threading.Tasks;
 
@@ -54,7 +52,7 @@ namespace GrammarNazi.Core.BotCommands.Discord
 
                 await _channelConfigService.Update(channelConfig);
 
-                await SendMessage(message, "Algorithm updated.", DiscordBotCommands.SetAlgorithm);
+                await SendMessage(message, $"Algorithm updated: {channelConfig.GrammarAlgorithm.GetDescription()}", DiscordBotCommands.SetAlgorithm);
                 return;
             }
 

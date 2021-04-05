@@ -1,5 +1,4 @@
 ﻿using Discord;
-using Discord.WebSocket;
 using GrammarNazi.Core.Extensions;
 using GrammarNazi.Domain.BotCommands;
 using GrammarNazi.Domain.Constants;
@@ -54,7 +53,7 @@ namespace GrammarNazi.Core.BotCommands.Discord
 
                 await _channelConfigService.Update(channelConfig);
 
-                await SendMessage(message, "Language updated.", DiscordBotCommands.Language);
+                await SendMessage(message, $"Language updated: {channelConfig.SelectedLanguage.GetDescription()}", DiscordBotCommands.Language);
                 return;
             }
 
