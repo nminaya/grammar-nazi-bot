@@ -51,13 +51,14 @@ namespace GrammarNazi.Tests.HostedServices
             var scheduleTweetServiceMock = new Mock<IScheduledTweetService>();
             var twitterSettingsOptionsMock = new Mock<IOptions<TwitterBotSettings>>();
             var grammarServiceMock = new Mock<IGrammarService>();
+            var userMock = new Mock<IUser>();
             var cancellationTokenSource = new CancellationTokenSource();
             var twitterSettings = new TwitterBotSettings { BotUsername = "botUser", TimelineFirstLoadPageSize = 15, HostedServiceIntervalMilliseconds = 150 };
 
             twitterSettingsOptionsMock.Setup(v => v.Value).Returns(twitterSettings);
             twitterLogServiceMock.Setup(v => v.GetLastTweetId()).ReturnsAsync(0);
-            twitterClientMock.Setup(v => v.Users.GetFollowerIdsAsync(twitterSettings.BotUsername))
-                .ReturnsAsync(new long[] { 1 });
+            twitterClientMock.Setup(v => v.Users.GetFollowersAsync(twitterSettings.BotUsername))
+                .ReturnsAsync(new IUser[] { userMock.Object });
             twitterClientMock.Setup(v => v.Timelines.GetUserTimelineAsync(It.IsAny<GetUserTimelineParameters>()))
                 .ReturnsAsync(new ITweet[0]);
             twitterClientMock.Setup(v => v.Users.GetFriendIdsAsync(twitterSettings.BotUsername))
@@ -86,14 +87,15 @@ namespace GrammarNazi.Tests.HostedServices
             var scheduleTweetServiceMock = new Mock<IScheduledTweetService>();
             var twitterSettingsOptionsMock = new Mock<IOptions<TwitterBotSettings>>();
             var grammarServiceMock = new Mock<IGrammarService>();
+            var userMock = new Mock<IUser>();
             var cancellationTokenSource = new CancellationTokenSource();
             var twitterSettings = new TwitterBotSettings { BotUsername = "botUser", TimelineFirstLoadPageSize = 15, HostedServiceIntervalMilliseconds = 150 };
             const long lastTweetId = 123456;
 
             twitterSettingsOptionsMock.Setup(v => v.Value).Returns(twitterSettings);
             twitterLogServiceMock.Setup(v => v.GetLastTweetId()).ReturnsAsync(lastTweetId);
-            twitterClientMock.Setup(v => v.Users.GetFollowerIdsAsync(twitterSettings.BotUsername))
-                .ReturnsAsync(new long[] { 1 });
+            twitterClientMock.Setup(v => v.Users.GetFollowersAsync(twitterSettings.BotUsername))
+                .ReturnsAsync(new IUser[] { userMock.Object });
             twitterClientMock.Setup(v => v.Timelines.GetUserTimelineAsync(It.IsAny<GetUserTimelineParameters>()))
                 .ReturnsAsync(new ITweet[0]);
             twitterClientMock.Setup(v => v.Users.GetFriendIdsAsync(twitterSettings.BotUsername))
@@ -163,6 +165,7 @@ namespace GrammarNazi.Tests.HostedServices
             var twitterSettingsOptionsMock = new Mock<IOptions<TwitterBotSettings>>();
             var grammarServiceMock = new Mock<IGrammarService>();
             var tweetMock = new Mock<ITweet>();
+            var userMock = new Mock<IUser>();
             var cancellationTokenSource = new CancellationTokenSource();
             var twitterSettings = new TwitterBotSettings { BotUsername = "botUser", TimelineFirstLoadPageSize = 15, HostedServiceIntervalMilliseconds = 150 };
             const long lastTweetId = 123456;
@@ -171,8 +174,8 @@ namespace GrammarNazi.Tests.HostedServices
 
             twitterSettingsOptionsMock.Setup(v => v.Value).Returns(twitterSettings);
             twitterLogServiceMock.Setup(v => v.GetLastTweetId()).ReturnsAsync(lastTweetId);
-            twitterClientMock.Setup(v => v.Users.GetFollowerIdsAsync(twitterSettings.BotUsername))
-                .ReturnsAsync(new long[] { 1 });
+            twitterClientMock.Setup(v => v.Users.GetFollowersAsync(twitterSettings.BotUsername))
+                .ReturnsAsync(new IUser[] { userMock.Object });
             twitterClientMock.Setup(v => v.Timelines.GetUserTimelineAsync(It.IsAny<GetUserTimelineParameters>()))
                 .ReturnsAsync(new[] { tweetMock.Object });
             twitterClientMock.Setup(v => v.Users.GetFriendIdsAsync(twitterSettings.BotUsername))
