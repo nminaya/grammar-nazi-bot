@@ -66,36 +66,33 @@ namespace GrammarNazi.App.HostedServices
                 {
                     var lastTweetIdTask = _twitterLogService.GetLastTweetId();
 
-                    var followerIds = await _twitterClient.Users.GetFollowerIdsAsync(_twitterBotSettings.BotUsername);
+                    var followers = await _twitterClient.Users.GetFollowersAsync(_twitterBotSettings.BotUsername);
+
+                    var friendIds = await _twitterClient.Users.GetFriendIdsAsync(_twitterBotSettings.BotUsername);
 
                     long sinceTweetId = await lastTweetIdTask;
 
                     var tweets = new List<ITweet>();
 
-                    foreach (var followerId in followerIds)
+                    foreach (var follower in followers)
                     {
-                        try
-                        {
-                            var getTimeLineParameters = new GetUserTimelineParameters(followerId);
+                        if (follower.Protected && !friendIds.Contains(follower.Id))
+                            continue;
 
-                            if (sinceTweetId == 0)
-                                getTimeLineParameters.PageSize = _twitterBotSettings.TimelineFirstLoadPageSize;
-                            else
-                                getTimeLineParameters.SinceId = sinceTweetId;
+                        var getTimeLineParameters = new GetUserTimelineParameters(follower);
 
-                            var timeLine = await _twitterClient.Timelines.GetUserTimelineAsync(getTimeLineParameters);
+                        if (sinceTweetId == 0)
+                            getTimeLineParameters.PageSize = _twitterBotSettings.TimelineFirstLoadPageSize;
+                        else
+                            getTimeLineParameters.SinceId = sinceTweetId;
 
-                            if (timeLine.Length == 0)
-                                continue;
+                        var timeLine = await _twitterClient.Timelines.GetUserTimelineAsync(getTimeLineParameters);
 
-                            // Avoid Retweets.
-                            tweets.AddRange(timeLine.Where(v => !v.Text.StartsWith("RT")));
-                        }
-                        catch (TwitterException ex)
-                        {
-                            // TODO: refactor this workaround https://github.com/nminaya/grammar-nazi-bot/issues/179
-                            _logger.LogWarning(ex, ex.TwitterDescription);
-                        }
+                        if (timeLine.Length == 0)
+                            continue;
+
+                        // Avoid Retweets.
+                        tweets.AddRange(timeLine.Where(v => !v.Text.StartsWith("RT")));
                     }
 
                     foreach (var tweet in tweets)
@@ -143,7 +140,7 @@ namespace GrammarNazi.App.HostedServices
                         await Task.Delay(_twitterBotSettings.PublishTweetDelayMilliseconds, stoppingToken);
                     }
 
-                    var followBackUsersTask = FollowBackUsers(followerIds);
+                    var followBackUsersTask = FollowBackUsers(followers, friendIds);
                     var publishScheduledTweetsTask = PublishScheduledTweets();
                     var likeRepliesToBotTask = LikeRepliesToBot(tweets);
 
@@ -171,13 +168,11 @@ namespace GrammarNazi.App.HostedServices
             }
         }
 
-        private async Task FollowBackUsers(IEnumerable<long> followerdIds)
+        private async Task FollowBackUsers(IEnumerable<IUser> followers, IEnumerable<long> friendIds)
         {
-            var friendIds = await _twitterClient.Users.GetFriendIdsAsync(_twitterBotSettings.BotUsername);
-
             var userIdsPendingToFollow = await _twitterClient.Users.GetUserIdsYouRequestedToFollowAsync();
 
-            var userIdsToFollow = followerdIds.Except(friendIds).Except(userIdsPendingToFollow);
+            var userIdsToFollow = followers.Select(v => v.Id).Except(friendIds).Except(userIdsPendingToFollow);
 
             foreach (var userId in userIdsToFollow)
             {
