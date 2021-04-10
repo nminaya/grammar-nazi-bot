@@ -47,7 +47,7 @@ namespace GrammarNazi.Core.Services
 
             var words = text.Split(" ")
                 .Select(StringUtils.RemoveSpecialCharacters)
-                .Where(v => char.IsLetter(v[0]) && !IsWhiteListWord(v));
+                .Where(v => !string.IsNullOrEmpty(v) && char.IsLetter(v[0]) && !IsWhiteListWord(v));
 
             var wordCheckTasks = words.Select(v => _datamuseApiClient.CheckWord(v, language));
 
