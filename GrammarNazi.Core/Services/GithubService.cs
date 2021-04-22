@@ -27,30 +27,42 @@ namespace GrammarNazi.Core.Services
         {
             var issueTitle = GetTrimmedTitle(title);
 
-            // Do not duplicate the issue if exist
-            if (await IssueExist(issueTitle))
+            var issue = await GetIssueByTittle(issueTitle);
+
+            // Update count if issue exist
+            if (issue != null)
+            {
+                var issueUpdate = new IssueUpdate
+                {
+                    Title = issue.Title,
+                    Body = GetBodyWithCounterUpdated(issue.Body)
+                };
+
+                await _githubClient.Issue.Update(_githubSettings.Username, _githubSettings.RepositoryName, issue.Number, issueUpdate);
                 return;
+            }
 
             var bodyBuilder = new StringBuilder();
             bodyBuilder.Append("This is an issue created automatically by GrammarNazi when an exception was captured.\n\n");
             bodyBuilder.AppendLine($"Date (UTC): {DateTime.UtcNow}\n\n");
             bodyBuilder.AppendLine("Exception:\n\n").AppendLine(exception.ToString());
+            bodyBuilder.AppendLine("\n\nException caught counter: 1.");
 
-            var issue = new NewIssue(issueTitle)
+            var newIssue = new NewIssue(issueTitle)
             {
                 Body = bodyBuilder.ToString()
             };
-            issue.Labels.Add(GithubIssueLabels.ProductionBug.GetDescription());
-            issue.Labels.Add(githubIssueSection.GetDescription());
+            newIssue.Labels.Add(GithubIssueLabels.ProductionBug.GetDescription());
+            newIssue.Labels.Add(githubIssueSection.GetDescription());
 
-            await _githubClient.Issue.Create(_githubSettings.Username, _githubSettings.RepositoryName, issue);
+            await _githubClient.Issue.Create(_githubSettings.Username, _githubSettings.RepositoryName, newIssue);
         }
 
-        private async Task<bool> IssueExist(string title)
+        private async Task<Issue> GetIssueByTittle(string title)
         {
             var issues = await _githubClient.Issue.GetAllForRepository(_githubSettings.Username, _githubSettings.RepositoryName);
 
-            return issues.Any(v => v.Title == title);
+            return issues.FirstOrDefault(v => v.Title == title);
         }
 
         private static string GetTrimmedTitle(string title)
@@ -61,6 +73,24 @@ namespace GrammarNazi.Core.Services
             const string dots = "...";
 
             return title[0..(Defaults.GithubIssueMaxTitleLength - dots.Length)] + dots;
+        }
+
+        private static string GetBodyWithCounterUpdated(string issueBody)
+        {
+            var index = issueBody.IndexOf("Exception caught counter: ");
+
+            if (index == -1)
+            {
+                return issueBody + $"\n\nException caught counter: 1.";
+            }
+
+            var exceptionCaughtText = issueBody[index..];
+
+            var number = exceptionCaughtText.Replace("Exception caught counter: ", "").Replace(".", "");
+
+            var parsedNumber = int.Parse(number);
+
+            return issueBody[..index] + $"Exception caught counter: {++parsedNumber}.";
         }
     }
 }
