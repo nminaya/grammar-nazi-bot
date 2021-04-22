@@ -3,6 +3,7 @@ using GrammarNazi.Domain.Constants;
 using GrammarNazi.Domain.Entities;
 using GrammarNazi.Domain.Enums;
 using GrammarNazi.Domain.Services;
+using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using System;
@@ -23,24 +24,21 @@ namespace GrammarNazi.App.HostedServices
     {
         private readonly ILogger<TelegramBotHostedService> _logger;
         private readonly IEnumerable<IGrammarService> _grammarServices;
-        private readonly IChatConfigurationService _chatConfigurationService;
         private readonly ITelegramBotClient _client;
-        private readonly ITelegramCommandHandlerService _telegramCommandHandlerService;
         private readonly IGithubService _githubService;
+        private readonly IServiceScopeFactory _serviceScopeFactory;
 
         public TelegramBotHostedService(ILogger<TelegramBotHostedService> logger,
             ITelegramBotClient telegramBotClient,
             IEnumerable<IGrammarService> grammarServices,
-            IChatConfigurationService chatConfigurationService,
-            ITelegramCommandHandlerService telegramCommandHandlerService,
+            IServiceScopeFactory serviceScopeFactory,
             IGithubService githubService)
         {
             _logger = logger;
             _grammarServices = grammarServices;
-            _chatConfigurationService = chatConfigurationService;
             _client = telegramBotClient;
-            _telegramCommandHandlerService = telegramCommandHandlerService;
             _githubService = githubService;
+            _serviceScopeFactory = serviceScopeFactory;
         }
 
         protected override async Task ExecuteAsync(CancellationToken stoppingToken)
@@ -52,7 +50,13 @@ namespace GrammarNazi.App.HostedServices
             {
                 try
                 {
-                    await OnMessageReceived(obj, eventArgs);
+                    using var scope = _serviceScopeFactory.CreateScope();
+
+                    var chatConfigurationService = scope.ServiceProvider.GetService<IChatConfigurationService>();
+                    var telegramCommandHandlerService = scope.ServiceProvider.GetService<ITelegramCommandHandlerService>();
+                    // TODO: Add IEnumerable<IGrammarService> to this scope
+
+                    await OnMessageReceived(obj, eventArgs, chatConfigurationService, telegramCommandHandlerService);
                 }
                 catch (ApiRequestException ex)
                 {
@@ -86,7 +90,10 @@ namespace GrammarNazi.App.HostedServices
             {
                 try
                 {
-                    await _telegramCommandHandlerService.HandleCallBackQuery(eventArgs.CallbackQuery);
+                    using var scope = _serviceScopeFactory.CreateScope();
+                    var telegramCommandHandlerService = scope.ServiceProvider.GetService<ITelegramCommandHandlerService>();
+
+                    await telegramCommandHandlerService.HandleCallBackQuery(eventArgs.CallbackQuery);
                 }
                 catch (Exception ex)
                 {
@@ -101,7 +108,11 @@ namespace GrammarNazi.App.HostedServices
             await Task.Delay(Timeout.Infinite, stoppingToken);
         }
 
-        private async Task OnMessageReceived(object sender, MessageEventArgs messageEvent)
+        private async Task OnMessageReceived(
+            object sender,
+            MessageEventArgs messageEvent,
+            IChatConfigurationService chatConfigurationService,
+            ITelegramCommandHandlerService telegramCommandHandlerService)
         {
             var message = messageEvent.Message;
 
@@ -110,11 +121,11 @@ namespace GrammarNazi.App.HostedServices
 
             _logger.LogInformation($"Message received from chat id: {message.Chat.Id}");
 
-            var chatConfig = await GetChatConfiguration(message.Chat.Id);
+            var chatConfig = await GetChatConfiguration(message.Chat.Id, chatConfigurationService);
 
             if (message.Text.StartsWith('/')) // Text is a command
             {
-                await _telegramCommandHandlerService.HandleCommand(message);
+                await telegramCommandHandlerService.HandleCommand(message);
                 return;
             }
 
@@ -148,9 +159,9 @@ namespace GrammarNazi.App.HostedServices
             await _client.SendTextMessageAsync(message.Chat.Id, messageBuilder.ToString(), replyToMessageId: message.MessageId);
         }
 
-        private async Task<ChatConfiguration> GetChatConfiguration(long chatId)
+        private async Task<ChatConfiguration> GetChatConfiguration(long chatId, IChatConfigurationService chatConfigurationService)
         {
-            var chatConfig = await _chatConfigurationService.GetConfigurationByChatId(chatId);
+            var chatConfig = await chatConfigurationService.GetConfigurationByChatId(chatId);
 
             if (chatConfig != null)
                 return chatConfig;
@@ -167,7 +178,7 @@ namespace GrammarNazi.App.HostedServices
                 SelectedLanguage = SupportedLanguages.Auto
             };
 
-            await _chatConfigurationService.AddConfiguration(chatConfiguration);
+            await chatConfigurationService.AddConfiguration(chatConfiguration);
             await _client.SendTextMessageAsync(chatId, messageBuilder.ToString());
 
             return chatConfiguration;
