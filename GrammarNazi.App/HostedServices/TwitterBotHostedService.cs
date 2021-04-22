@@ -140,9 +140,9 @@ namespace GrammarNazi.App.HostedServices
                         await Task.Delay(_twitterBotSettings.PublishTweetDelayMilliseconds, stoppingToken);
                     }
 
-                    var followBackUsersTask = FollowBackUsers(followers, friendIds);
-                    var publishScheduledTweetsTask = PublishScheduledTweets();
-                    var likeRepliesToBotTask = LikeRepliesToBot(tweets);
+                    await FollowBackUsers(followers, friendIds);
+                    await PublishScheduledTweets();
+                    await LikeRepliesToBot(tweets);
 
                     if (tweets.Any())
                     {
@@ -151,8 +151,6 @@ namespace GrammarNazi.App.HostedServices
                         // Save last Tweet Id
                         await _twitterLogService.LogTweet(lastTweet.Id);
                     }
-
-                    await Task.WhenAll(followBackUsersTask, publishScheduledTweetsTask, likeRepliesToBotTask);
                 }
                 catch (Exception ex)
                 {
