@@ -35,10 +35,10 @@ namespace GrammarNazi.Core.Services
                 var issueUpdate = new IssueUpdate
                 {
                     Title = issue.Title,
-                    Body = UpdateCounter(issue.Body)
+                    Body = GetBodyWithCounterUpdated(issue.Body)
                 };
 
-                //await _githubClient.Issue.Update(_githubSettings.Username, _githubSettings.RepositoryName, issue.Number, issueUpdate);
+                await _githubClient.Issue.Update(_githubSettings.Username, _githubSettings.RepositoryName, issue.Number, issueUpdate);
                 return;
             }
 
@@ -55,7 +55,7 @@ namespace GrammarNazi.Core.Services
             newIssue.Labels.Add(GithubIssueLabels.ProductionBug.GetDescription());
             newIssue.Labels.Add(githubIssueSection.GetDescription());
 
-            //await _githubClient.Issue.Create(_githubSettings.Username, _githubSettings.RepositoryName, newIssue);
+            await _githubClient.Issue.Create(_githubSettings.Username, _githubSettings.RepositoryName, newIssue);
         }
 
         private async Task<Issue> GetIssueByTittle(string title)
@@ -75,11 +75,22 @@ namespace GrammarNazi.Core.Services
             return title[0..(Defaults.GithubIssueMaxTitleLength - dots.Length)] + dots;
         }
 
-        private static string UpdateCounter(string issueBody)
+        private static string GetBodyWithCounterUpdated(string issueBody)
         {
-            var number = issueBody[issueBody.IndexOf("Exception caught counter: ")..];
+            var index = issueBody.IndexOf("Exception caught counter: ");
 
-            return "";
+            if (index == -1)
+            {
+                return issueBody + $"\n\nException caught counter: 1.";
+            }
+
+            var exceptionCaughtText = issueBody[index..];
+
+            var number = exceptionCaughtText.Replace("Exception caught counter: ", "").Replace(".", "");
+
+            var parsedNumber = int.Parse(number);
+
+            return issueBody[..index] + $"Exception caught counter: {++parsedNumber}.";
         }
     }
 }
