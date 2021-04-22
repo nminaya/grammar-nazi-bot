@@ -1,4 +1,7 @@
-﻿using GrammarNazi.Domain.Entities.Settings;
+﻿using GrammarNazi.Core.Extensions;
+using GrammarNazi.Domain.Constants;
+using GrammarNazi.Domain.Entities.Settings;
+using GrammarNazi.Domain.Enums;
 using GrammarNazi.Domain.Services;
 using Microsoft.Extensions.Options;
 using Octokit;
@@ -20,34 +23,39 @@ namespace GrammarNazi.Core.Services
             _githubSettings = options.Value;
         }
 
-        public async Task CreateBugIssue(string title, Exception exception)
+        public async Task CreateBugIssue(string title, Exception exception, GithubIssueLabels githubIssueSection)
         {
-            var bodyBuilder = new StringBuilder();
+            var issueTitle = GetTrimmedTitle(title);
 
-            var issue = await GetIssueByTittle(title);
+            var issue = await GetIssueByTittle(issueTitle);
 
-            // Leave a comment in the Issue if Issue exist
+            // Update count if issue exist
             if (issue != null)
             {
-                bodyBuilder.Append("GramarNazi Bot: Same exception captured again.\n\n");
-                bodyBuilder.AppendLine($"Date (UTC): {DateTime.UtcNow}\n\n");
-                bodyBuilder.AppendLine("StackTrace:\n\n").AppendLine(exception.ToString());
+                var issueUpdate = new IssueUpdate
+                {
+                    Title = issue.Title,
+                    Body = UpdateCounter(issue.Body)
+                };
 
-                await _githubClient.Issue.Comment.Create(_githubSettings.Username, _githubSettings.RepositoryName, issue.Number, bodyBuilder.ToString());
+                //await _githubClient.Issue.Update(_githubSettings.Username, _githubSettings.RepositoryName, issue.Number, issueUpdate);
                 return;
             }
 
+            var bodyBuilder = new StringBuilder();
             bodyBuilder.Append("This is an issue created automatically by GrammarNazi when an exception was captured.\n\n");
             bodyBuilder.AppendLine($"Date (UTC): {DateTime.UtcNow}\n\n");
             bodyBuilder.AppendLine("Exception:\n\n").AppendLine(exception.ToString());
+            bodyBuilder.AppendLine("\n\nException caught counter: 1.");
 
-            var newIssue = new NewIssue(title)
+            var newIssue = new NewIssue(issueTitle)
             {
                 Body = bodyBuilder.ToString()
             };
-            newIssue.Labels.Add("production-bug");
+            newIssue.Labels.Add(GithubIssueLabels.ProductionBug.GetDescription());
+            newIssue.Labels.Add(githubIssueSection.GetDescription());
 
-            await _githubClient.Issue.Create(_githubSettings.Username, _githubSettings.RepositoryName, newIssue);
+            //await _githubClient.Issue.Create(_githubSettings.Username, _githubSettings.RepositoryName, newIssue);
         }
 
         private async Task<Issue> GetIssueByTittle(string title)
@@ -55,6 +63,23 @@ namespace GrammarNazi.Core.Services
             var issues = await _githubClient.Issue.GetAllForRepository(_githubSettings.Username, _githubSettings.RepositoryName);
 
             return issues.FirstOrDefault(v => v.Title == title);
+        }
+
+        private static string GetTrimmedTitle(string title)
+        {
+            if (title.Length <= Defaults.GithubIssueMaxTitleLength)
+                return title;
+
+            const string dots = "...";
+
+            return title[0..(Defaults.GithubIssueMaxTitleLength - dots.Length)] + dots;
+        }
+
+        private static string UpdateCounter(string issueBody)
+        {
+            var number = issueBody[issueBody.IndexOf("Exception caught counter: ")..];
+
+            return "";
         }
     }
 }

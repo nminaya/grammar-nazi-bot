@@ -31,6 +31,11 @@ namespace GrammarNazi.Core.Repositories
             return Task.CompletedTask;
         }
 
+        public Task<IEnumerable<T>> GetAll(Expression<Func<T, bool>> filter)
+        {
+            return Task.FromResult(_list.Where(filter.Compile()));
+        }
+
         public Task<T> GetFirst(Expression<Func<T, bool>> filter)
         {
             var item = _list.FirstOrDefault(filter.Compile());
@@ -44,6 +49,7 @@ namespace GrammarNazi.Core.Repositories
 
         public Task Update(T entity, Expression<Func<T, bool>> identifier)
         {
+            //TODO: Find way to update without removing
             var obj = _list.FirstOrDefault(identifier.Compile());
 
             if (obj != default)

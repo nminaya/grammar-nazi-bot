@@ -24,7 +24,7 @@ namespace GrammarNazi.Core.Clients
         {
             string languageParam = "";
 
-            if (language == LanguageUtils.GetLanguageCode(SupportedLanguages.Spanish.GetDescription()))
+            if (language == SupportedLanguages.Spanish.GetLanguageInformation().TwoLetterISOLanguageName)
             {
                 languageParam = "&v=es";
             }

@@ -14,7 +14,7 @@ namespace GrammarNazi.Tests.HostedServices
             // Arrange
             var telegramBotMock = new Mock<ITelegramBotClient>();
             var cancellationTokenSource = CancellationTokenSource.CreateLinkedTokenSource();
-            var hostedService = new TelegramBotHostedService(null, telegramBotMock.Object, null, null, null, null, null);
+            var hostedService = new TelegramBotHostedService(null, telegramBotMock.Object, null, null, null, null);
 
             // TODO: Create MessageEventArgs
             // We are currently not able to create a MessageEventArgs object

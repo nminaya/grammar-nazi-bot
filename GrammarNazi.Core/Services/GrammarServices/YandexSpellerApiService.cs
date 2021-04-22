@@ -27,53 +27,47 @@ namespace GrammarNazi.Core.Services
         public async Task<GrammarCheckResult> GetCorrections(string text)
         {
             if (string.IsNullOrWhiteSpace(text))
-                return new GrammarCheckResult(default);
+                return new(default);
 
             string languageCode;
             if (SelectedLanguage != SupportedLanguages.Auto)
             {
-                languageCode = LanguageUtils.GetLanguageCode(SelectedLanguage.GetDescription());
+                languageCode = SelectedLanguage.GetLanguageInformation().TwoLetterISOLanguageName;
             }
             else
             {
                 var languageInfo = _languageService.IdentifyLanguage(text);
 
-                if (languageInfo == default)
-                {
+                if (languageInfo == default) // Language not supported
                     return new(default);
-                }
 
                 languageCode = languageInfo.TwoLetterISOLanguageName;
             }
 
-            var response = await _yandexSpellerApiClient.CheckText(text, languageCode);
+            var textCorrections = await _yandexSpellerApiClient.CheckText(text, languageCode);
 
-            if (response?.Any() == true)
+            if (!textCorrections.Any())
+                return new(default);
+
+            var corrections = new List<GrammarCorrection>();
+
+            foreach (var textCorrection in textCorrections.Where(ErrorCodeFIlter))
             {
-                var corrections = new List<GrammarCorrection>();
+                if (IsWhiteListWord(textCorrection.Word))
+                    continue;
 
-                foreach (var spellResult in response.Where(ErrorCodeFIlter))
+                corrections.Add(new()
                 {
-                    if (IsWhiteListWord(spellResult.Word))
-                        continue;
-
-                    var correction = new GrammarCorrection
-                    {
-                        WrongWord = spellResult.Word,
-                        PossibleReplacements = spellResult.Replacements,
-                        Message = GetErrorMessage(spellResult)
-                    };
-
-                    corrections.Add(correction);
-                }
-
-                return new(corrections);
+                    WrongWord = textCorrection.Word,
+                    PossibleReplacements = textCorrection.Replacements,
+                    Message = GetErrorMessage(textCorrection)
+                });
             }
 
-            return new(default);
+            return new(corrections);
         }
 
-        private string GetErrorMessage(CheckTextResponse checkTextResponse)
+        private static string GetErrorMessage(CheckTextResponse checkTextResponse)
         {
             return checkTextResponse.ErrorCode switch
             {

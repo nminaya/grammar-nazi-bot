@@ -28,7 +28,7 @@ namespace GrammarNazi.Core.Services
         public async Task<GrammarCheckResult> GetCorrections(string text)
         {
             // Do not evalulate long texts or empty texts
-            if (string.IsNullOrWhiteSpace(text) || text.Length >= Defaults.MaxLengthText)
+            if (string.IsNullOrWhiteSpace(text) || text.Length >= Defaults.LanguageToolApiMaxTextLength)
             {
                 return new(default);
             }
@@ -36,21 +36,20 @@ namespace GrammarNazi.Core.Services
             string languageCode;
             if (SelectedLanguage != SupportedLanguages.Auto)
             {
-                languageCode = LanguageUtils.GetLanguageCode(SelectedLanguage.GetDescription());
+                languageCode = SelectedLanguage.GetLanguageInformation().TwoLetterISOLanguageName;
             }
             else
             {
                 var languageInfo = _languageService.IdentifyLanguage(text);
 
-                if (languageInfo != default)
+                if (languageInfo == default)
                 {
-                    // Use API language auto detection
-                    languageCode = "auto";
-                }
-                else // language not supported
-                {
+                    // language not supported
                     return new(default);
                 }
+                
+                // Use API language auto detection
+                languageCode = "auto";
             }
 
             var result = await _apiClient.Check(text, languageCode);
@@ -104,6 +103,8 @@ namespace GrammarNazi.Core.Services
                 && match.Rule.Id != "SPANISH_WORD_REPEAT_RULE"
                 && match.Rule.Id != "ES_QUESTION_MARK"
                 && match.Rule.Id != "GONNA"
+                && match.Rule.Id != "DECIMAL_COMMA"
+                && match.Rule.Id != "ONOMATOPEYAS"
                 && match.Rule.Id != "INCORRECT_SPACES";
         }
 

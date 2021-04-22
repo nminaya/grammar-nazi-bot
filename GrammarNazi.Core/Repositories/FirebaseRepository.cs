@@ -1,12 +1,14 @@
 ﻿using Firebase.Database;
 using Firebase.Database.Query;
 using GrammarNazi.Domain.Repositories;
+using Microsoft.Extensions.Logging;
 using Newtonsoft.Json;
 using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Linq.Expressions;
 using System.Reactive.Linq;
+using System.Runtime.CompilerServices;
 using System.Threading.Tasks;
 
 namespace GrammarNazi.Core.Repositories
@@ -14,24 +16,26 @@ namespace GrammarNazi.Core.Repositories
     public class FirebaseRepository<T> : IRepository<T> where T : class
     {
         private readonly FirebaseClient _firebaseClient;
+        private readonly ILogger<T> _logger;
 
-        private static object lockObject = new object();
+        private string TypeName => typeof(T).Name;
 
-        public FirebaseRepository(FirebaseClient firebaseClient)
+        public FirebaseRepository(FirebaseClient firebaseClient, ILogger<T> logger)
         {
             _firebaseClient = firebaseClient;
+            _logger = logger;
         }
 
         public async Task Add(T entity)
         {
-            await _firebaseClient.Child(typeof(T).Name).PostAsync(JsonConvert.SerializeObject(entity));
+            await ExecuteFirebaseQuery(() => _firebaseClient.Child(TypeName).PostAsync(JsonConvert.SerializeObject(entity)));
         }
 
         public async Task<bool> Any(Expression<Func<T, bool>> filter = default)
         {
             if (filter == default)
             {
-                var items = await _firebaseClient.Child(typeof(T).Name).OrderByKey().LimitToFirst(1).OnceAsync<T>();
+                var items = await ExecuteFirebaseQuery(() => _firebaseClient.Child(TypeName).OrderByKey().LimitToFirst(1).OnceAsync<T>());
                 return items.Count > 0;
             }
 
@@ -42,13 +46,13 @@ namespace GrammarNazi.Core.Repositories
 
         public async Task Delete(T entity)
         {
-            var results = await _firebaseClient.Child(typeof(T).Name).OnceAsync<T>();
+            var results = await _firebaseClient.Child(TypeName).OnceAsync<T>();
 
             var firebaseObject = results.FirstOrDefault(v => v.Object.Equals(entity));
 
             if (firebaseObject != default)
             {
-                await _firebaseClient.Child(typeof(T).Name).Child(firebaseObject.Key).DeleteAsync();
+                await ExecuteFirebaseQuery(() => _firebaseClient.Child(TypeName).Child(firebaseObject.Key).DeleteAsync());
             }
         }
 
@@ -66,25 +70,57 @@ namespace GrammarNazi.Core.Repositories
             return results.Max(selector.Compile());
         }
 
-        public Task Update(T entity, Expression<Func<T, bool>> identifier)
+        public async Task Update(T entity, Expression<Func<T, bool>> identifier)
         {
-            // Workaround to avoid duplicity
-            lock (lockObject)
+            var results = await ExecuteFirebaseQuery(() => _firebaseClient.Child(TypeName).OnceAsync<T>());
+
+            var firebaseObject = results.FirstOrDefault(v => v.Object.Equals(entity));
+
+            if (firebaseObject == default)
             {
-                var items = GetAllItems().GetAwaiter().GetResult();
-                var filteredItems = items.Where(identifier.Compile());
-
-                foreach (var item in filteredItems)
-                {
-                    Delete(item).GetAwaiter().GetResult();
-                }
-
-                Add(entity).GetAwaiter().GetResult();
+                throw new InvalidOperationException($"Firebase object not found. {TypeName}:{entity}");
             }
 
-            return Task.CompletedTask;
+            await ExecuteFirebaseQuery(() => _firebaseClient.Child(TypeName).Child(firebaseObject.Key).PutAsync(JsonConvert.SerializeObject(entity)));
         }
 
-        private async Task<IEnumerable<T>> GetAllItems() => (await _firebaseClient.Child(typeof(T).Name).OnceAsync<T>()).Select(v => v.Object);
+        private async Task<IEnumerable<T>> GetAllItems()
+        {
+            var allItems = await ExecuteFirebaseQuery(() => _firebaseClient.Child(TypeName).OnceAsync<T>());
+
+            return allItems.Select(v => v.Object);
+        }
+
+        public async Task<IEnumerable<T>> GetAll(Expression<Func<T, bool>> filter)
+        {
+            var items = await GetAllItems();
+
+            return items.Where(filter.Compile());
+        }
+
+        private async Task<TResult> ExecuteFirebaseQuery<TResult>(Func<Task<TResult>> action, [CallerMemberName] string callerMemberName = "")
+        {
+            try
+            {
+                return await action();
+            }
+            catch (FirebaseException ex)
+            {
+                _logger.LogWarning(ex, $"Error on {callerMemberName}: {ex.Message}");
+
+                // wrap FirebaseException in InvalidOperationException with a different message
+                // to avoid exposing database data
+                throw new InvalidOperationException($"Error on {callerMemberName}", ex.InnerException);
+            }
+        }
+
+        private Task ExecuteFirebaseQuery(Func<Task> action, [CallerMemberName] string callerMemberName = "")
+        {
+            return ExecuteFirebaseQuery(async () =>
+            {
+                await action();
+                return 0;
+            }, callerMemberName);
+        }
     }
 }

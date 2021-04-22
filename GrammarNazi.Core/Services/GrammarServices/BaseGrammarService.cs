@@ -1,5 +1,4 @@
 ﻿using GrammarNazi.Core.Extensions;
-using GrammarNazi.Core.Utilities;
 using GrammarNazi.Domain.Enums;
 using System;
 using System.Collections.Generic;
@@ -25,7 +24,7 @@ namespace GrammarNazi.Core.Services
 
         public void SetWhiteListWords(IEnumerable<string> whiteListWords)
         {
-            WhiteListWords.Clear();
+            WhiteListWords.RemoveAll(_ => true);
 
             if (whiteListWords?.Any() == true)
             {
@@ -40,7 +39,7 @@ namespace GrammarNazi.Core.Services
 
         protected static string GetCorrectionMessage(string word, string language)
         {
-            if (language == LanguageUtils.GetLanguageCode(SupportedLanguages.English.GetDescription()))
+            if (language == SupportedLanguages.English.GetLanguageInformation().TwoLetterISOLanguageName)
                 return $"The word \"{word}\" doesn't exist or isn't in the dictionary.";
 
             return $"La palabra \"{word}\" no existe o no está en el diccionario.";

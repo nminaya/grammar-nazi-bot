@@ -55,5 +55,10 @@ namespace GrammarNazi.Domain.Entities
         {
             return ChatId.GetHashCode();
         }
-    }
+
+		public override string ToString()
+		{
+			return $"{ChatId}";
+		}
+	}
 }

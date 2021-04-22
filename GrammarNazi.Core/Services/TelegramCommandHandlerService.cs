@@ -1,15 +1,16 @@
 using GrammarNazi.Core.Extensions;
+using GrammarNazi.Domain.BotCommands;
 using GrammarNazi.Domain.Constants;
-using GrammarNazi.Domain.Entities;
 using GrammarNazi.Domain.Enums;
 using GrammarNazi.Domain.Services;
 using System;
+using System.Collections.Generic;
 using System.Linq;
-using System.Text;
 using System.Threading.Tasks;
 using Telegram.Bot;
 using Telegram.Bot.Types;
 using Telegram.Bot.Types.Enums;
+using static GrammarNazi.Core.Utilities.TelegramBotHelper;
 
 namespace GrammarNazi.Core.Services
 {
@@ -17,354 +18,68 @@ namespace GrammarNazi.Core.Services
     {
         private readonly IChatConfigurationService _chatConfigurationService;
         private readonly ITelegramBotClient _client;
+        private readonly IEnumerable<ITelegramBotCommand> _botCommands;
 
         public TelegramCommandHandlerService(IChatConfigurationService chatConfigurationService,
-            ITelegramBotClient telegramBotClient)
+            ITelegramBotClient telegramBotClient,
+            IEnumerable<ITelegramBotCommand> botCommands)
         {
             _chatConfigurationService = chatConfigurationService;
             _client = telegramBotClient;
+            _botCommands = botCommands;
         }
 
         public async Task HandleCommand(Message message)
         {
-            var text = message.Text;
+            var command = _botCommands.FirstOrDefault(v => IsCommand(v.Command, message.Text));
 
-            if (IsCommand(Commands.Start, text))
+            if (command != null)
             {
-                var chatConfig = await _chatConfigurationService.GetConfigurationByChatId(message.Chat.Id);
-                var messageBuilder = new StringBuilder();
-
-                if (chatConfig == null)
-                {
-                    messageBuilder.AppendLine("Hi, I'm GrammarNazi.");
-                    messageBuilder.AppendLine("I'm currently working and correcting all spelling errors in this chat.");
-                    messageBuilder.AppendLine($"Type {Commands.Help} to get useful commands.");
-
-                    var chatConfiguration = new ChatConfiguration
-                    {
-                        ChatId = message.Chat.Id,
-                        GrammarAlgorithm = Defaults.DefaultAlgorithm,
-                        CorrectionStrictnessLevel = CorrectionStrictnessLevels.Intolerant,
-                        SelectedLanguage = SupportedLanguages.Auto
-                    };
-
-                    await _chatConfigurationService.AddConfiguration(chatConfiguration);
-                }
-                else
-                {
-                    if (chatConfig.IsBotStopped)
-                    {
-                        if (!await IsUserAdmin(message))
-                        {
-                            messageBuilder.AppendLine("Only admins can use this command.");
-                        }
-                        else
-                        {
-                            chatConfig.IsBotStopped = false;
-                            await _chatConfigurationService.Update(chatConfig);
-                            messageBuilder.AppendLine("Bot started");
-                        }
-                    }
-                    else
-                    {
-                        messageBuilder.AppendLine("Bot is already started");
-                    }
-                }
-
-                await _client.SendTextMessageAsync(message.Chat.Id, messageBuilder.ToString());
+                await command.Handle(message);
             }
-            else if (IsCommand(Commands.Help, text))
+        }
+
+        public async Task HandleCallBackQuery(CallbackQuery callbackQuery)
+        {
+            var message = callbackQuery.Message;
+
+            if (!await IsUserAdmin(_client, callbackQuery.Message, callbackQuery.From))
             {
-                var messageBuilder = new StringBuilder();
-                messageBuilder.AppendLine("Help").AppendLine();
-                messageBuilder.AppendLine("Useful commands:");
-                messageBuilder.AppendLine($"{Commands.Start} start/activate the Bot.");
-                messageBuilder.AppendLine($"{Commands.Stop} stop/disable the Bot.");
-                messageBuilder.AppendLine($"{Commands.Settings} get configured settings.");
-                messageBuilder.AppendLine($"{Commands.SetAlgorithm} <algorithm_number> to set an algorithm.");
-                messageBuilder.AppendLine($"{Commands.Language} <language_number> to set a language.");
-                messageBuilder.AppendLine($"{Commands.ShowDetails} Show correction details");
-                messageBuilder.AppendLine($"{Commands.HideDetails} Hide correction details");
-                messageBuilder.AppendLine($"{Commands.WhiteList} See list of ignored words.");
-                messageBuilder.AppendLine($"{Commands.AddWhiteList} <word> to add a Whitelist word.");
-                messageBuilder.AppendLine($"{Commands.RemoveWhiteList} <word> to remove a Whitelist word.");
-                messageBuilder.AppendLine($"{Commands.Tolerant} Set strictness level to {CorrectionStrictnessLevels.Tolerant.GetDescription()}");
-                messageBuilder.AppendLine($"{Commands.Intolerant} Set strictness level to {CorrectionStrictnessLevels.Intolerant.GetDescription()}");
+                var userMention = $"[{callbackQuery.From.FirstName} {callbackQuery.From.LastName}](tg://user?id={callbackQuery.From.Id})";
 
-                await _client.SendTextMessageAsync(message.Chat.Id, messageBuilder.ToString());
+                await _client.SendTextMessageAsync(message.Chat.Id, $"{userMention} Only admins can use this command.", ParseMode.Markdown);
+                return;
             }
-            else if (IsCommand(Commands.Settings, text))
+
+            var chatConfig = await _chatConfigurationService.GetConfigurationByChatId(message.Chat.Id);
+
+            var enumTypeString = callbackQuery.Data.Split(".")[0];
+
+            if (enumTypeString == nameof(SupportedLanguages))
             {
-                var chatConfig = await _chatConfigurationService.GetConfigurationByChatId(message.Chat.Id);
+                var languageSelectedString = callbackQuery.Data.Split(".")[1];
 
-                var messageBuilder = new StringBuilder();
-                messageBuilder.AppendLine(GetAvailableAlgorithms(chatConfig.GrammarAlgorithm));
-                messageBuilder.AppendLine(GetSupportedLanguages(chatConfig.SelectedLanguage));
+                var languageSelected = Enum.GetValues(typeof(SupportedLanguages)).Cast<SupportedLanguages>().First(v => v.ToString() == languageSelectedString);
 
-                var showCorrectionDetailsIcon = chatConfig.HideCorrectionDetails ? "❌" : "✅";
-                messageBuilder.AppendLine($"Show correction details {showCorrectionDetailsIcon}").AppendLine();
-                messageBuilder.AppendLine("Strictness level:").AppendLine($"{chatConfig.CorrectionStrictnessLevel.GetDescription()} ✅").AppendLine();
+                chatConfig.SelectedLanguage = languageSelected;
 
-                messageBuilder.AppendLine($"Whitelist Words:").AppendLine($"Type {Commands.WhiteList} to see Whitelist words configured.").AppendLine();
-
-                if (chatConfig.IsBotStopped)
-                    messageBuilder.AppendLine($"The bot is currently stopped. Type {Commands.Start} to activate the Bot.");
-
-                await _client.SendTextMessageAsync(message.Chat.Id, messageBuilder.ToString());
+                await _client.SendTextMessageAsync(message.Chat.Id, $"Language updated: {languageSelected.GetDescription()}");
             }
-            else if (IsCommand(Commands.SetAlgorithm, text))
+            else
             {
-                var messageBuilder = new StringBuilder();
+                var algorithmSelectedString = callbackQuery.Data.Split(".")[1];
 
-                if (!await IsUserAdmin(message))
-                {
-                    messageBuilder.AppendLine("Only admins can use this command.");
-                    await _client.SendTextMessageAsync(message.Chat.Id, messageBuilder.ToString(), replyToMessageId: message.MessageId);
-                    return;
-                }
+                var algorithmSelected = Enum.GetValues(typeof(GrammarAlgorithms)).Cast<GrammarAlgorithms>().First(v => v.ToString() == algorithmSelectedString);
 
-                var parameters = text.Split(" ");
-                if (parameters.Length == 1)
-                {
-                    var chatConfig = await _chatConfigurationService.GetConfigurationByChatId(message.Chat.Id);
+                chatConfig.GrammarAlgorithm = algorithmSelected;
 
-                    messageBuilder.AppendLine($"Parameter not received. Type {Commands.SetAlgorithm} <algorithm_numer> to set an algorithm").AppendLine();
-                    messageBuilder.AppendLine(GetAvailableAlgorithms(chatConfig.GrammarAlgorithm));
-                    await _client.SendTextMessageAsync(message.Chat.Id, messageBuilder.ToString());
-                }
-                else
-                {
-                    bool parsedOk = int.TryParse(parameters[1], out int algorithm);
-
-                    if (parsedOk && algorithm.IsAssignableToEnum<GrammarAlgorithms>())
-                    {
-                        var chatConfig = await _chatConfigurationService.GetConfigurationByChatId(message.Chat.Id);
-                        chatConfig.GrammarAlgorithm = (GrammarAlgorithms)algorithm;
-
-                        // Fire and forget
-                        _ = _chatConfigurationService.Update(chatConfig);
-
-                        await _client.SendTextMessageAsync(message.Chat.Id, "Algorithm updated.");
-                    }
-                    else
-                    {
-                        await _client.SendTextMessageAsync(message.Chat.Id, $"Invalid parameter. Type {Commands.SetAlgorithm} <algorithm_numer> to set an algorithm.");
-                    }
-                }
+                await _client.SendTextMessageAsync(message.Chat.Id, $"Algorithm updated: {algorithmSelected.GetDescription()}");
             }
-            else if (IsCommand(Commands.Language, text))
-            {
-                var messageBuilder = new StringBuilder();
 
-                if (!await IsUserAdmin(message))
-                {
-                    messageBuilder.AppendLine("Only admins can use this command.");
-                    await _client.SendTextMessageAsync(message.Chat.Id, messageBuilder.ToString(), replyToMessageId: message.MessageId);
-                    return;
-                }
+            await _chatConfigurationService.Update(chatConfig);
 
-                var parameters = text.Split(" ");
-
-                if (parameters.Length == 1)
-                {
-                    var chatConfig = await _chatConfigurationService.GetConfigurationByChatId(message.Chat.Id);
-
-                    messageBuilder.AppendLine($"Parameter not received. Type {Commands.Language} <language_number> to set a language.").AppendLine();
-                    messageBuilder.AppendLine(GetSupportedLanguages(chatConfig.SelectedLanguage));
-                    await _client.SendTextMessageAsync(message.Chat.Id, messageBuilder.ToString());
-                }
-                else
-                {
-                    bool parsedOk = int.TryParse(parameters[1], out int language);
-
-                    if (parsedOk && language.IsAssignableToEnum<SupportedLanguages>())
-                    {
-                        var chatConfig = await _chatConfigurationService.GetConfigurationByChatId(message.Chat.Id);
-                        chatConfig.SelectedLanguage = (SupportedLanguages)language;
-
-                        // Fire and forget
-                        _ = _chatConfigurationService.Update(chatConfig);
-
-                        await _client.SendTextMessageAsync(message.Chat.Id, "Language updated.");
-                    }
-                    else
-                    {
-                        await _client.SendTextMessageAsync(message.Chat.Id, $"Invalid parameter. Type {Commands.Language} <language_number> to set a language.");
-                    }
-                }
-            }
-            else if (IsCommand(Commands.Stop, text))
-            {
-                if (!await IsUserAdmin(message))
-                {
-                    await _client.SendTextMessageAsync(message.Chat.Id, "Only admins can use this command.", replyToMessageId: message.MessageId);
-                    return;
-                }
-
-                var chatConfig = await _chatConfigurationService.GetConfigurationByChatId(message.Chat.Id);
-
-                chatConfig.IsBotStopped = true;
-
-                // Fire and forget
-                _ = _chatConfigurationService.Update(chatConfig);
-
-                await _client.SendTextMessageAsync(message.Chat.Id, $"Bot stopped");
-            }
-            else if (IsCommand(Commands.HideDetails, text))
-            {
-                if (!await IsUserAdmin(message))
-                {
-                    await _client.SendTextMessageAsync(message.Chat.Id, "Only admins can use this command.", replyToMessageId: message.MessageId);
-                    return;
-                }
-
-                var chatConfig = await _chatConfigurationService.GetConfigurationByChatId(message.Chat.Id);
-
-                chatConfig.HideCorrectionDetails = true;
-
-                // Fire and forget
-                _ = _chatConfigurationService.Update(chatConfig);
-
-                await _client.SendTextMessageAsync(message.Chat.Id, "Correction details hidden ✅");
-            }
-            else if (IsCommand(Commands.ShowDetails, text))
-            {
-                if (!await IsUserAdmin(message))
-                {
-                    await _client.SendTextMessageAsync(message.Chat.Id, "Only admins can use this command.", replyToMessageId: message.MessageId);
-                    return;
-                }
-
-                var chatConfig = await _chatConfigurationService.GetConfigurationByChatId(message.Chat.Id);
-
-                chatConfig.HideCorrectionDetails = false;
-
-                // Fire and forget
-                _ = _chatConfigurationService.Update(chatConfig);
-
-                await _client.SendTextMessageAsync(message.Chat.Id, "Show correction details ✅");
-            }
-            else if (IsCommand(Commands.Tolerant, text))
-            {
-                if (!await IsUserAdmin(message))
-                {
-                    await _client.SendTextMessageAsync(message.Chat.Id, "Only admins can use this command.", replyToMessageId: message.MessageId);
-                    return;
-                }
-
-                var chatConfig = await _chatConfigurationService.GetConfigurationByChatId(message.Chat.Id);
-
-                chatConfig.CorrectionStrictnessLevel = CorrectionStrictnessLevels.Tolerant;
-
-                // Fire and forget
-                _ = _chatConfigurationService.Update(chatConfig);
-
-                await _client.SendTextMessageAsync(message.Chat.Id, "Tolerant ✅");
-            }
-            else if (IsCommand(Commands.Intolerant, text))
-            {
-                if (!await IsUserAdmin(message))
-                {
-                    await _client.SendTextMessageAsync(message.Chat.Id, "Only admins can use this command.", replyToMessageId: message.MessageId);
-                    return;
-                }
-
-                var chatConfig = await _chatConfigurationService.GetConfigurationByChatId(message.Chat.Id);
-
-                chatConfig.CorrectionStrictnessLevel = CorrectionStrictnessLevels.Intolerant;
-
-                // Fire and forget
-                _ = _chatConfigurationService.Update(chatConfig);
-
-                await _client.SendTextMessageAsync(message.Chat.Id, "Intolerant ✅");
-            }
-            else if (IsCommand(Commands.WhiteList, text))
-            {
-                var chatConfig = await _chatConfigurationService.GetConfigurationByChatId(message.Chat.Id);
-
-                if (chatConfig.WhiteListWords?.Any() == true)
-                {
-                    var messageBuilder = new StringBuilder();
-                    messageBuilder.AppendLine("Whitelist Words:\n");
-
-                    foreach (var word in chatConfig.WhiteListWords)
-                    {
-                        messageBuilder.AppendLine($"- {word}");
-                    }
-
-                    await _client.SendTextMessageAsync(message.Chat.Id, messageBuilder.ToString());
-
-                    return;
-                }
-
-                await _client.SendTextMessageAsync(message.Chat.Id, $"You don't have Whitelist words configured. Use {Commands.AddWhiteList} to add words to the WhiteList.");
-            }
-            else if (IsCommand(Commands.AddWhiteList, text))
-            {
-                if (!await IsUserAdmin(message))
-                {
-                    await _client.SendTextMessageAsync(message.Chat.Id, "Only admins can use this command.", replyToMessageId: message.MessageId);
-                    return;
-                }
-
-                var parameters = text.Split(" ");
-
-                if (parameters.Length == 1)
-                {
-                    await _client.SendTextMessageAsync(message.Chat.Id, $"Parameter not received. Type {Commands.AddWhiteList} <word> to add a Whitelist word.");
-                }
-                else
-                {
-                    var chatConfig = await _chatConfigurationService.GetConfigurationByChatId(message.Chat.Id);
-
-                    var word = parameters[1].Trim();
-
-                    if (chatConfig.WhiteListWords.Contains(word))
-                    {
-                        await _client.SendTextMessageAsync(message.Chat.Id, $"The word '{word}' is already on the WhiteList");
-                        return;
-                    }
-
-                    chatConfig.WhiteListWords.Add(word);
-
-                    _ = _chatConfigurationService.Update(chatConfig);
-
-                    await _client.SendTextMessageAsync(message.Chat.Id, $"Word '{word}' added to the WhiteList.");
-                }
-            }
-            else if (IsCommand(Commands.RemoveWhiteList, text))
-            {
-                if (!await IsUserAdmin(message))
-                {
-                    await _client.SendTextMessageAsync(message.Chat.Id, "Only admins can use this command.", replyToMessageId: message.MessageId);
-                    return;
-                }
-
-                var parameters = text.Split(" ");
-
-                if (parameters.Length == 1)
-                {
-                    await _client.SendTextMessageAsync(message.Chat.Id, $"Parameter not received. Type {Commands.RemoveWhiteList} <word> to remove a Whitelist word.");
-                }
-                else
-                {
-                    var chatConfig = await _chatConfigurationService.GetConfigurationByChatId(message.Chat.Id);
-
-                    var word = parameters[1].Trim();
-
-                    if (!chatConfig.WhiteListWords.Contains(word))
-                    {
-                        await _client.SendTextMessageAsync(message.Chat.Id, $"The word '{word}' is not in the WhiteList.");
-                        return;
-                    }
-
-                    chatConfig.WhiteListWords.Remove(word);
-
-                    _ = _chatConfigurationService.Update(chatConfig);
-
-                    await _client.SendTextMessageAsync(message.Chat.Id, $"Word '{word}' removed from the WhiteList.");
-                }
-            }
+            // Fire and forget
+            _ = _client.DeleteMessageAsync(callbackQuery.Message.Chat.Id, callbackQuery.Message.MessageId);
         }
 
         private static bool IsCommand(string expected, string actual)
@@ -377,49 +92,6 @@ namespace GrammarNazi.Core.Services
             }
 
             return actual.StartsWith(expected);
-        }
-
-        private async Task<bool> IsUserAdmin(Message message)
-        {
-            if (message.Chat.Type == ChatType.Private)
-                return true;
-
-            var chatAdministrators = await _client.GetChatAdministratorsAsync(message.Chat.Id);
-            var currentUserId = message.From.Id;
-
-            return chatAdministrators.Any(v => v.User.Id == currentUserId);
-        }
-
-        private static string GetAvailableAlgorithms(GrammarAlgorithms selectedAlgorith)
-        {
-            var algorithms = Enum.GetValues(typeof(GrammarAlgorithms)).Cast<GrammarAlgorithms>();
-
-            var messageBuilder = new StringBuilder();
-            messageBuilder.AppendLine("Algorithms available:");
-
-            foreach (var item in algorithms)
-            {
-                var selected = item == selectedAlgorith ? "✅" : "";
-                messageBuilder.AppendLine($"{(int)item} - {item.GetDescription()} {selected}");
-            }
-
-            return messageBuilder.ToString();
-        }
-
-        private static string GetSupportedLanguages(SupportedLanguages selectedLanguage)
-        {
-            var languages = Enum.GetValues(typeof(SupportedLanguages)).Cast<SupportedLanguages>();
-
-            var messageBuilder = new StringBuilder();
-            messageBuilder.AppendLine("Supported Languages:");
-
-            foreach (var item in languages)
-            {
-                var selected = item == selectedLanguage ? "✅" : "";
-                messageBuilder.AppendLine($"{(int)item} - {item} {selected}");
-            }
-
-            return messageBuilder.ToString();
         }
     }
 }

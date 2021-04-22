@@ -21,9 +21,19 @@ namespace GrammarNazi.Core
             modelBuilder.Entity<TwitterLog>()
                 .HasKey(v => v.TweetId);
 
+            modelBuilder.Entity<ScheduledTweet>()
+                .HasKey(v => v.Id);
+
+            modelBuilder.Entity<DiscordChannelConfig>()
+                .HasKey(v => v.ChannelId);
+
             modelBuilder.Entity<ChatConfiguration>()
                 .Property(e => e.WhiteListWords)
                 .HasConversion(v => v.Join(","), v => v.Split(',', StringSplitOptions.RemoveEmptyEntries).ToList());
+
+            modelBuilder.Entity<DiscordChannelConfig>()
+                .Property(e => e.WhiteListWords)
+                .HasConversion(v => string.Join(",", v), v => v.Split(',', StringSplitOptions.RemoveEmptyEntries).ToList());
         }
     }
 }

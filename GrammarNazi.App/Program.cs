@@ -1,31 +1,20 @@
+using GrammarNazi.App;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.Extensions.Hosting;
 using System;
 
-namespace GrammarNazi.App
-{
-    public class Program
+Host.CreateDefaultBuilder(args)
+    .ConfigureWebHostDefaults(webBuilder =>
     {
-        public static void Main(string[] args)
+        webBuilder.UseStartup<Startup>();
+        webBuilder.UseKestrel((_, options) =>
         {
-            CreateHostBuilder(args).Build().Run();
-        }
-
-        public static IHostBuilder CreateHostBuilder(string[] args)
-        {
-            return Host.CreateDefaultBuilder(args)
-                    .ConfigureWebHostDefaults(webBuilder =>
-                    {
-                        webBuilder.UseStartup<Startup>();
-                        webBuilder.UseKestrel((_, options) =>
-                        {
-                            var port = Environment.GetEnvironmentVariable("PORT");
-                            if (!string.IsNullOrEmpty(port))
-                            {
-                                options.ListenAnyIP(int.Parse(port));
-                            }
-                        });
-                    });
-        }
-    }
-}
+            var port = Environment.GetEnvironmentVariable("PORT");
+            if (!string.IsNullOrEmpty(port))
+            {
+                options.ListenAnyIP(int.Parse(port));
+            }
+        });
+    })
+    .Build()
+    .Run();

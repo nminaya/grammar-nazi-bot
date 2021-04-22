@@ -1,6 +1,9 @@
-﻿using Microsoft.EntityFrameworkCore;
+﻿using GrammarNazi.Domain.BotCommands;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using NTextCat;
+using System.Linq;
+using System.Reflection;
 
 namespace GrammarNazi.Core.Extensions
 {
@@ -24,6 +27,35 @@ namespace GrammarNazi.Core.Extensions
             using var scope = serviceCollection.BuildServiceProvider().CreateScope();
             var context = scope.ServiceProvider.GetService<DbContext>();
             context.Database.EnsureCreated();
+        }
+
+        public static IServiceCollection AddDiscordBotCommands(this IServiceCollection serviceCollection)
+        {
+            // All IDiscordBotCommand classes in the current Assembly
+            return AddTransientInstancesOf<IDiscordBotCommand>(serviceCollection);
+        }
+
+        public static IServiceCollection AddTelegramBotCommands(this IServiceCollection serviceCollection)
+        {
+            // All ITelegramBotCommand classes in the current Assembly
+            return AddTransientInstancesOf<ITelegramBotCommand>(serviceCollection);
+        }
+
+        private static IServiceCollection AddTransientInstancesOf<T>(IServiceCollection serviceCollection)
+        {
+            var type = typeof(T);
+
+            var commandClassTypes = Assembly
+                .GetExecutingAssembly()
+                .GetTypes()
+                .Where(v => v.IsAssignableTo(type));
+
+            foreach (var commandClassType in commandClassTypes)
+            {
+                serviceCollection.AddTransient(type, commandClassType);
+            }
+
+            return serviceCollection;
         }
     }
 }

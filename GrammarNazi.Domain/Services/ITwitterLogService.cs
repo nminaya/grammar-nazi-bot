@@ -9,5 +9,7 @@ namespace GrammarNazi.Domain.Services
         Task LogReply(long tweetId, long replyTweetId);
 
         Task LogTweet(long tweetId);
+
+        Task<bool> TweetExist(long tweetId);
     }
 }

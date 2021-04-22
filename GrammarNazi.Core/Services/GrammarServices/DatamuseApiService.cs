@@ -42,12 +42,12 @@ namespace GrammarNazi.Core.Services
             }
             else
             {
-                language = LanguageUtils.GetLanguageCode(SelectedLanguage.GetDescription());
+                language = SelectedLanguage.GetLanguageInformation().TwoLetterISOLanguageName;
             }
 
             var words = text.Split(" ")
                 .Select(StringUtils.RemoveSpecialCharacters)
-                .Where(v => char.IsLetter(v[0]) && !IsWhiteListWord(v));
+                .Where(v => !string.IsNullOrEmpty(v) && char.IsLetter(v[0]) && !IsWhiteListWord(v));
 
             var wordCheckTasks = words.Select(v => _datamuseApiClient.CheckWord(v, language));
 
@@ -57,15 +57,17 @@ namespace GrammarNazi.Core.Services
             {
                 var wordCheckResult = await wordCheckResultTask;
 
-                if (wordCheckResult.IsWrongWord)
+                if (!wordCheckResult.IsWrongWord)
                 {
-                    corrections.Add(new()
-                    {
-                        WrongWord = wordCheckResult.Word,
-                        PossibleReplacements = wordCheckResult.SimilarWords.Select(v => v.Word),
-                        Message = GetCorrectionMessage(wordCheckResult.Word, language)
-                    });
+                    continue;
                 }
+
+                corrections.Add(new()
+                {
+                    WrongWord = wordCheckResult.Word,
+                    PossibleReplacements = wordCheckResult.SimilarWords.Select(v => v.Word),
+                    Message = GetCorrectionMessage(wordCheckResult.Word, language)
+                });
             }
 
             return new(corrections);

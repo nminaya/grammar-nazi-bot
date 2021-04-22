@@ -1,5 +1,7 @@
+using Discord.WebSocket;
 using Firebase.Database;
 using GrammarNazi.App.HostedServices;
+using GrammarNazi.Core;
 using GrammarNazi.Core.Clients;
 using GrammarNazi.Core.Extensions;
 using GrammarNazi.Core.Repositories;
@@ -12,6 +14,7 @@ using GrammarNazi.Domain.Services;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Http;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
@@ -39,6 +42,7 @@ namespace GrammarNazi.App
             // Hosted services
             services.AddHostedService<TelegramBotHostedService>();
             services.AddHostedService<TwitterBotHostedService>();
+            services.AddHostedService<DiscordBotHostedService>();
 
             ConfigureDependencies(services);
         }
@@ -48,14 +52,21 @@ namespace GrammarNazi.App
             // Settings
             services.Configure<TwitterBotSettings>(Configuration.GetSection("AppSettings:TwitterBotSettings"));
             services.Configure<GithubSettings>(Configuration.GetSection("AppSettings:GithubSettings"));
+            services.Configure<DiscordSettings>(d => d.Token = Environment.GetEnvironmentVariable("DISCORD_API_KEY"));
             services.Configure<MeaningCloudSettings>(m =>
             {
                 m.MeaningCloudHostUrl = Configuration.GetSection("AppSettings:MeaningCloudSettings:MeaningCloudHostUrl").Value;
                 m.Key = Environment.GetEnvironmentVariable("MEANING_CLOUD_API_KEY");
             });
 
+            // TODO: Move this to a extension
+            services.AddDbContext<GrammarNaziContext>(options =>
+            {
+                options.UseSqlServer(Environment.GetEnvironmentVariable("SQL_SERVER_CONNECTION_STRING"));
+            });
+
             // Repository
-            services.AddTransient(typeof(IRepository<>), typeof(FirebaseRepository<>)); // Use Firebase for now
+            services.AddTransient(typeof(IRepository<>), typeof(EFRepository<>));
 
             // Services
             services.AddSingleton<IFileService, FileService>();
@@ -64,7 +75,9 @@ namespace GrammarNazi.App
             services.AddTransient<IMeganingCloudLangApiClient, MeganingCloudLangApiClient>();
             services.AddTransient<IYandexSpellerApiClient, YandexSpellerApiClient>();
             services.AddTransient<IDatamuseApiClient, DatamuseApiClient>();
+            services.AddTransient<ISentimApiClient, SentimApiClient>();
             services.AddTransient<IChatConfigurationService, ChatConfigurationService>();
+            services.AddTransient<IScheduledTweetService, ScheduledTweetService>();
             services.AddTransient<ILanguageService, NTextCatLanguageService>();
             services.AddTransient<IGrammarService, LanguageToolApiService>();
             services.AddTransient<IGrammarService, InternalFileGrammarService>();
@@ -73,6 +86,17 @@ namespace GrammarNazi.App
             services.AddTransient<ITwitterLogService, TwitterLogService>();
             services.AddTransient<IGithubService, GithubService>();
             services.AddTransient<ITelegramCommandHandlerService, TelegramCommandHandlerService>();
+            services.AddTransient<ISentimentAnalysisService, SentimentAnalysisService>();
+            services.AddTransient<IDiscordChannelConfigService, DiscordChannelConfigService>();
+            services.AddTransient<IDiscordCommandHandlerService, DiscordCommandHandlerService>();
+
+            services.AddTransient<DbContext, GrammarNaziContext>();
+
+            // Discord Bot Commands
+            services.AddDiscordBotCommands();
+
+            // Telegram Bot Commands
+            services.AddTelegramBotCommands();
 
             // HttpClient
             services.AddHttpClient();
@@ -121,6 +145,9 @@ namespace GrammarNazi.App
                     Credentials = new Credentials(githubToken)
                 };
             });
+
+            // Discord Client
+            services.AddSingleton<BaseSocketClient, DiscordSocketClient>();
         }
 
         public void Configure(IApplicationBuilder app, IWebHostEnvironment env)

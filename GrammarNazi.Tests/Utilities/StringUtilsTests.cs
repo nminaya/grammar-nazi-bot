@@ -51,6 +51,10 @@ namespace GrammarNazi.Tests.Utilities
         }
 
         [Theory]
+        [InlineData("bored🔫😡😆😡❤️😡😡❤️", "bored")]
+        [InlineData("testé🔫😡😆😡❤️😡😡❤️", "testé")]
+        [InlineData("é🔫😡á😆é😡❤️😡ú😡❤️ ó", "éáéú ó")]
+        [InlineData("🔫😡Don't😆😡❤️😡😡❤️", "Don't")]
         [InlineData("This is fun 😂", "This is fun")]
         [InlineData("😀😁😂🤣😃😄😅😆💋👏😜💖😢😎🎶😉😍😒😘🤞😊😩😬👍", "")]
         [InlineData("Test😁Test1", "TestTest1")]
@@ -59,6 +63,56 @@ namespace GrammarNazi.Tests.Utilities
         {
             // Arrange > Act
             var result = StringUtils.RemoveEmojis(actual);
+
+            // Assert
+            Assert.Equal(expected, result);
+        }
+
+        [Fact]
+        public void RemoveCodeBlocks_GivenStringWithSingleCodeBlock_Should_RemoveCodeBlock()
+        {
+            const string test = @"```cs
+                                private void Test() => Console.WriteLine(""Method param"");
+                                ```
+                                This is a test";
+
+            var result = StringUtils.RemoveCodeBlocks(test);
+
+            Assert.DoesNotContain("private void Test() => Console.WriteLine", result);
+            Assert.Contains("This is a test", result);
+        }
+
+        [Fact]
+        public void RemoveCodeBlocks_GivenStringWithMultipleCodeBlocks_Should_RemoveAllCodeBlocks()
+        {
+            const string test = @"```cs
+                                private void Test() => Console.WriteLine(""Method param"");
+                                ```
+                                This is a test1
+                                ```javascript
+                                function test() {
+                                 console.log(""Method param"");
+                                }
+                                ```
+                                This is a test2
+                                ";
+
+            var result = StringUtils.RemoveCodeBlocks(test);
+
+            Assert.DoesNotContain("private void Test() => Console.WriteLine", result);
+            Assert.DoesNotContain("console.log", result);
+            Assert.Contains("This is a test", result);
+            Assert.Contains("This is a test2", result);
+        }
+
+        [Theory]
+        [InlineData("This is a **test**", "This is a test")]
+        [InlineData("This is a _test_", "This is a test")]
+        [InlineData("**This** is *a* _test_", "This is a test")]
+        public void MarkDownToPlainText_GivenString_Should_ReturnsExpectedResult(string actual, string expected)
+        {
+            // Arrange > Act
+            var result = StringUtils.MarkDownToPlainText(actual);
 
             // Assert
             Assert.Equal(expected, result);

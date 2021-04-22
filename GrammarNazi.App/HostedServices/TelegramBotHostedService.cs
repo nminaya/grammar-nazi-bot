@@ -3,7 +3,6 @@ using GrammarNazi.Domain.Constants;
 using GrammarNazi.Domain.Entities;
 using GrammarNazi.Domain.Enums;
 using GrammarNazi.Domain.Services;
-using Microsoft.AspNetCore.Hosting;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using System;
@@ -25,7 +24,6 @@ namespace GrammarNazi.App.HostedServices
         private readonly ILogger<TelegramBotHostedService> _logger;
         private readonly IEnumerable<IGrammarService> _grammarServices;
         private readonly IChatConfigurationService _chatConfigurationService;
-        private readonly IWebHostEnvironment _webHostEnvironment;
         private readonly ITelegramBotClient _client;
         private readonly ITelegramCommandHandlerService _telegramCommandHandlerService;
         private readonly IGithubService _githubService;
@@ -34,14 +32,12 @@ namespace GrammarNazi.App.HostedServices
             ITelegramBotClient telegramBotClient,
             IEnumerable<IGrammarService> grammarServices,
             IChatConfigurationService chatConfigurationService,
-            IWebHostEnvironment webHostEnvironment,
             ITelegramCommandHandlerService telegramCommandHandlerService,
             IGithubService githubService)
         {
             _logger = logger;
             _grammarServices = grammarServices;
             _chatConfigurationService = chatConfigurationService;
-            _webHostEnvironment = webHostEnvironment;
             _client = telegramBotClient;
             _telegramCommandHandlerService = telegramCommandHandlerService;
             _githubService = githubService;
@@ -58,16 +54,46 @@ namespace GrammarNazi.App.HostedServices
                 {
                     await OnMessageReceived(obj, eventArgs);
                 }
-                catch (ApiRequestException ex) when (ex.Message.Contains("bot was blocked by the user"))
+                catch (ApiRequestException ex)
                 {
-                    _logger.LogWarning(ex, "User has blocked the Bot");
+                    if (ex.Message.Contains("bot was blocked by the user"))
+                    {
+                        _logger.LogWarning(ex, "User has blocked the Bot");
+                    }
+                    else if (ex.Message.Contains("bot was kicked from the supergroup"))
+                    {
+                        _logger.LogWarning(ex, "Bot was kicked from supergroup");
+                    }
+                    else if (ex.Message.Contains("have no rights to send a message"))
+                    {
+                        _logger.LogWarning(ex, "Bot has no rights to send a message");
+                    }
+                    else
+                    {
+                        _logger.LogError(ex, ex.Message);
+                    }
                 }
                 catch (Exception ex)
                 {
                     _logger.LogError(ex, ex.Message);
 
                     // fire and forget
-                    _ = _githubService.CreateBugIssue($"Application Exception: {ex.Message}", ex);
+                    _ = _githubService.CreateBugIssue($"Application Exception: {ex.Message}", ex, GithubIssueLabels.Telegram);
+                }
+            };
+
+            _client.OnCallbackQuery += async (obj, eventArgs) =>
+            {
+                try
+                {
+                    await _telegramCommandHandlerService.HandleCallBackQuery(eventArgs.CallbackQuery);
+                }
+                catch (Exception ex)
+                {
+                    _logger.LogError(ex, ex.Message);
+
+                    // fire and forget
+                    _ = _githubService.CreateBugIssue($"Application Exception: {ex.Message}", ex, GithubIssueLabels.Telegram);
                 }
             };
 
@@ -79,21 +105,18 @@ namespace GrammarNazi.App.HostedServices
         {
             var message = messageEvent.Message;
 
-            _logger.LogInformation($"Message received from chat id: {message.Chat.Id}");
-
             if (message.Type != MessageType.Text) // We only analyze Text messages
                 return;
 
-            if (_webHostEnvironment.IsDevelopment())
-                _logger.LogInformation($"Message: {message.Text}");
+            _logger.LogInformation($"Message received from chat id: {message.Chat.Id}");
+
+            var chatConfig = await GetChatConfiguration(message.Chat.Id);
 
             if (message.Text.StartsWith('/')) // Text is a command
             {
                 await _telegramCommandHandlerService.HandleCommand(message);
                 return;
             }
-
-            var chatConfig = await GetChatConfiguration(message.Chat.Id);
 
             if (chatConfig.IsBotStopped)
                 return;
@@ -105,21 +128,24 @@ namespace GrammarNazi.App.HostedServices
 
             var corretionResult = await grammarService.GetCorrections(text);
 
-            if (corretionResult.HasCorrections)
+            if (!corretionResult.HasCorrections)
+                return;
+
+            // Send "Typing..." notification
+            await _client.SendChatActionAsync(message.Chat.Id, ChatAction.Typing);
+
+            var messageBuilder = new StringBuilder();
+
+            foreach (var correction in corretionResult.Corrections)
             {
-                var messageBuilder = new StringBuilder();
+                var correctionDetailMessage = !chatConfig.HideCorrectionDetails && !string.IsNullOrEmpty(correction.Message)
+                    ? $"[{correction.Message}]"
+                    : string.Empty;
 
-                foreach (var correction in corretionResult.Corrections)
-                {
-                    var correctionDetailMessage = !chatConfig.HideCorrectionDetails && !string.IsNullOrEmpty(correction.Message)
-                        ? $"[{correction.Message}]"
-                        : string.Empty;
-
-                    messageBuilder.AppendLine($"*{correction.PossibleReplacements.First()} {correctionDetailMessage}");
-                }
-
-                await _client.SendTextMessageAsync(message.Chat.Id, messageBuilder.ToString(), replyToMessageId: message.MessageId);
+                messageBuilder.AppendLine($"*{correction.PossibleReplacements.First()} {correctionDetailMessage}");
             }
+
+            await _client.SendTextMessageAsync(message.Chat.Id, messageBuilder.ToString(), replyToMessageId: message.MessageId);
         }
 
         private async Task<ChatConfiguration> GetChatConfiguration(long chatId)
@@ -128,6 +154,11 @@ namespace GrammarNazi.App.HostedServices
 
             if (chatConfig != null)
                 return chatConfig;
+            var messageBuilder = new StringBuilder();
+
+            messageBuilder.AppendLine("Hi, I'm GrammarNazi.");
+            messageBuilder.AppendLine("I'm currently working and correcting all spelling errors in this chat.");
+            messageBuilder.AppendLine($"Type {TelegramBotCommands.Help} to get useful commands.");
 
             var chatConfiguration = new ChatConfiguration
             {
@@ -137,6 +168,7 @@ namespace GrammarNazi.App.HostedServices
             };
 
             await _chatConfigurationService.AddConfiguration(chatConfiguration);
+            await _client.SendTextMessageAsync(chatId, messageBuilder.ToString());
 
             return chatConfiguration;
         }
