@@ -59,11 +59,7 @@ namespace GrammarNazi.App
                 m.Key = Environment.GetEnvironmentVariable("MEANING_CLOUD_API_KEY");
             });
 
-            // TODO: Move this to a extension
-            services.AddDbContext<GrammarNaziContext>(options =>
-            {
-                options.UseSqlServer(Environment.GetEnvironmentVariable("SQL_SERVER_CONNECTION_STRING"));
-            });
+            services.AddSqlServerDbContext(Environment.GetEnvironmentVariable("SQL_SERVER_CONNECTION_STRING"));
 
             // Repository
             services.AddTransient(typeof(IRepository<>), typeof(EFRepository<>));
@@ -89,8 +85,6 @@ namespace GrammarNazi.App
             services.AddTransient<ISentimentAnalysisService, SentimentAnalysisService>();
             services.AddTransient<IDiscordChannelConfigService, DiscordChannelConfigService>();
             services.AddTransient<IDiscordCommandHandlerService, DiscordCommandHandlerService>();
-
-            services.AddTransient<DbContext, GrammarNaziContext>();
 
             // Discord Bot Commands
             services.AddDiscordBotCommands();

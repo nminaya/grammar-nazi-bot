@@ -22,6 +22,14 @@ namespace GrammarNazi.Core.Extensions
             return serviceCollection;
         }
 
+        public static IServiceCollection AddSqlServerDbContext(this IServiceCollection serviceCollection, string connectionString)
+        {
+            serviceCollection.AddDbContext<GrammarNaziContext>(options => options.UseSqlServer(connectionString));
+            serviceCollection.AddTransient<DbContext, GrammarNaziContext>();
+
+            return serviceCollection;
+        }
+
         public static void EnsureDatabaseCreated(this IServiceCollection serviceCollection)
         {
             using var scope = serviceCollection.BuildServiceProvider().CreateScope();
