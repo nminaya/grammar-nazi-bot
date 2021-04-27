@@ -23,19 +23,16 @@ namespace GrammarNazi.App.HostedServices
     public class TelegramBotHostedService : BackgroundService
     {
         private readonly ILogger<TelegramBotHostedService> _logger;
-        private readonly IEnumerable<IGrammarService> _grammarServices;
         private readonly ITelegramBotClient _client;
         private readonly IGithubService _githubService;
         private readonly IServiceScopeFactory _serviceScopeFactory;
 
         public TelegramBotHostedService(ILogger<TelegramBotHostedService> logger,
             ITelegramBotClient telegramBotClient,
-            IEnumerable<IGrammarService> grammarServices,
             IServiceScopeFactory serviceScopeFactory,
             IGithubService githubService)
         {
             _logger = logger;
-            _grammarServices = grammarServices;
             _client = telegramBotClient;
             _githubService = githubService;
             _serviceScopeFactory = serviceScopeFactory;
@@ -52,25 +49,15 @@ namespace GrammarNazi.App.HostedServices
                 {
                     using var scope = _serviceScopeFactory.CreateScope();
 
-                    var chatConfigurationService = scope.ServiceProvider.GetService<IChatConfigurationService>();
-                    var telegramCommandHandlerService = scope.ServiceProvider.GetService<ITelegramCommandHandlerService>();
-                    // TODO: Add IEnumerable<IGrammarService> to this scope
-
-                    await OnMessageReceived(obj, eventArgs, chatConfigurationService, telegramCommandHandlerService);
+                    await OnMessageReceived(obj, eventArgs, scope.ServiceProvider);
                 }
                 catch (ApiRequestException ex)
                 {
-                    if (ex.Message.Contains("bot was blocked by the user"))
+                    var warningMessages = new[] { "bot was blocked by the user", "bot was kicked from the supergroup", "have no rights to send a message" };
+
+                    if (warningMessages.Any(x => ex.Message.Contains(x)))
                     {
-                        _logger.LogWarning(ex, "User has blocked the Bot");
-                    }
-                    else if (ex.Message.Contains("bot was kicked from the supergroup"))
-                    {
-                        _logger.LogWarning(ex, "Bot was kicked from supergroup");
-                    }
-                    else if (ex.Message.Contains("have no rights to send a message"))
-                    {
-                        _logger.LogWarning(ex, "Bot has no rights to send a message");
+                        _logger.LogWarning(ex, ex.Message);
                     }
                     else
                     {
@@ -108,11 +95,7 @@ namespace GrammarNazi.App.HostedServices
             await Task.Delay(Timeout.Infinite, stoppingToken);
         }
 
-        private async Task OnMessageReceived(
-            object sender,
-            MessageEventArgs messageEvent,
-            IChatConfigurationService chatConfigurationService,
-            ITelegramCommandHandlerService telegramCommandHandlerService)
+        private async Task OnMessageReceived(object sender, MessageEventArgs messageEvent, IServiceProvider serviceProvider)
         {
             var message = messageEvent.Message;
 
@@ -121,10 +104,12 @@ namespace GrammarNazi.App.HostedServices
 
             _logger.LogInformation($"Message received from chat id: {message.Chat.Id}");
 
-            var chatConfig = await GetChatConfiguration(message.Chat.Id, chatConfigurationService);
+            var chatConfig = await GetChatConfiguration(message.Chat.Id, serviceProvider);
 
             if (message.Text.StartsWith('/')) // Text is a command
             {
+                var telegramCommandHandlerService = serviceProvider.GetService<ITelegramCommandHandlerService>();
+
                 await telegramCommandHandlerService.HandleCommand(message);
                 return;
             }
@@ -132,7 +117,7 @@ namespace GrammarNazi.App.HostedServices
             if (chatConfig.IsBotStopped)
                 return;
 
-            var grammarService = GetConfiguredGrammarService(chatConfig);
+            var grammarService = GetConfiguredGrammarService(chatConfig, serviceProvider);
 
             // Remove emojis, hashtags, mentions and mentions of users without username
             var text = GetCleanedText(message);
@@ -159,8 +144,10 @@ namespace GrammarNazi.App.HostedServices
             await _client.SendTextMessageAsync(message.Chat.Id, messageBuilder.ToString(), replyToMessageId: message.MessageId);
         }
 
-        private async Task<ChatConfiguration> GetChatConfiguration(long chatId, IChatConfigurationService chatConfigurationService)
+        private async Task<ChatConfiguration> GetChatConfiguration(long chatId, IServiceProvider serviceProvider)
         {
+            var chatConfigurationService = serviceProvider.GetService<IChatConfigurationService>();
+
             var chatConfig = await chatConfigurationService.GetConfigurationByChatId(chatId);
 
             if (chatConfig != null)
@@ -184,9 +171,11 @@ namespace GrammarNazi.App.HostedServices
             return chatConfiguration;
         }
 
-        private IGrammarService GetConfiguredGrammarService(ChatConfiguration chatConfig)
+        private IGrammarService GetConfiguredGrammarService(ChatConfiguration chatConfig, IServiceProvider serviceProvider)
         {
-            var grammarService = _grammarServices.First(v => v.GrammarAlgorith == chatConfig.GrammarAlgorithm);
+            var grammarServices = serviceProvider.GetService<IEnumerable<IGrammarService>>();
+
+            var grammarService = grammarServices.First(v => v.GrammarAlgorith == chatConfig.GrammarAlgorithm);
             grammarService.SetSelectedLanguage(chatConfig.SelectedLanguage);
             grammarService.SetStrictnessLevel(chatConfig.CorrectionStrictnessLevel);
             grammarService.SetWhiteListWords(chatConfig.WhiteListWords);
