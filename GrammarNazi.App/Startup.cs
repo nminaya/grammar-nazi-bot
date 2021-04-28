@@ -1,7 +1,6 @@
 using Discord.WebSocket;
 using Firebase.Database;
 using GrammarNazi.App.HostedServices;
-using GrammarNazi.Core;
 using GrammarNazi.Core.Clients;
 using GrammarNazi.Core.Extensions;
 using GrammarNazi.Core.Repositories;
@@ -14,7 +13,6 @@ using GrammarNazi.Domain.Services;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Http;
-using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
@@ -60,6 +58,7 @@ namespace GrammarNazi.App
             });
 
             services.AddSqlServerDbContext(Environment.GetEnvironmentVariable("SQL_SERVER_CONNECTION_STRING"));
+            services.EnsureDatabaseCreated();
 
             // Repository
             services.AddTransient(typeof(IRepository<>), typeof(EFRepository<>));
