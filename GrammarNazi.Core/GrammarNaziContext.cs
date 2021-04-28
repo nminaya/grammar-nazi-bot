@@ -1,7 +1,9 @@
 ﻿using GrammarNazi.Core.Extensions;
 using GrammarNazi.Domain.Entities;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.ChangeTracking;
 using System;
+using System.Collections.Generic;
 using System.Linq;
 
 namespace GrammarNazi.Core
@@ -27,13 +29,20 @@ namespace GrammarNazi.Core
             modelBuilder.Entity<DiscordChannelConfig>()
                 .HasKey(v => v.ChannelId);
 
+            var valueComparerWhiteListWords = new ValueComparer<List<string>>(
+                (c1, c2) => c1.SequenceEqual(c2),
+                c => c.Aggregate(0, (a, v) => HashCode.Combine(a, v.GetHashCode())),
+                c => c.ToList());
+
             modelBuilder.Entity<ChatConfiguration>()
                 .Property(e => e.WhiteListWords)
-                .HasConversion(v => v.Join(","), v => v.Split(',', StringSplitOptions.RemoveEmptyEntries).ToList());
+                .HasConversion(v => v.Join(","), v => v.Split(',', StringSplitOptions.RemoveEmptyEntries).ToList())
+                .Metadata.SetValueComparer(valueComparerWhiteListWords);
 
             modelBuilder.Entity<DiscordChannelConfig>()
                 .Property(e => e.WhiteListWords)
-                .HasConversion(v => string.Join(",", v), v => v.Split(',', StringSplitOptions.RemoveEmptyEntries).ToList());
+                .HasConversion(v => string.Join(",", v), v => v.Split(',', StringSplitOptions.RemoveEmptyEntries).ToList())
+                .Metadata.SetValueComparer(valueComparerWhiteListWords);
         }
     }
 }
