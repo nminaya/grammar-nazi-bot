@@ -69,6 +69,7 @@ namespace GrammarNazi.App
             services.AddSingleton<IStringDiffService, StringDiffService>();
             services.AddTransient<ILanguageToolApiClient, LanguageToolApiClient>();
             services.AddTransient<IMeganingCloudLangApiClient, MeganingCloudLangApiClient>();
+            services.AddTransient<IMeaningCloudSentimentAnalysisApiClient, MeaningCloudSentimentAnalysisApiClient>();
             services.AddTransient<IYandexSpellerApiClient, YandexSpellerApiClient>();
             services.AddTransient<IDatamuseApiClient, DatamuseApiClient>();
             services.AddTransient<ISentimApiClient, SentimApiClient>();
@@ -82,7 +83,7 @@ namespace GrammarNazi.App
             services.AddTransient<ITwitterLogService, TwitterLogService>();
             services.AddTransient<IGithubService, GithubService>();
             services.AddTransient<ITelegramCommandHandlerService, TelegramCommandHandlerService>();
-            services.AddTransient<ISentimentAnalysisService, SentimentAnalysisService>();
+            services.AddTransient<ISentimentAnalysisService, MeaningCloudSentimentAnalysisService>();
             services.AddTransient<IDiscordChannelConfigService, DiscordChannelConfigService>();
             services.AddTransient<IDiscordCommandHandlerService, DiscordCommandHandlerService>();
 
