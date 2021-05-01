@@ -23,7 +23,7 @@ namespace GrammarNazi.Core.Clients
 
         public async Task<LanguageDetectionResult> GetLanguage(string text)
         {
-            var url = $"{_meaningCloudSettings.MeaningCloudHostUrl}?key={_meaningCloudSettings.Key}&txt={HttpUtility.UrlEncode(text)}";
+            var url = $"{_meaningCloudSettings.MeaningCloudLanguageHostUrl}?key={_meaningCloudSettings.Key}&txt={HttpUtility.UrlEncode(text)}";
 
             var httpClient = _httpClientFactory.CreateClient();
             var response = await httpClient.PostAsync(url, null);

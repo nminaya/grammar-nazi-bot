@@ -34,7 +34,7 @@ namespace GrammarNazi.Core.Clients
             var body = JsonContent.Create(requestBody);
 
             var httpClient = _httpClientFactory.CreateClient();
-            var response = await httpClient.PostAsync(_meaningCloudSettings.MeaningCloudHostUrl, body);
+            var response = await httpClient.PostAsync(_meaningCloudSettings.MeaningCloudSentimentHostUrl, body);
 
             return JsonConvert.DeserializeObject<SentimentAnalysisResult>(await response.Content.ReadAsStringAsync());
         }

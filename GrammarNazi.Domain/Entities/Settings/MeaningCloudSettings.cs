@@ -2,7 +2,8 @@
 {
     public class MeaningCloudSettings
     {
-        public string MeaningCloudHostUrl { get; set; }
+        public string MeaningCloudLanguageHostUrl { get; set; }
+        public string MeaningCloudSentimentHostUrl { get; set; }
         public string Key { get; set; }
     }
 }
