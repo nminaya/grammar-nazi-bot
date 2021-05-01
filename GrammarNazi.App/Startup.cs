@@ -55,7 +55,8 @@ namespace GrammarNazi.App
             services.Configure<DiscordSettings>(d => d.Token = Environment.GetEnvironmentVariable("DISCORD_API_KEY"));
             services.Configure<MeaningCloudSettings>(m =>
             {
-                m.MeaningCloudHostUrl = Configuration.GetSection("AppSettings:MeaningCloudSettings:MeaningCloudHostUrl").Value;
+                m.MeaningCloudLanguageHostUrl = Configuration.GetSection("AppSettings:MeaningCloudSettings:MeaningCloudLanguageHostUrl").Value;
+                m.MeaningCloudSentimentHostUrl = Configuration.GetSection("AppSettings:MeaningCloudSettings:MeaningCloudSentimentHostUrl").Value;
                 m.Key = Environment.GetEnvironmentVariable("MEANING_CLOUD_API_KEY");
             });
 
