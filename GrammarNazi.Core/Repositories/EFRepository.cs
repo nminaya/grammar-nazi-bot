@@ -40,7 +40,7 @@ namespace GrammarNazi.Core.Repositories
 
         public async Task<IEnumerable<T>> GetAll(Expression<Func<T, bool>> filter)
         {
-            return await _dbContext.Set<T>().Where(filter).ToListAsync();
+            return await _dbContext.Set<T>().AsNoTracking().Where(filter).ToListAsync();
         }
 
         public async Task<T> GetFirst(Expression<Func<T, bool>> filter)
