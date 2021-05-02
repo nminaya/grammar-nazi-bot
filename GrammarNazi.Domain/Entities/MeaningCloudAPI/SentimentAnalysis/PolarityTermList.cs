@@ -1,7 +1,7 @@
 ﻿using Newtonsoft.Json;
 using System.Collections.Generic;
 
-namespace GrammarNazi.Domain.Entities.LanguageIdentificationAPI.SentimentAnalysis
+namespace GrammarNazi.Domain.Entities.MeaningCloudAPI.SentimentAnalysis
 {
     public class PolarityTermList
     {

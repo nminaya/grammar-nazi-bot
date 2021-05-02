@@ -1,6 +1,6 @@
 ﻿using Newtonsoft.Json;
 
-namespace GrammarNazi.Domain.Entities.LanguageIdentificationAPI
+namespace GrammarNazi.Domain.Entities.MeaningCloudAPI
 {
     public class DetectedLanguage
     {
