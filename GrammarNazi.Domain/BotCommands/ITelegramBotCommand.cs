@@ -4,6 +4,5 @@ namespace GrammarNazi.Domain.BotCommands
 {
     public interface ITelegramBotCommand : IBotCommand<Message>
     {
-        string Command { get; }
     }
 }
