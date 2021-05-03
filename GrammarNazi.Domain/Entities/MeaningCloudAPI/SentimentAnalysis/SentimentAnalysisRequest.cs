@@ -1,6 +1,6 @@
 ﻿using Newtonsoft.Json;
 
-namespace GrammarNazi.Domain.Entities.LanguageIdentificationAPI.SentimentAnalysis
+namespace GrammarNazi.Domain.Entities.MeaningCloudAPI.SentimentAnalysis
 {
     public class SentimentAnalysisRequest
     {

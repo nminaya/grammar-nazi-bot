@@ -6,11 +6,11 @@ using System.Threading.Tasks;
 
 namespace GrammarNazi.Core.Services
 {
-    public class SentimentAnalysisService : ISentimentAnalysisService
+    public class SentimAnalysisApiService : ISentimentAnalysisService
     {
         private readonly ISentimApiClient _sentimApiClient;
 
-        public SentimentAnalysisService(ISentimApiClient sentimApiClient)
+        public SentimAnalysisApiService(ISentimApiClient sentimApiClient)
         {
             _sentimApiClient = sentimApiClient;
         }
