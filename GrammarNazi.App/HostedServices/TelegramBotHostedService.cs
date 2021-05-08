@@ -57,7 +57,7 @@ namespace GrammarNazi.App.HostedServices
 
                     if (warningMessages.Any(x => ex.Message.Contains(x)))
                     {
-                        _logger.LogWarning(ex, ex.Message);
+                        _logger.LogWarning(ex.Message);
                     }
                     else
                     {
