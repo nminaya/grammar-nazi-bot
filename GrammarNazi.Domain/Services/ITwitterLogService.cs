@@ -10,6 +10,6 @@ namespace GrammarNazi.Domain.Services
 
         Task LogTweet(long tweetId);
 
-        Task<bool> TweetExist(long tweetId);
+        Task<bool> ReplyTweetExist(long tweetId);
     }
 }

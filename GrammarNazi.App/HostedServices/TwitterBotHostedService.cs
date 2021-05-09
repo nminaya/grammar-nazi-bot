@@ -207,7 +207,7 @@ namespace GrammarNazi.App.HostedServices
 
             foreach (var reply in replies)
             {
-                bool isReplyToBot = await _twitterLogService.TweetExist(reply.InReplyToStatusId.Value);
+                bool isReplyToBot = await _twitterLogService.ReplyTweetExist(reply.InReplyToStatusId.Value);
 
                 if (!isReplyToBot)
                     continue;
