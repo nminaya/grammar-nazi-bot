@@ -7,6 +7,7 @@ using Newtonsoft.Json;
 using System.Net.Http;
 using System.Net.Http.Json;
 using System.Threading.Tasks;
+using System.Web;
 
 namespace GrammarNazi.Core.Clients
 {
@@ -24,19 +25,13 @@ namespace GrammarNazi.Core.Clients
 
         public async Task<SentimentAnalysisResult> GetSentimentResult(string text, string language)
         {
-            var requestBody = new SentimentAnalysisRequest
-            {
-                Key = _meaningCloudSettings.Key,
-                Lang = language,
-                Text = text
-            };
-
-            var body = JsonContent.Create(requestBody);
+            var url = $"{_meaningCloudSettings.MeaningCloudSentimentHostUrl}?key={_meaningCloudSettings.Key}&txt={HttpUtility.UrlEncode(text)}&lang={language}";
 
             var httpClient = _httpClientFactory.CreateClient();
-            var response = await httpClient.PostAsync(_meaningCloudSettings.MeaningCloudSentimentHostUrl, body);
+            var response = await httpClient.GetAsync(url);
+            var responseJson = await response.Content.ReadAsStringAsync();
 
-            return JsonConvert.DeserializeObject<SentimentAnalysisResult>(await response.Content.ReadAsStringAsync());
+            return JsonConvert.DeserializeObject<SentimentAnalysisResult>(responseJson);
         }
     }
 }
