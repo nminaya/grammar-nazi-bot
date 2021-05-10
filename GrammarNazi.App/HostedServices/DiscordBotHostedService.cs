@@ -63,7 +63,7 @@ namespace GrammarNazi.App.HostedServices
                 }
                 catch (HttpException ex) when (ex.Message.Contains("50013") || ex.Message.Contains("Forbidden"))
                 {
-                    _logger.LogWarning(ex, "Missing Permissions");
+                    _logger.LogWarning($"Missing permissions: {ex.Message}");
                 }
                 catch (Exception ex)
                 {
