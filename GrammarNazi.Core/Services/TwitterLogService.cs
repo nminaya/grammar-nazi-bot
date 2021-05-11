@@ -27,6 +27,11 @@ namespace GrammarNazi.Core.Services
 
         public async Task LogReply(long tweetId, long replyTweetId)
         {
+            if (await _repository.Any(x => x.TweetId == tweetId))
+            {
+                return;
+            }
+
             var twitterLog = new TwitterLog
             {
                 TweetId = tweetId,

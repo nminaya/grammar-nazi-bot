@@ -237,7 +237,7 @@ namespace GrammarNazi.App.HostedServices
             }
 
             _logger.LogInformation("Reply sent successfuly");
-            await _twitterLogService.LogReply(replyTo, replyTweet.Id);
+            await _twitterLogService.LogReply(replyTweet.Id, replyTo);
         }
     }
 }
