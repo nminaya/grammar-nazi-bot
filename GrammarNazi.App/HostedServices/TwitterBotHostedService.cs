@@ -224,20 +224,28 @@ namespace GrammarNazi.App.HostedServices
 
         private async Task PublishReplyTweet(string text, long replyTo)
         {
-            var publishTweetsParameters = new PublishTweetParameters(text)
+            // TODO: Remove try catch when issue #221 is resolved
+            try
             {
-                InReplyToTweetId = replyTo
-            };
-            var replyTweet = await _twitterClient.Tweets.PublishTweetAsync(publishTweetsParameters);
+                var publishTweetsParameters = new PublishTweetParameters(text)
+                {
+                    InReplyToTweetId = replyTo
+                };
+                var replyTweet = await _twitterClient.Tweets.PublishTweetAsync(publishTweetsParameters);
 
-            if (replyTweet == null)
-            {
-                _logger.LogWarning("Not able to tweet Reply", text, replyTo);
-                return;
+                if (replyTweet == null)
+                {
+                    _logger.LogWarning("Not able to tweet Reply", text, replyTo);
+                    return;
+                }
+
+                _logger.LogInformation("Reply sent successfuly");
+                await _twitterLogService.LogReply(replyTweet.Id, replyTo);
             }
-
-            _logger.LogInformation("Reply sent successfuly");
-            await _twitterLogService.LogReply(replyTweet.Id, replyTo);
+            catch (TwitterException ex)
+            {
+                _logger.LogWarning(ex, "Exception while sending reply");
+            }
         }
     }
 }
