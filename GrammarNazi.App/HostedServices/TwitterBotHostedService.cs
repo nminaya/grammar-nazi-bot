@@ -233,6 +233,7 @@ namespace GrammarNazi.App.HostedServices
                 // Avoid tweeting the same tweet
                 // TODO: Find out what to do in this scenario
                 // #231: https://github.com/nminaya/grammar-nazi-bot/issues/231
+                _logger.LogWarning($"Attempt to publish a duplicate reply: {text}");
                 return;
             }
 
