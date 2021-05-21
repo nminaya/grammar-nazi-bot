@@ -60,5 +60,10 @@ namespace GrammarNazi.Core.Services
         {
             return _repository.Any(v => v.ReplyTweetId == tweetId);
         }
+
+        public async Task<bool> TweetExist(string tweetText, DateTime createdAfter)
+        {
+            return await _repository.Any(x => x.Text == tweetText && x.CreatedDate >= createdAfter);
+        }
     }
 }

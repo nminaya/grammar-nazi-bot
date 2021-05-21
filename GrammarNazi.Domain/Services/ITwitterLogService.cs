@@ -1,4 +1,5 @@
-﻿using System.Threading.Tasks;
+﻿using System;
+using System.Threading.Tasks;
 
 namespace GrammarNazi.Domain.Services
 {
@@ -11,5 +12,7 @@ namespace GrammarNazi.Domain.Services
         Task LogTweet(long tweetId);
 
         Task<bool> ReplyTweetExist(long tweetId);
+
+        Task<bool> TweetExist(string tweetText, DateTime createdAfter);
     }
 }
