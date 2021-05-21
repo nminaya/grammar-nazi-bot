@@ -224,28 +224,32 @@ namespace GrammarNazi.App.HostedServices
 
         private async Task PublishReplyTweet(string text, long replyTo)
         {
-            // TODO: Remove try catch when issue #221 is resolved
-            try
-            {
-                var publishTweetsParameters = new PublishTweetParameters(text)
-                {
-                    InReplyToTweetId = replyTo
-                };
-                var replyTweet = await _twitterClient.Tweets.PublishTweetAsync(publishTweetsParameters);
+            var tweetText = StringUtils.RemoveMentions(text);
 
-                if (replyTweet == null)
-                {
-                    _logger.LogWarning("Not able to tweet Reply", text, replyTo);
-                    return;
-                }
+            bool tweetExist = await _twitterLogService.TweetExist(tweetText, DateTime.Now.AddHours(_twitterBotSettings.PublishRepeatedTweetAfterHours));
 
-                _logger.LogInformation("Reply sent successfuly");
-                await _twitterLogService.LogReply(replyTweet.Id, replyTo);
-            }
-            catch (TwitterException ex)
+            if (tweetExist)
             {
-                _logger.LogWarning(ex, "Exception while sending reply");
+                // Avoid tweeting the same tweet
+                // TODO: Find out what to do in this scenario
+                // #231: https://github.com/nminaya/grammar-nazi-bot/issues/231
+                return;
             }
+
+            var publishTweetsParameters = new PublishTweetParameters(text)
+            {
+                InReplyToTweetId = replyTo
+            };
+            var replyTweet = await _twitterClient.Tweets.PublishTweetAsync(publishTweetsParameters);
+
+            if (replyTweet == null)
+            {
+                _logger.LogWarning("Not able to tweet Reply", text, replyTo);
+                return;
+            }
+
+            _logger.LogInformation("Reply sent successfuly");
+            await _twitterLogService.LogReply(replyTweet.Id, replyTo);
         }
     }
 }
