@@ -224,33 +224,40 @@ namespace GrammarNazi.App.HostedServices
 
         private async Task PublishReplyTweet(string text, long replyTo)
         {
-            var tweetText = StringUtils.RemoveMentions(text);
-
-            bool tweetExist = await _twitterLogService.TweetExist(tweetText, DateTime.Now.AddHours(-_twitterBotSettings.PublishRepeatedTweetAfterHours));
-
-            if (tweetExist)
+            try
             {
-                // Avoid tweeting the same tweet
-                // TODO: Find out what to do in this scenario
-                // #231: https://github.com/nminaya/grammar-nazi-bot/issues/231
-                _logger.LogWarning($"Attempt to publish a duplicate reply: {text}");
-                return;
+                var tweetText = StringUtils.RemoveMentions(text);
+
+                bool tweetExist = await _twitterLogService.TweetExist(tweetText, DateTime.Now.AddHours(-_twitterBotSettings.PublishRepeatedTweetAfterHours));
+
+                if (tweetExist)
+                {
+                    // Avoid tweeting the same tweet
+                    // TODO: Find out what to do in this scenario
+                    // #231: https://github.com/nminaya/grammar-nazi-bot/issues/231
+                    _logger.LogWarning($"Attempt to publish a duplicate reply: {text}");
+                    return;
+                }
+
+                var publishTweetsParameters = new PublishTweetParameters(text)
+                {
+                    InReplyToTweetId = replyTo
+                };
+                var replyTweet = await _twitterClient.Tweets.PublishTweetAsync(publishTweetsParameters);
+
+                if (replyTweet == null)
+                {
+                    _logger.LogWarning("Not able to tweet Reply", text, replyTo);
+                    return;
+                }
+
+                _logger.LogInformation("Reply sent successfuly");
+                await _twitterLogService.LogReply(replyTweet.Id, replyTo, replyTweet.Text);
             }
-
-            var publishTweetsParameters = new PublishTweetParameters(text)
+            catch (TwitterException ex) when (ex.ToString().Contains("The original Tweet author restricted who can reply to this Tweet"))
             {
-                InReplyToTweetId = replyTo
-            };
-            var replyTweet = await _twitterClient.Tweets.PublishTweetAsync(publishTweetsParameters);
-
-            if (replyTweet == null)
-            {
-                _logger.LogWarning("Not able to tweet Reply", text, replyTo);
-                return;
+                _logger.LogWarning($"The author restricted who can reply to this tweet {replyTo}");
             }
-
-            _logger.LogInformation("Reply sent successfuly");
-            await _twitterLogService.LogReply(replyTweet.Id, replyTo, replyTweet.Text);
         }
     }
 }
