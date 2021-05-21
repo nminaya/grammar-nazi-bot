@@ -107,7 +107,7 @@ namespace GrammarNazi.App.HostedServices
                         var messageBuilder = new StringBuilder();
 
                         var mentionedUsers = tweet.UserMentions.Select(v => v.ToString()).Join(" "); // Other users mentioned in the tweet
-                        messageBuilder.Append($"@{tweet.CreatedBy.ScreenName} {mentionedUsers}");
+                        messageBuilder.Append($"@{tweet.CreatedBy.ScreenName} {mentionedUsers} ");
 
                         foreach (var correction in correctionsResult.Corrections)
                         {
