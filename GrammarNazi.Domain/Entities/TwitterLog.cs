@@ -18,6 +18,11 @@ namespace GrammarNazi.Domain.Entities
         public long ReplyTweetId { get; set; }
 
         /// <summary>
+        /// Text of the tweeted tweet
+        /// </summary>
+        public string Text { get; set; }
+
+        /// <summary>
         /// Created Date
         /// </summary>
         public DateTime CreatedDate { get; set; }

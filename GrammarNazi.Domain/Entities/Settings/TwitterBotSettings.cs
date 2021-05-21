@@ -6,5 +6,6 @@
         public int TimelineFirstLoadPageSize { get; set; }
         public int PublishTweetDelayMilliseconds { get; set; }
         public int HostedServiceIntervalMilliseconds { get; set; }
+        public int PublishRepeatedTweetAfterHours { get; set; }
     }
 }
