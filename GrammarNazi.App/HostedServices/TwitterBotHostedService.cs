@@ -226,7 +226,7 @@ namespace GrammarNazi.App.HostedServices
         {
             var tweetText = StringUtils.RemoveMentions(text);
 
-            bool tweetExist = await _twitterLogService.TweetExist(tweetText, DateTime.Now.AddHours(_twitterBotSettings.PublishRepeatedTweetAfterHours));
+            bool tweetExist = await _twitterLogService.TweetExist(tweetText, DateTime.Now.AddHours(-_twitterBotSettings.PublishRepeatedTweetAfterHours));
 
             if (tweetExist)
             {
