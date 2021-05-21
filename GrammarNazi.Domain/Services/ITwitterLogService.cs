@@ -9,7 +9,7 @@ namespace GrammarNazi.Domain.Services
 
         Task LogReply(long tweetId, long replyTweetId, string tweetText);
 
-        Task LogTweet(long tweetId, string tweetText);
+        Task LogTweet(long tweetId);
 
         Task<bool> ReplyTweetExist(long tweetId);
 

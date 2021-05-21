@@ -68,7 +68,7 @@ namespace GrammarNazi.Tests.Services
             var service = new TwitterLogService(repositoryMock.Object);
 
             // Act
-            await service.LogTweet(123456, It.IsAny<string>());
+            await service.LogTweet(123456);
 
             // Assert
             repositoryMock.Verify(v => v.Add(It.IsAny<TwitterLog>()), Times.Never);
@@ -87,7 +87,7 @@ namespace GrammarNazi.Tests.Services
             var service = new TwitterLogService(repositoryMock.Object);
 
             // Act
-            await service.LogTweet(123456, It.IsAny<string>());
+            await service.LogTweet(123456);
 
             // Assert
             repositoryMock.Verify(v => v.Add(It.IsAny<TwitterLog>()), Times.Once);

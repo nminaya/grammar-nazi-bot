@@ -145,7 +145,7 @@ namespace GrammarNazi.App.HostedServices
                         var lastTweet = tweets.OrderByDescending(v => v.Id).First();
 
                         // Save last Tweet Id
-                        await _twitterLogService.LogTweet(lastTweet.Id, lastTweet.Text);
+                        await _twitterLogService.LogTweet(lastTweet.Id);
                     }
 
                     await FollowBackUsers(followers, friendIds);

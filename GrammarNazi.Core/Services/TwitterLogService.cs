@@ -43,7 +43,7 @@ namespace GrammarNazi.Core.Services
             await _repository.Add(twitterLog);
         }
 
-        public async Task LogTweet(long tweetId, string tweetText)
+        public async Task LogTweet(long tweetId)
         {
             if (await _repository.Any(x => x.TweetId == tweetId))
                 return;
@@ -51,8 +51,7 @@ namespace GrammarNazi.Core.Services
             var twitterLog = new TwitterLog
             {
                 TweetId = tweetId,
-                CreatedDate = DateTime.Now,
-                Text = tweetText
+                CreatedDate = DateTime.Now
             };
 
             await _repository.Add(twitterLog);
