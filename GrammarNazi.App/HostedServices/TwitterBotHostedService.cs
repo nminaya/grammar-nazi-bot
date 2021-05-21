@@ -145,7 +145,7 @@ namespace GrammarNazi.App.HostedServices
                         var lastTweet = tweets.OrderByDescending(v => v.Id).First();
 
                         // Save last Tweet Id
-                        await _twitterLogService.LogTweet(lastTweet.Id);
+                        await _twitterLogService.LogTweet(lastTweet.Id, lastTweet.Text);
                     }
 
                     await FollowBackUsers(followers, friendIds);
@@ -249,7 +249,7 @@ namespace GrammarNazi.App.HostedServices
             }
 
             _logger.LogInformation("Reply sent successfuly");
-            await _twitterLogService.LogReply(replyTweet.Id, replyTo);
+            await _twitterLogService.LogReply(replyTweet.Id, replyTo, replyTweet.Text);
         }
     }
 }

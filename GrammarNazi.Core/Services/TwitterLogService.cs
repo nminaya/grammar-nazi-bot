@@ -25,7 +25,7 @@ namespace GrammarNazi.Core.Services
             return 0;
         }
 
-        public async Task LogReply(long tweetId, long replyTweetId)
+        public async Task LogReply(long tweetId, long replyTweetId, string tweetText)
         {
             if (await _repository.Any(x => x.TweetId == tweetId))
             {
@@ -36,13 +36,14 @@ namespace GrammarNazi.Core.Services
             {
                 TweetId = tweetId,
                 ReplyTweetId = replyTweetId,
-                CreatedDate = DateTime.Now
+                CreatedDate = DateTime.Now,
+                Text = tweetText
             };
 
             await _repository.Add(twitterLog);
         }
 
-        public async Task LogTweet(long tweetId)
+        public async Task LogTweet(long tweetId, string tweetText)
         {
             if (await _repository.Any(x => x.TweetId == tweetId))
                 return;
@@ -50,7 +51,8 @@ namespace GrammarNazi.Core.Services
             var twitterLog = new TwitterLog
             {
                 TweetId = tweetId,
-                CreatedDate = DateTime.Now
+                CreatedDate = DateTime.Now,
+                Text = tweetText
             };
 
             await _repository.Add(twitterLog);
