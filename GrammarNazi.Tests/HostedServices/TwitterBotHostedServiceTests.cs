@@ -152,7 +152,7 @@ namespace GrammarNazi.Tests.HostedServices
 
             // Assert
             grammarServiceMock.Verify(v => v.GetCorrections(It.IsAny<string>()), Times.Never);
-            twitterLogServiceMock.Verify(v => v.LogTweet(It.IsAny<long>()), Times.Never);
+            twitterLogServiceMock.Verify(v => v.LogTweet(It.IsAny<long>(), It.IsAny<string>()), Times.Never);
         }
 
         [Fact]
