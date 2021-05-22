@@ -9,6 +9,11 @@ namespace GrammarNazi.Domain.Entities
     public class ChatConfiguration
     {
         /// <summary>
+        /// Backing field for WhitelistWords
+        /// </summary>
+        private List<string> _whiteListWords = new();
+
+        /// <summary>
         /// Unique identifier for the Chat
         /// </summary>
         public long ChatId { get; set; }
@@ -41,7 +46,11 @@ namespace GrammarNazi.Domain.Entities
         /// <summary>
         /// List of ignored words
         /// </summary>
-        public List<string> WhiteListWords { get; set; } = new();
+        public List<string> WhiteListWords
+        {
+            get => _whiteListWords;
+            set => _whiteListWords = value ?? new();
+        }
 
         public override bool Equals(object obj)
         {

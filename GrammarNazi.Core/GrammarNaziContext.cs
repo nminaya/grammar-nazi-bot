@@ -37,11 +37,15 @@ namespace GrammarNazi.Core
             modelBuilder.Entity<ChatConfiguration>()
                 .Property(e => e.WhiteListWords)
                 .HasConversion(v => v.Join(","), v => v.Split(',', StringSplitOptions.RemoveEmptyEntries).ToList())
+                .HasField("_whiteListWords")
+                .UsePropertyAccessMode(PropertyAccessMode.Property)
                 .Metadata.SetValueComparer(valueComparerWhiteListWords);
 
             modelBuilder.Entity<DiscordChannelConfig>()
                 .Property(e => e.WhiteListWords)
                 .HasConversion(v => string.Join(",", v), v => v.Split(',', StringSplitOptions.RemoveEmptyEntries).ToList())
+                .HasField("_whiteListWords")
+                .UsePropertyAccessMode(PropertyAccessMode.Property)
                 .Metadata.SetValueComparer(valueComparerWhiteListWords);
         }
     }

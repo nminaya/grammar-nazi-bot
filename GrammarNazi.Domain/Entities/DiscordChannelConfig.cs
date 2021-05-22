@@ -9,6 +9,11 @@ namespace GrammarNazi.Domain.Entities
     public class DiscordChannelConfig
     {
         /// <summary>
+        /// Backing field for WhitelistWords
+        /// </summary>
+        private List<string> _whiteListWords = new();
+
+        /// <summary>
         /// Channel Id
         /// </summary>
         public ulong ChannelId { get; set; }
@@ -46,7 +51,11 @@ namespace GrammarNazi.Domain.Entities
         /// <summary>
         /// List of ignored words
         /// </summary>
-        public List<string> WhiteListWords { get; set; } = new();
+        public List<string> WhiteListWords
+        {
+            get => _whiteListWords;
+            set => _whiteListWords = value ?? new();
+        }
 
         public override bool Equals(object obj)
         {
