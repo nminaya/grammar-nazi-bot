@@ -166,7 +166,7 @@ namespace GrammarNazi.App.HostedServices
             }
         }
 
-        private async Task FollowBackUsers(IEnumerable<IUser> followers, IEnumerable<long> friendIds)
+        protected async Task FollowBackUsers(IEnumerable<IUser> followers, IEnumerable<long> friendIds)
         {
             var userIdsPendingToFollow = await _twitterClient.Users.GetUserIdsYouRequestedToFollowAsync();
 
@@ -178,7 +178,7 @@ namespace GrammarNazi.App.HostedServices
             }
         }
 
-        private async Task PublishScheduledTweets()
+        protected async Task PublishScheduledTweets()
         {
             var scheduledTweets = await _scheduledTweetService.GetPendingScheduledTweets();
 
@@ -201,7 +201,7 @@ namespace GrammarNazi.App.HostedServices
             }
         }
 
-        private async Task LikeRepliesToBot(List<ITweet> tweets)
+        protected async Task LikeRepliesToBot(List<ITweet> tweets)
         {
             var replies = tweets.Where(v => v.InReplyToStatusId != null);
 
@@ -222,7 +222,7 @@ namespace GrammarNazi.App.HostedServices
             }
         }
 
-        private async Task PublishReplyTweet(string text, long replyTo)
+        protected async Task PublishReplyTweet(string text, long replyTo)
         {
             try
             {
