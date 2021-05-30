@@ -100,6 +100,8 @@ namespace GrammarNazi.App.HostedServices
                         }
 
                         await PublishReplyTweet(correctionString, mention.Id);
+
+                        await Task.Delay(TwitterBotSettings.PublishTweetDelayMilliseconds, stoppingToken);
                     }
 
                     if (mentions.Any())
@@ -116,8 +118,6 @@ namespace GrammarNazi.App.HostedServices
                     await FollowBackUsers(await followersTask, await friendIdsTask);
                     await PublishScheduledTweets();
                     await LikeRepliesToBot(mentions);
-
-                    await Task.Delay(TwitterBotSettings.PublishTweetDelayMilliseconds, stoppingToken);
                 }
                 catch (Exception ex)
                 {
@@ -128,7 +128,7 @@ namespace GrammarNazi.App.HostedServices
                     // fire and forget
                     _ = _githubService.CreateBugIssue($"Application Exception: {message}", ex, GithubIssueLabels.Twitter);
                 }
-                
+
                 await Task.Delay(TwitterBotSettings.HostedServiceIntervalMilliseconds);
             }
         }
