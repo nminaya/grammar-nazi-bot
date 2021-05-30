@@ -14,36 +14,31 @@ using System.Threading;
 using System.Threading.Tasks;
 using Tweetinvi;
 using Tweetinvi.Exceptions;
-using Tweetinvi.Models;
 using Tweetinvi.Parameters;
 
 namespace GrammarNazi.App.HostedServices
 {
-    public class TwitterBotHostedService : BaseTwitterHostedService
+    public class TwitterBotMentionHostedService : BaseTwitterHostedService
     {
         private readonly IGrammarService _grammarService;
         private readonly IGithubService _githubService;
+        private readonly ITwitterMentionLogService _twitterMentionLogService;
 
-        public TwitterBotHostedService(ILogger<TwitterBotHostedService> logger,
+        public TwitterBotMentionHostedService(ILogger<TwitterBotHostedService> logger,
             IEnumerable<IGrammarService> grammarServices,
             ITwitterLogService twitterLogService,
-            ITwitterClient userClient,
+            ITwitterClient twitterClient,
             IOptions<TwitterBotSettings> options,
             IGithubService githubService,
             IScheduledTweetService scheduledTweetService,
+            ITwitterMentionLogService twitterMentionLogService,
             ISentimentAnalysisService sentimentAnalysisService)
-            : base(logger, twitterLogService, userClient, options.Value, scheduledTweetService, sentimentAnalysisService)
+            : base(logger, twitterLogService, twitterClient, options.Value, scheduledTweetService, sentimentAnalysisService)
         {
             _githubService = githubService;
-
+            _twitterMentionLogService = twitterMentionLogService;
             _grammarService = grammarServices.First(v => v.GrammarAlgorith == Defaults.DefaultAlgorithm);
             _grammarService.SetStrictnessLevel(CorrectionStrictnessLevels.Tolerant);
-        }
-
-        public override Task StartAsync(CancellationToken cancellationToken)
-        {
-            Logger.LogInformation("TwitterBotHostedService started");
-            return base.StartAsync(cancellationToken);
         }
 
         protected override async Task ExecuteAsync(CancellationToken stoppingToken)
@@ -52,39 +47,21 @@ namespace GrammarNazi.App.HostedServices
             {
                 try
                 {
-                    var lastTweetIdTask = TwitterLogService.GetLastTweetId();
+                    long lastTweetId = await _twitterMentionLogService.GetLastTweetId();
 
-                    var followers = await TwitterClient.Users.GetFollowersAsync(TwitterBotSettings.BotUsername);
+                    var getMentionParameters = new GetMentionsTimelineParameters();
 
-                    var friendIds = await TwitterClient.Users.GetFriendIdsAsync(TwitterBotSettings.BotUsername);
+                    if (lastTweetId == 0)
+                        getMentionParameters.PageSize = TwitterBotSettings.TimelineFirstLoadPageSize;
+                    else
+                        getMentionParameters.SinceId = lastTweetId;
 
-                    long sinceTweetId = await lastTweetIdTask;
+                    var mentions = await TwitterClient.Timelines.GetMentionsTimelineAsync(getMentionParameters);
 
-                    var tweets = new List<ITweet>();
-
-                    foreach (var follower in followers)
+                    foreach (var mention in mentions.Where(x => x.InReplyToStatusId.HasValue))
                     {
-                        if (follower.Protected && !friendIds.Contains(follower.Id))
-                            continue;
+                        var tweet = await TwitterClient.Tweets.GetTweetAsync(mention.InReplyToStatusId.Value);
 
-                        var getTimeLineParameters = new GetUserTimelineParameters(follower);
-
-                        if (sinceTweetId == 0)
-                            getTimeLineParameters.PageSize = TwitterBotSettings.TimelineFirstLoadPageSize;
-                        else
-                            getTimeLineParameters.SinceId = sinceTweetId;
-
-                        var timeLine = await TwitterClient.Timelines.GetUserTimelineAsync(getTimeLineParameters);
-
-                        if (timeLine.Length == 0)
-                            continue;
-
-                        // Avoid Retweets.
-                        tweets.AddRange(timeLine.Where(v => !v.Text.StartsWith("RT")));
-                    }
-
-                    foreach (var tweet in tweets)
-                    {
                         var tweetText = StringUtils.RemoveHashtags(StringUtils.RemoveMentions(StringUtils.RemoveEmojis(tweet.Text)));
 
                         var correctionsResult = await _grammarService.GetCorrections(tweetText);
@@ -94,8 +71,7 @@ namespace GrammarNazi.App.HostedServices
 
                         var messageBuilder = new StringBuilder();
 
-                        var mentionedUsers = tweet.UserMentions.Select(v => v.ToString()).Join(" "); // Other users mentioned in the tweet
-                        messageBuilder.Append($"@{tweet.CreatedBy.ScreenName} {mentionedUsers} ");
+                        messageBuilder.Append($"@{mention.CreatedBy.ScreenName}");
 
                         foreach (var correction in correctionsResult.Corrections)
                         {
@@ -105,7 +81,7 @@ namespace GrammarNazi.App.HostedServices
 
                         var correctionString = messageBuilder.ToString();
 
-                        Logger.LogInformation($"Sending reply to: {tweet.CreatedBy.ScreenName}");
+                        Logger.LogInformation($"Sending reply to: {mention.CreatedBy.ScreenName}");
 
                         if (correctionString.Length >= Defaults.TwitterTextMaxLength)
                         {
@@ -113,9 +89,9 @@ namespace GrammarNazi.App.HostedServices
 
                             foreach (var (reply, index) in replyTweets.WithIndex())
                             {
-                                var correctionStringSplitted = index == 0 ? reply : $"@{tweet.CreatedBy.ScreenName} {mentionedUsers} {reply}";
+                                var correctionStringSplitted = index == 0 ? reply : $"@{mention.CreatedBy.ScreenName} {reply}";
 
-                                await PublishReplyTweet(correctionStringSplitted, tweet.Id);
+                                await PublishReplyTweet(correctionStringSplitted, mention.Id);
 
                                 await Task.Delay(TwitterBotSettings.PublishTweetDelayMilliseconds, stoppingToken);
                             }
@@ -123,22 +99,25 @@ namespace GrammarNazi.App.HostedServices
                             continue;
                         }
 
-                        await PublishReplyTweet(correctionString, tweet.Id);
-
-                        await Task.Delay(TwitterBotSettings.PublishTweetDelayMilliseconds, stoppingToken);
+                        await PublishReplyTweet(correctionString, mention.Id);
                     }
 
-                    if (tweets.Any())
+                    if (mentions.Any())
                     {
-                        var lastTweet = tweets.OrderByDescending(v => v.Id).First();
+                        var lastTweet = mentions.OrderByDescending(v => v.Id).First();
 
                         // Save last Tweet Id
-                        await TwitterLogService.LogTweet(lastTweet.Id);
+                        await _twitterMentionLogService.LogTweet(lastTweet.Id, default);
                     }
 
-                    await FollowBackUsers(followers, friendIds);
+                    var followersTask = TwitterClient.Users.GetFollowersAsync(TwitterBotSettings.BotUsername);
+                    var friendIdsTask = TwitterClient.Users.GetFriendIdsAsync(TwitterBotSettings.BotUsername);
+
+                    await FollowBackUsers(await followersTask, await friendIdsTask);
                     await PublishScheduledTweets();
-                    await LikeRepliesToBot(tweets);
+                    await LikeRepliesToBot(mentions);
+
+                    await Task.Delay(TwitterBotSettings.PublishTweetDelayMilliseconds, stoppingToken);
                 }
                 catch (Exception ex)
                 {
@@ -149,8 +128,6 @@ namespace GrammarNazi.App.HostedServices
                     // fire and forget
                     _ = _githubService.CreateBugIssue($"Application Exception: {message}", ex, GithubIssueLabels.Twitter);
                 }
-
-                await Task.Delay(TwitterBotSettings.HostedServiceIntervalMilliseconds);
             }
         }
     }

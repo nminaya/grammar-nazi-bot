@@ -1,7 +1,6 @@
 using Discord.WebSocket;
 using Firebase.Database;
 using GrammarNazi.App.HostedServices;
-using GrammarNazi.Core;
 using GrammarNazi.Core.Clients;
 using GrammarNazi.Core.Extensions;
 using GrammarNazi.Core.Repositories;
@@ -14,7 +13,6 @@ using GrammarNazi.Domain.Services;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Http;
-using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
@@ -41,10 +39,11 @@ namespace GrammarNazi.App
 
             // Hosted services
             services.AddHostedService<TelegramBotHostedService>();
-            // Disable Twitter bot due to limitation/suspension
-            //services.AddHostedService<TwitterBotHostedService>();
+            services.AddHostedService<TwitterBotMentionHostedService>();
             services.AddHostedService<DiscordBotHostedService>();
 
+            // Disable Twitter bot due to limitation/suspension
+            //services.AddHostedService<TwitterBotHostedService>();
             ConfigureDependencies(services);
         }
 
@@ -77,6 +76,7 @@ namespace GrammarNazi.App
             services.AddTransient<ISentimApiClient, SentimApiClient>();
             services.AddTransient<IChatConfigurationService, ChatConfigurationService>();
             services.AddTransient<IScheduledTweetService, ScheduledTweetService>();
+            services.AddTransient<ITwitterMentionLogService, TwitterMentionLogService>();
             services.AddTransient<ILanguageService, NTextCatLanguageService>();
             services.AddTransient<IGrammarService, LanguageToolApiService>();
             services.AddTransient<IGrammarService, InternalFileGrammarService>();
