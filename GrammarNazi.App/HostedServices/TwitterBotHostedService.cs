@@ -22,7 +22,6 @@ namespace GrammarNazi.App.HostedServices
     public class TwitterBotHostedService : BaseTwitterHostedService
     {
         private readonly IGrammarService _grammarService;
-        private readonly ITwitterClient _twitterClient;
         private readonly IGithubService _githubService;
 
         public TwitterBotHostedService(ILogger<TwitterBotHostedService> logger,
@@ -55,9 +54,9 @@ namespace GrammarNazi.App.HostedServices
                 {
                     var lastTweetIdTask = TwitterLogService.GetLastTweetId();
 
-                    var followers = await _twitterClient.Users.GetFollowersAsync(TwitterBotSettings.BotUsername);
+                    var followers = await TwitterClient.Users.GetFollowersAsync(TwitterBotSettings.BotUsername);
 
-                    var friendIds = await _twitterClient.Users.GetFriendIdsAsync(TwitterBotSettings.BotUsername);
+                    var friendIds = await TwitterClient.Users.GetFriendIdsAsync(TwitterBotSettings.BotUsername);
 
                     long sinceTweetId = await lastTweetIdTask;
 
@@ -75,7 +74,7 @@ namespace GrammarNazi.App.HostedServices
                         else
                             getTimeLineParameters.SinceId = sinceTweetId;
 
-                        var timeLine = await _twitterClient.Timelines.GetUserTimelineAsync(getTimeLineParameters);
+                        var timeLine = await TwitterClient.Timelines.GetUserTimelineAsync(getTimeLineParameters);
 
                         if (timeLine.Length == 0)
                             continue;
