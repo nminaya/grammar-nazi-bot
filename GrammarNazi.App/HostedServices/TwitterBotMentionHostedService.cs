@@ -62,7 +62,7 @@ namespace GrammarNazi.App.HostedServices
                     {
                         var tweet = await TwitterClient.Tweets.GetTweetAsync(mention.InReplyToStatusId.Value);
 
-                        var tweetText = StringUtils.RemoveHashtags(StringUtils.RemoveMentions(StringUtils.RemoveEmojis(tweet.Text)));\
+                        var tweetText = StringUtils.RemoveHashtags(StringUtils.RemoveMentions(StringUtils.RemoveEmojis(tweet.Text)));
 
                         var correctionsResult = await _grammarService.GetCorrections(tweetText);
 
@@ -100,24 +100,24 @@ namespace GrammarNazi.App.HostedServices
                         }
 
                         await PublishReplyTweet(correctionString, mention.Id);
-
-                        if (mentions.Any())
-                        {
-                            var lastTweet = mentions.OrderByDescending(v => v.Id).First();
-
-                            // Save last Tweet Id
-                            await _twitterMentionLogService.LogTweet(lastTweet.Id, default);
-                        }
-
-                        var followersTask = TwitterClient.Users.GetFollowersAsync(TwitterBotSettings.BotUsername);
-                        var friendIdsTask = TwitterClient.Users.GetFriendIdsAsync(TwitterBotSettings.BotUsername);
-
-                        await FollowBackUsers(await followersTask, await friendIdsTask);
-                        await PublishScheduledTweets();
-                        await LikeRepliesToBot(mentions);
-
-                        await Task.Delay(TwitterBotSettings.PublishTweetDelayMilliseconds, stoppingToken);
                     }
+
+                    if (mentions.Any())
+                    {
+                        var lastTweet = mentions.OrderByDescending(v => v.Id).First();
+
+                        // Save last Tweet Id
+                        await _twitterMentionLogService.LogTweet(lastTweet.Id, default);
+                    }
+
+                    var followersTask = TwitterClient.Users.GetFollowersAsync(TwitterBotSettings.BotUsername);
+                    var friendIdsTask = TwitterClient.Users.GetFriendIdsAsync(TwitterBotSettings.BotUsername);
+
+                    await FollowBackUsers(await followersTask, await friendIdsTask);
+                    await PublishScheduledTweets();
+                    await LikeRepliesToBot(mentions);
+
+                    await Task.Delay(TwitterBotSettings.PublishTweetDelayMilliseconds, stoppingToken);
                 }
                 catch (Exception ex)
                 {
