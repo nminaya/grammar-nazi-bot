@@ -77,6 +77,7 @@ namespace GrammarNazi.App
             services.AddTransient<ISentimApiClient, SentimApiClient>();
             services.AddTransient<IChatConfigurationService, ChatConfigurationService>();
             services.AddTransient<IScheduledTweetService, ScheduledTweetService>();
+            services.AddTransient<ITwitterMentionLogService, TwitterMentionLogService>();
             services.AddTransient<ILanguageService, NTextCatLanguageService>();
             services.AddTransient<IGrammarService, LanguageToolApiService>();
             services.AddTransient<IGrammarService, InternalFileGrammarService>();
