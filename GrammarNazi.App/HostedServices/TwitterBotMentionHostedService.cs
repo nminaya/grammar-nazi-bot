@@ -81,7 +81,7 @@ namespace GrammarNazi.App.HostedServices
 
                         var correctionString = messageBuilder.ToString();
 
-                        Logger.LogInformation($"Sending reply to: {tweet.CreatedBy.ScreenName}");
+                        Logger.LogInformation($"Sending reply to: {mention.CreatedBy.ScreenName}");
 
                         if (correctionString.Length >= Defaults.TwitterTextMaxLength)
                         {

@@ -102,17 +102,6 @@ namespace GrammarNazi.App.HostedServices
             {
                 var tweetText = StringUtils.RemoveMentions(text);
 
-                bool tweetExist = await TwitterLogService.TweetExist(tweetText, DateTime.Now.AddHours(-TwitterBotSettings.PublishRepeatedTweetAfterHours));
-
-                if (tweetExist)
-                {
-                    // Avoid tweeting the same tweet
-                    // TODO: Find out what to do in this scenario
-                    // #231: https://github.com/nminaya/grammar-nazi-bot/issues/231
-                    Logger.LogWarning($"Attempt to publish a duplicate reply: {text}");
-                    return;
-                }
-
                 var publishTweetsParameters = new PublishTweetParameters(text)
                 {
                     InReplyToTweetId = replyTo
