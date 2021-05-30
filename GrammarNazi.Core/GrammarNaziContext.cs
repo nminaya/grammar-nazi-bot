@@ -4,6 +4,7 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.ChangeTracking;
 using System;
 using System.Collections.Generic;
+using System.ComponentModel.DataAnnotations.Schema;
 using System.Linq;
 
 namespace GrammarNazi.Core
@@ -28,6 +29,13 @@ namespace GrammarNazi.Core
 
             modelBuilder.Entity<DiscordChannelConfig>()
                 .HasKey(v => v.ChannelId);
+
+            modelBuilder.Entity<TwitterMentionLog>()
+                .HasKey(x => x.TweetId);
+
+            modelBuilder.Entity<TwitterMentionLog>()
+                .Property(x => x.TweetId)
+                .ValueGeneratedNever();
 
             var valueComparerWhiteListWords = new ValueComparer<List<string>>(
                 (c1, c2) => c1.SequenceEqual(c2),
