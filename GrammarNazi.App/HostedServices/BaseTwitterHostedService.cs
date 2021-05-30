@@ -75,7 +75,7 @@ namespace GrammarNazi.App.HostedServices
             }
         }
 
-        protected async Task LikeRepliesToBot(List<ITweet> tweets)
+        protected async Task LikeRepliesToBot(IEnumerable<ITweet> tweets)
         {
             var replies = tweets.Where(v => v.InReplyToStatusId != null);
 
