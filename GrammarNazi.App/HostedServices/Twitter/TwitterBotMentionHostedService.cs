@@ -38,11 +38,13 @@ namespace GrammarNazi.App.HostedServices
             _githubService = githubService;
             _twitterMentionLogService = twitterMentionLogService;
             _grammarService = grammarServices.First(v => v.GrammarAlgorith == Defaults.DefaultAlgorithm);
-            _grammarService.SetStrictnessLevel(CorrectionStrictnessLevels.Tolerant);
+            _grammarService.SetStrictnessLevel(CorrectionStrictnessLevels.Intolerant);
         }
 
         protected override async Task ExecuteAsync(CancellationToken stoppingToken)
         {
+            Logger.LogInformation("TwitterBotMentionHostedService started");
+
             while (!stoppingToken.IsCancellationRequested)
             {
                 try
@@ -67,7 +69,10 @@ namespace GrammarNazi.App.HostedServices
                         var correctionsResult = await _grammarService.GetCorrections(tweetText);
 
                         if (!correctionsResult.HasCorrections)
+                        {
+                            await PublishReplyTweet($"@{mention.CreatedBy.ScreenName} I don't see anything wrong here.", mention.Id);
                             continue;
+                        }
 
                         var messageBuilder = new StringBuilder();
 
