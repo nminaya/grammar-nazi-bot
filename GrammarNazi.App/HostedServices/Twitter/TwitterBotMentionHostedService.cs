@@ -60,9 +60,9 @@ namespace GrammarNazi.App.HostedServices
 
                     var mentions = await TwitterClient.Timelines.GetMentionsTimelineAsync(getMentionParameters);
 
-                    foreach (var mention in mentions.Where(x => x.InReplyToStatusId.HasValue))
+                    foreach (var mention in mentions.Where(x => x.InReplyToStatusId.HasValue || x.QuotedStatusId.HasValue))
                     {
-                        var tweet = await TwitterClient.Tweets.GetTweetAsync(mention.InReplyToStatusId.Value);
+                        var tweet = await TwitterClient.Tweets.GetTweetAsync(mention.InReplyToStatusId ?? mention.QuotedStatusId.Value);
 
                         var tweetText = StringUtils.RemoveHashtags(StringUtils.RemoveMentions(StringUtils.RemoveEmojis(tweet.Text)));
 
