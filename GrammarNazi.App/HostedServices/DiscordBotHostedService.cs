@@ -61,7 +61,7 @@ namespace GrammarNazi.App.HostedServices
                 {
                     await OnMessageReceived(eventArgs);
                 }
-                catch (HttpException ex) when (ex.Message.Contains("50013") || ex.Message.Contains("Forbidden"))
+                catch (HttpException ex) when (ex.Message.Contains("50013") || ex.Message.Contains("Forbidden") || ex.Message.Contains("160002"))
                 {
                     _logger.LogWarning($"Missing permissions: {ex.Message}");
                 }
