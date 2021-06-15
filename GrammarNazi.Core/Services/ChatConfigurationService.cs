@@ -19,6 +19,7 @@ namespace GrammarNazi.Core.Services
             if (await _repository.Any(x => x.ChatId == chatConfiguration.ChatId))
             {
                 await Update(chatConfiguration);
+                return;
             }
 
             await _repository.Add(chatConfiguration);
