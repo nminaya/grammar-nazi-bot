@@ -14,9 +14,15 @@ namespace GrammarNazi.Core.Services
             _repository = repository;
         }
 
-        public Task AddConfiguration(ChatConfiguration chatConfiguration)
+        public async Task AddConfiguration(ChatConfiguration chatConfiguration)
         {
-            return _repository.Add(chatConfiguration);
+            if (await _repository.Any(x => x.ChatId == chatConfiguration.ChatId))
+            {
+                await Update(chatConfiguration);
+                return;
+            }
+
+            await _repository.Add(chatConfiguration);
         }
 
         public Task Delete(ChatConfiguration chatConfiguration)
