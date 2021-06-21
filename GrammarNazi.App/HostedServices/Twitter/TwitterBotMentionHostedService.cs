@@ -14,6 +14,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using Tweetinvi;
 using Tweetinvi.Exceptions;
+using Tweetinvi.Models;
 using Tweetinvi.Parameters;
 
 namespace GrammarNazi.App.HostedServices
@@ -68,7 +69,10 @@ namespace GrammarNazi.App.HostedServices
                         if (mention.InReplyToUserId == myUser.Id)
                             continue;
 
-                        var tweet = await TwitterClient.Tweets.GetTweetAsync(mention.InReplyToStatusId ?? mention.QuotedStatusId.Value);
+                        var tweet = await GetTweetFromMention(mention);
+
+                        if (tweet == null)
+                            continue;
 
                         var tweetText = StringUtils.RemoveHashtags(StringUtils.RemoveMentions(StringUtils.RemoveEmojis(tweet.Text)));
 
@@ -141,6 +145,19 @@ namespace GrammarNazi.App.HostedServices
                 }
 
                 await Task.Delay(TwitterBotSettings.HostedServiceIntervalMilliseconds);
+            }
+        }
+
+        private async Task<ITweet> GetTweetFromMention(ITweet mention)
+        {
+            try
+            {
+                return await TwitterClient.Tweets.GetTweetAsync(mention.InReplyToStatusId ?? mention.QuotedStatusId.Value);
+            }
+            catch (TwitterException ex) when (ex.ToString().Contains("blocked from the author of this tweet"))
+            {
+                Logger.LogWarning(ex, $"Blocked from {mention.CreatedBy.ScreenName}");
+                return null;
             }
         }
     }
