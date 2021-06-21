@@ -117,7 +117,7 @@ namespace GrammarNazi.App.HostedServices
                 Logger.LogInformation("Reply sent successfuly");
                 await TwitterLogService.LogReply(replyTweet.Id, replyTo, replyTweet.Text);
             }
-            catch (TwitterException ex) when (ex.ToString().Contains("The original Tweet author restricted who can reply to this Tweet"))
+            catch (TwitterException ex) when (ex.ToString().Contains("The original Tweet author restricted who can reply to this Tweet") || ex.ToString().Contains("Status is a duplicate"))
             {
                 Logger.LogWarning($"The author restricted who can reply to this tweet {replyTo}");
             }
