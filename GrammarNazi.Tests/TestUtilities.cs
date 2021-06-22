@@ -32,7 +32,7 @@ namespace GrammarNazi.Tests
             channelMock.Verify(v => v.SendMessageAsync(It.Is<string>(s => s.Contains(replyMessage)), false, null, null, null, It.Is<MessageReference>(m => m.MessageId.Value == message.Object.Id)));
         }
 
-        public static async Task TestTelegramNotAdminUser(ITelegramBotCommand command, Mock<ITelegramBotClient> telegramBotClientMock) 
+        public static async Task TestTelegramNotAdminUser(ITelegramBotCommand command, Mock<ITelegramBotClient> telegramBotClientMock)
         {
             // Arrange
             const string replyMessage = "Only admins can use this command.";
@@ -55,7 +55,7 @@ namespace GrammarNazi.Tests
             await command.Handle(message);
 
             // Assert
-            telegramBotClientMock.Verify(v => v.SendTextMessageAsync(It.IsAny<ChatId>(), It.Is<string>(s => s.Contains(replyMessage)), ParseMode.Default, false, false, 0, null, default));
+            telegramBotClientMock.Verify(v => v.SendTextMessageAsync(It.IsAny<ChatId>(), It.Is<string>(s => s.Contains(replyMessage)), ParseMode.Default, default, false, false, 0, false, default, default));
         }
     }
 }
