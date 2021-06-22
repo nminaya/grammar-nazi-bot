@@ -134,7 +134,7 @@ namespace GrammarNazi.App.HostedServices
                     await PublishScheduledTweets();
                     await LikeRepliesToBot(mentions);
                 }
-                catch (TwitterException ex) when (ex.Message.Contains("Try again later"))
+                catch (TwitterException ex) when (ex.TwitterDescription.Contains("Try again later"))
                 {
                     Logger.LogWarning(ex, "Twitter servers are overloaded.");
                 }
