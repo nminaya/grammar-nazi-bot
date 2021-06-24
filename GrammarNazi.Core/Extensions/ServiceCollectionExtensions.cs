@@ -1,6 +1,8 @@
 ﻿using GrammarNazi.Domain.BotCommands;
+using GrammarNazi.Domain.Entities.Settings;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Options;
 using NTextCat;
 using System;
 using System.Linq;
@@ -19,6 +21,10 @@ namespace GrammarNazi.Core.Extensions
         {
             serviceCollection.AddHttpClient("datamuseApi", c => c.BaseAddress = new Uri("https://api.datamuse.com/"));
             serviceCollection.AddHttpClient("languageToolApi", c => c.BaseAddress = new Uri("https://languagetool.org/"));
+
+            var meaningCloudSettings = serviceCollection.BuildServiceProvider().GetService<IOptions<MeaningCloudSettings>>().Value;
+
+            serviceCollection.AddHttpClient("meaninCloudSentimentAnalysisApi", c => c.BaseAddress = new Uri(meaningCloudSettings.MeaningCloudSentimentHostUrl));
 
             return serviceCollection;
         }
