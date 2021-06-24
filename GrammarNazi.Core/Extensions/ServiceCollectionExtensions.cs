@@ -1,7 +1,10 @@
 ﻿using GrammarNazi.Domain.BotCommands;
+using GrammarNazi.Domain.Entities.Settings;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Options;
 using NTextCat;
+using System;
 using System.Linq;
 using System.Reflection;
 
@@ -12,6 +15,21 @@ namespace GrammarNazi.Core.Extensions
         public static IServiceCollection AddNTextCatLanguageService(this IServiceCollection serviceCollection)
         {
             return serviceCollection.AddTransient<BasicProfileFactoryBase<RankedLanguageIdentifier>, RankedLanguageIdentifierFactory>();
+        }
+
+        public static IServiceCollection AddNamedHttpClients(this IServiceCollection serviceCollection)
+        {
+            serviceCollection.AddHttpClient("datamuseApi", c => c.BaseAddress = new Uri("https://api.datamuse.com/"));
+            serviceCollection.AddHttpClient("languageToolApi", c => c.BaseAddress = new Uri("https://languagetool.org/"));
+            serviceCollection.AddHttpClient("yandexSpellerApi", c => c.BaseAddress = new Uri("https://speller.yandex.net/"));
+            serviceCollection.AddHttpClient("sentimApi", c => c.BaseAddress = new Uri("https://sentim-api.herokuapp.com/"));
+
+            var meaningCloudSettings = serviceCollection.BuildServiceProvider().GetService<IOptions<MeaningCloudSettings>>().Value;
+
+            serviceCollection.AddHttpClient("meaninCloudSentimentAnalysisApi", c => c.BaseAddress = new Uri(meaningCloudSettings.MeaningCloudSentimentHostUrl));
+            serviceCollection.AddHttpClient("meaninCloudLanguageApi", c => c.BaseAddress = new Uri(meaningCloudSettings.MeaningCloudLanguageHostUrl));
+
+            return serviceCollection;
         }
 
         public static IServiceCollection AddSqliteDbContext(this IServiceCollection serviceCollection, string connectionString)

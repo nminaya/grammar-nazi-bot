@@ -97,6 +97,7 @@ namespace GrammarNazi.App
 
             // HttpClient
             services.AddHttpClient();
+            services.AddNamedHttpClients();
 
             // NTextCatLanguageService
             services.AddNTextCatLanguageService();

@@ -1,5 +1,4 @@
 ﻿using GrammarNazi.Core.Extensions;
-using GrammarNazi.Core.Utilities;
 using GrammarNazi.Domain.Clients;
 using GrammarNazi.Domain.Entities.DatamuseAPI;
 using GrammarNazi.Domain.Enums;
@@ -29,10 +28,11 @@ namespace GrammarNazi.Core.Clients
                 languageParam = "&v=es";
             }
 
-            var url = $"https://api.datamuse.com/words?sp={HttpUtility.UrlEncode(word)}{languageParam}";
+            var httpClient = _httpClientFactory.CreateClient("datamuseApi");
 
-            var httpClient = _httpClientFactory.CreateClient();
-            var response = await httpClient.GetAsync(url);
+            var request = new HttpRequestMessage(HttpMethod.Get, $"words?sp={HttpUtility.UrlEncode(word)}{languageParam}");
+
+            var response = await httpClient.SendAsync(request);
 
             var content = await response.Content.ReadAsStringAsync();
 

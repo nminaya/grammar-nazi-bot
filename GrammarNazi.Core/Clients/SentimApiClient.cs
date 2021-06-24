@@ -18,13 +18,12 @@ namespace GrammarNazi.Core.Clients
 
         public async Task<SentimResult> GetSentimentResult(string text)
         {
-            // TODO: Get url from config
-            const string url = "https://sentim-api.herokuapp.com/api/v1/";
-
-            var body = JsonContent.Create(new SentimRequest(text));
-
-            var httpClient = _httpClientFactory.CreateClient();
-            var response = await httpClient.PostAsync(url, body);
+            var httpClient = _httpClientFactory.CreateClient("sentimApi");
+            var request = new HttpRequestMessage(HttpMethod.Post, "/api/v1/")
+            {
+                Content = JsonContent.Create(new SentimRequest(text))
+            };
+            var response = await httpClient.SendAsync(request);
 
             return JsonConvert.DeserializeObject<SentimResult>(await response.Content.ReadAsStringAsync());
         }
