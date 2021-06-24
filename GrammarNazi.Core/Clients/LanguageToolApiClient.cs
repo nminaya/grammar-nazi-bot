@@ -25,11 +25,11 @@ namespace GrammarNazi.Core.Clients
         {
             try
             {
-                // TODO: Get url from config
-                var url = $"https://languagetool.org/api/v2/check?text={HttpUtility.UrlEncode(text)}&language={languageCode}";
+                var httpClient = _httpClientFactory.CreateClient("languageToolApi");
 
-                var httpClient = _httpClientFactory.CreateClient();
-                var response = await httpClient.PostAsync(url, null);
+                var request = new HttpRequestMessage(HttpMethod.Post, $"api/v2/check?text={HttpUtility.UrlEncode(text)}&language={languageCode}");
+
+                var response = await httpClient.SendAsync(request);
 
                 return JsonConvert.DeserializeObject<LanguageToolCheckResult>(await response.Content.ReadAsStringAsync());
             }

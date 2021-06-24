@@ -18,6 +18,7 @@ namespace GrammarNazi.Core.Extensions
         public static IServiceCollection AddNamedHttpClients(this IServiceCollection serviceCollection)
         {
             serviceCollection.AddHttpClient("datamuseApi", c => c.BaseAddress = new Uri("https://api.datamuse.com/"));
+            serviceCollection.AddHttpClient("languageToolApi", c => c.BaseAddress = new Uri("https://languagetool.org/"));
 
             return serviceCollection;
         }
