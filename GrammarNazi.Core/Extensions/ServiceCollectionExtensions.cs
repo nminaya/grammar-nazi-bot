@@ -25,6 +25,7 @@ namespace GrammarNazi.Core.Extensions
             var meaningCloudSettings = serviceCollection.BuildServiceProvider().GetService<IOptions<MeaningCloudSettings>>().Value;
 
             serviceCollection.AddHttpClient("meaninCloudSentimentAnalysisApi", c => c.BaseAddress = new Uri(meaningCloudSettings.MeaningCloudSentimentHostUrl));
+            serviceCollection.AddHttpClient("meaninCloudLanguageApi", c => c.BaseAddress = new Uri(meaningCloudSettings.MeaningCloudLanguageHostUrl));
 
             return serviceCollection;
         }

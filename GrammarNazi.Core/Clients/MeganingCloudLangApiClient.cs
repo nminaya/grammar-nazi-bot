@@ -23,10 +23,10 @@ namespace GrammarNazi.Core.Clients
 
         public async Task<LanguageDetectionResult> GetLanguage(string text)
         {
-            var url = $"{_meaningCloudSettings.MeaningCloudLanguageHostUrl}?key={_meaningCloudSettings.Key}&txt={HttpUtility.UrlEncode(text)}";
+            var httpClient = _httpClientFactory.CreateClient("meaninCloudLanguageApi");
+            var request = new HttpRequestMessage(HttpMethod.Get, $"?key={_meaningCloudSettings.Key}&txt={HttpUtility.UrlEncode(text)}");
 
-            var httpClient = _httpClientFactory.CreateClient();
-            var response = await httpClient.PostAsync(url, null);
+            var response = await httpClient.SendAsync(request);
 
             return JsonConvert.DeserializeObject<LanguageDetectionResult>(await response.Content.ReadAsStringAsync());
         }
