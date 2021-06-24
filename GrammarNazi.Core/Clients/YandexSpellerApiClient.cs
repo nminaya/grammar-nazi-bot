@@ -26,11 +26,10 @@ namespace GrammarNazi.Core.Clients
         {
             try
             {
-                // TODO: Get url from config
-                var url = $"https://speller.yandex.net/services/spellservice.json/checkText?text={HttpUtility.UrlEncode(text)}&lang={language}";
+                var httpClient = _httpClientFactory.CreateClient("yandexSpellerApi");
+                var request = new HttpRequestMessage(HttpMethod.Get, $"/services/spellservice.json/checkText?text={HttpUtility.UrlEncode(text)}&lang={language}");
 
-                var httpClient = _httpClientFactory.CreateClient();
-                var response = await httpClient.GetAsync(url);
+                var response = await httpClient.SendAsync(request);
                 var jsonString = await response.Content.ReadAsStringAsync();
 
                 return JsonConvert.DeserializeObject<IEnumerable<CheckTextResponse>>(jsonString);
