@@ -2,6 +2,7 @@
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using NTextCat;
+using System;
 using System.Linq;
 using System.Reflection;
 
@@ -12,6 +13,13 @@ namespace GrammarNazi.Core.Extensions
         public static IServiceCollection AddNTextCatLanguageService(this IServiceCollection serviceCollection)
         {
             return serviceCollection.AddTransient<BasicProfileFactoryBase<RankedLanguageIdentifier>, RankedLanguageIdentifierFactory>();
+        }
+
+        public static IServiceCollection AddNamedHttpClients(this IServiceCollection serviceCollection)
+        {
+            serviceCollection.AddHttpClient("datamuseApi", c => c.BaseAddress = new Uri("https://api.datamuse.com/"));
+
+            return serviceCollection;
         }
 
         public static IServiceCollection AddSqliteDbContext(this IServiceCollection serviceCollection, string connectionString)
