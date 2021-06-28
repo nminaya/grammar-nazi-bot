@@ -69,50 +69,17 @@ namespace GrammarNazi.App.HostedServices
 
         private async Task BotOnMessageReceived(Message message)
         {
-            try
-            {
-                using var scope = _serviceScopeFactory.CreateScope();
+            using var scope = _serviceScopeFactory.CreateScope();
 
-                await OnMessageReceived(message, scope.ServiceProvider);
-            }
-            catch (ApiRequestException ex)
-            {
-                var warningMessages = new[] { "bot was blocked by the user", "bot was kicked from the supergroup", "have no rights to send a message" };
-
-                if (warningMessages.Any(x => ex.Message.Contains(x)))
-                {
-                    _logger.LogWarning(ex.Message);
-                }
-                else
-                {
-                    _logger.LogError(ex, ex.Message);
-                }
-            }
-            catch (Exception ex)
-            {
-                _logger.LogError(ex, ex.Message);
-
-                // fire and forget
-                _ = _githubService.CreateBugIssue($"Application Exception: {ex.Message}", ex, GithubIssueLabels.Telegram);
-            }
+            await OnMessageReceived(message, scope.ServiceProvider);
         }
 
         private async Task BotOnCallbackQueryReceived(CallbackQuery callbackQuery)
         {
-            try
-            {
-                using var scope = _serviceScopeFactory.CreateScope();
-                var telegramCommandHandlerService = scope.ServiceProvider.GetService<ITelegramCommandHandlerService>();
+            using var scope = _serviceScopeFactory.CreateScope();
+            var telegramCommandHandlerService = scope.ServiceProvider.GetService<ITelegramCommandHandlerService>();
 
-                await telegramCommandHandlerService.HandleCallBackQuery(callbackQuery);
-            }
-            catch (Exception ex)
-            {
-                _logger.LogError(ex, ex.Message);
-
-                // fire and forget
-                _ = _githubService.CreateBugIssue($"Application Exception: {ex.Message}", ex, GithubIssueLabels.Telegram);
-            }
+            await telegramCommandHandlerService.HandleCallBackQuery(callbackQuery);
         }
 
         private Task UnknownUpdateHandlerAsync(Update update)
@@ -123,13 +90,27 @@ namespace GrammarNazi.App.HostedServices
 
         public Task HandleErrorAsync(ITelegramBotClient botClient, Exception exception, CancellationToken cancellationToken)
         {
-            var ErrorMessage = exception switch
+            if (exception is ApiRequestException apiRequestException)
             {
-                ApiRequestException apiRequestException => $"Telegram API Error:\n[{apiRequestException.ErrorCode}]\n{apiRequestException.Message}",
-                _ => exception.ToString()
-            };
+                var warningMessages = new[] { "bot was blocked by the user", "bot was kicked from the supergroup", "have no rights to send a message" };
 
-            _logger.LogError(ErrorMessage);
+                if (warningMessages.Any(x => apiRequestException.Message.Contains(x)))
+                {
+                    _logger.LogWarning(apiRequestException.Message);
+                }
+                else
+                {
+                    _logger.LogError(apiRequestException, apiRequestException.Message);
+                }
+
+                return Task.CompletedTask;
+            }
+
+            _logger.LogError(exception, exception.Message);
+
+            // fire and forget
+            _ = _githubService.CreateBugIssue($"Application Exception: {exception.Message}", exception, GithubIssueLabels.Telegram);
+
             return Task.CompletedTask;
         }
 
