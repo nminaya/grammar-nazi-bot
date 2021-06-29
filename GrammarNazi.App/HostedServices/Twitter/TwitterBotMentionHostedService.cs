@@ -63,7 +63,7 @@ namespace GrammarNazi.App.HostedServices
 
                     var myUser = await TwitterClient.Users.GetUserAsync(TwitterBotSettings.BotUsername);
 
-                    foreach (var mention in mentions.Where(x => x.InReplyToStatusId.HasValue || x.QuotedStatusId.HasValue))
+                    foreach (var mention in mentions.Where(x => x.Text.Contains($"@{TwitterBotSettings.BotUsername}") && (x.InReplyToStatusId.HasValue || x.QuotedStatusId.HasValue)))
                     {
                         // Avoid correcting replies to my own tweets
                         if (mention.InReplyToUserId == myUser.Id)
