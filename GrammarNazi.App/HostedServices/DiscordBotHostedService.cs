@@ -8,6 +8,7 @@ using GrammarNazi.Domain.Entities;
 using GrammarNazi.Domain.Entities.Settings;
 using GrammarNazi.Domain.Enums;
 using GrammarNazi.Domain.Services;
+using Microsoft.Data.SqlClient;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
@@ -64,6 +65,10 @@ namespace GrammarNazi.App.HostedServices
                 catch (HttpException ex) when (ex.Message.Contains("50013") || ex.Message.Contains("Forbidden") || ex.Message.Contains("160002"))
                 {
                     _logger.LogWarning($"Missing permissions: {ex.Message}");
+                }
+                catch (SqlException ex) when (ex.Message.Contains("SHUTDOWN"))
+                {
+                    _logger.LogWarning(ex, "Sql Server shutdown in progress");
                 }
                 catch (Exception ex)
                 {
