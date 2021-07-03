@@ -3,6 +3,7 @@ using GrammarNazi.Domain.Constants;
 using GrammarNazi.Domain.Entities;
 using GrammarNazi.Domain.Enums;
 using GrammarNazi.Domain.Services;
+using Microsoft.Data.SqlClient;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
@@ -60,6 +61,10 @@ namespace GrammarNazi.App.HostedServices
             try
             {
                 await handler;
+            }
+            catch (SqlException ex) when (ex.Message.Contains("SHUTDOWN"))
+            {
+                _logger.LogWarning(ex, "Sql Server shutdown in progress");
             }
             catch (Exception exception)
             {

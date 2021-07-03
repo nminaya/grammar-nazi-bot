@@ -4,6 +4,7 @@ using GrammarNazi.Domain.Constants;
 using GrammarNazi.Domain.Entities.Configs;
 using GrammarNazi.Domain.Enums;
 using GrammarNazi.Domain.Services;
+using Microsoft.Data.SqlClient;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using System;
@@ -137,6 +138,10 @@ namespace GrammarNazi.App.HostedServices
                 catch (TwitterException ex) when (ex.TwitterDescription.Contains("Try again later"))
                 {
                     Logger.LogWarning(ex, "Twitter servers are overloaded.");
+                }
+                catch (SqlException ex) when (ex.Message.Contains("SHUTDOWN"))
+                {
+                    Logger.LogWarning(ex, "Sql Server shutdown in progress");
                 }
                 catch (Exception ex)
                 {
