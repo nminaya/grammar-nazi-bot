@@ -38,7 +38,7 @@ namespace GrammarNazi.Tests.BotCommands.Telegram
                 }
             };
 
-            telegramBotClientMock.Setup(v => v.GetChatAdministratorsAsync(It.IsAny<ChatId>(), default))
+            telegramBotClientMock.Setup(v => v.GetChatAdministratorsAsync(message.Chat.Id, default))
                 .ReturnsAsync(new[] { new ChatMember { User = new() { Id = message.From.Id } } });
 
             chatConfigurationServiceMock.Setup(v => v.GetConfigurationByChatId(message.Chat.Id))
@@ -50,7 +50,7 @@ namespace GrammarNazi.Tests.BotCommands.Telegram
             // Assert
             Assert.True(chatConfig.IsBotStopped);
             chatConfigurationServiceMock.Verify(v => v.Update(chatConfig));
-            telegramBotClientMock.Verify(v => v.SendTextMessageAsync(It.IsAny<ChatId>(), It.Is<string>(s => s.Contains(replyMessage)), ParseMode.Default, default, false, false, 0, false, default, default));
+            telegramBotClientMock.Verify(v => v.SendTextMessageAsync(message.Chat.Id, It.Is<string>(s => s.Contains(replyMessage)), ParseMode.Default, default, false, false, 0, false, default, default));
         }
 
         [Fact]

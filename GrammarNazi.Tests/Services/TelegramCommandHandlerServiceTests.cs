@@ -46,7 +46,7 @@ namespace GrammarNazi.Tests.Services
 
             var callbackQuery = new CallbackQuery { Message = message, From = message.From, Data = callBackQueryData };
 
-            telegramBotClientMock.Setup(v => v.GetChatAdministratorsAsync(It.IsAny<ChatId>(), default))
+            telegramBotClientMock.Setup(v => v.GetChatAdministratorsAsync(message.Chat.Id, default))
                 .ReturnsAsync(new[] { new ChatMember { User = new() { Id = message.From.Id } } });
 
             telegramBotClientMock.Setup(v => v.GetMeAsync(default))
@@ -92,7 +92,7 @@ namespace GrammarNazi.Tests.Services
 
             var callbackQuery = new CallbackQuery { Message = message, From = message.From, Data = callBackQueryData };
 
-            telegramBotClientMock.Setup(v => v.GetChatAdministratorsAsync(It.IsAny<ChatId>(), default))
+            telegramBotClientMock.Setup(v => v.GetChatAdministratorsAsync(message.Chat.Id, default))
                 .ReturnsAsync(new[] { new ChatMember { User = new() { Id = message.From.Id } } });
 
             telegramBotClientMock.Setup(v => v.GetMeAsync(default))
@@ -135,7 +135,7 @@ namespace GrammarNazi.Tests.Services
 
             var callbackQuery = new CallbackQuery { Message = message, From = message.From, Data = "" };
 
-            telegramBotClientMock.Setup(v => v.GetChatAdministratorsAsync(It.IsAny<ChatId>(), default))
+            telegramBotClientMock.Setup(v => v.GetChatAdministratorsAsync(message.Chat.Id, default))
                 .ReturnsAsync(new[] { new ChatMember { User = new() { Id = 100 } } });
 
             telegramBotClientMock.Setup(v => v.GetMeAsync(default))
@@ -148,7 +148,7 @@ namespace GrammarNazi.Tests.Services
             await service.HandleCallBackQuery(callbackQuery);
 
             // Assert
-            telegramBotClientMock.Verify(v => v.SendTextMessageAsync(It.IsAny<ChatId>(), It.Is<string>(s => s.Contains(replyMessage)), ParseMode.Markdown, default, false, false, 0, false, default, default));
+            telegramBotClientMock.Verify(v => v.SendTextMessageAsync(message.Chat.Id, It.Is<string>(s => s.Contains(replyMessage)), ParseMode.Markdown, default, false, false, 0, false, default, default));
         }
 
         [Theory]
@@ -172,7 +172,7 @@ namespace GrammarNazi.Tests.Services
                 }
             };
 
-            telegramBotClientMock.Setup(v => v.GetChatAdministratorsAsync(It.IsAny<ChatId>(), default))
+            telegramBotClientMock.Setup(v => v.GetChatAdministratorsAsync(message.Chat.Id, default))
                 .ReturnsAsync(new[] { new ChatMember { User = new() { Id = message.From.Id } } });
 
             // Act
@@ -181,7 +181,7 @@ namespace GrammarNazi.Tests.Services
             // Assert
 
             // Make sure SendTextMessageAsync method was never called
-            telegramBotClientMock.Verify(v => v.SendTextMessageAsync(It.IsAny<ChatId>(), It.IsAny<string>(), ParseMode.Default, default, false, false, 0, false, default, default), Times.Never);
+            telegramBotClientMock.Verify(v => v.SendTextMessageAsync(message.Chat.Id, It.IsAny<string>(), ParseMode.Default, default, false, false, 0, false, default, default), Times.Never);
         }
 
         [Theory]
@@ -206,7 +206,7 @@ namespace GrammarNazi.Tests.Services
                 }
             };
 
-            telegramBotClientMock.Setup(v => v.GetChatAdministratorsAsync(It.IsAny<ChatId>(), default))
+            telegramBotClientMock.Setup(v => v.GetChatAdministratorsAsync(message.Chat.Id, default))
                 .ReturnsAsync(new[] { new ChatMember { User = new() { Id = message.From.Id } } });
 
             // Act
@@ -215,7 +215,7 @@ namespace GrammarNazi.Tests.Services
             // Assert
 
             // Make sure SendTextMessageAsync method was never called
-            telegramBotClientMock.Verify(v => v.SendTextMessageAsync(It.IsAny<ChatId>(), It.IsAny<string>(), ParseMode.Default, default, false, false, 0, false, default, default), Times.Never);
+            telegramBotClientMock.Verify(v => v.SendTextMessageAsync(message.Chat.Id, It.IsAny<string>(), ParseMode.Default, default, false, false, 0, false, default, default), Times.Never);
         }
 
         private IEnumerable<ITelegramBotCommand> GetAllCommands()
