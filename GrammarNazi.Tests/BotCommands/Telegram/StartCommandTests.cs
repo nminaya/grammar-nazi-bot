@@ -43,10 +43,6 @@ namespace GrammarNazi.Tests.BotCommands.Telegram
             await command.Handle(message);
 
             // Assert
-
-            // Using message.Chat.Id due to an issue with ChatId.Equals method.
-            // We should be able to especify ChatId's after this PR gets merged https://github.com/TelegramBots/Telegram.Bot/pull/940
-            // and the Telegram.Bot nuget package updated.
             telegramBotClientMock.Verify(v => v.SendTextMessageAsync(message.Chat.Id, It.Is<string>(s => s.Contains(replyMessage)), ParseMode.Default, default, false, false, 0, false, default, default));
         }
 
