@@ -5,6 +5,7 @@ using GrammarNazi.Core.Clients;
 using GrammarNazi.Core.Extensions;
 using GrammarNazi.Core.Repositories;
 using GrammarNazi.Core.Services;
+using GrammarNazi.Core.Utilities;
 using GrammarNazi.Domain.Clients;
 using GrammarNazi.Domain.Entities.Configs;
 using GrammarNazi.Domain.Entities.Settings;
@@ -20,6 +21,7 @@ using Microsoft.Extensions.Options;
 using Octokit;
 using System;
 using Telegram.Bot;
+using Telegram.Bot.Extensions.Polling;
 using Tweetinvi;
 
 namespace GrammarNazi.App
@@ -88,6 +90,7 @@ namespace GrammarNazi.App
             services.AddTransient<ISentimentAnalysisService, MeaningCloudSentimentAnalysisService>();
             services.AddTransient<IDiscordChannelConfigService, DiscordChannelConfigService>();
             services.AddTransient<IDiscordCommandHandlerService, DiscordCommandHandlerService>();
+            services.AddTransient<IUpdateHandler, TelegramUpdateHandler>();
 
             // Discord Bot Commands
             services.AddDiscordBotCommands();
