@@ -1,4 +1,5 @@
 ﻿using GrammarNazi.Core.Utilities;
+using GrammarNazi.Domain.Enums;
 using GrammarNazi.Domain.Services;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
@@ -6,6 +7,7 @@ using Moq;
 using System;
 using System.Threading.Tasks;
 using Telegram.Bot;
+using Telegram.Bot.Exceptions;
 using Telegram.Bot.Types;
 using Xunit;
 
@@ -71,6 +73,38 @@ namespace GrammarNazi.Tests.Utilities
 
             // Assert
             chatConfigServiceMock.Verify(x => x.GetConfigurationByChatId(update.Message.Chat.Id), Times.Never);
+        }
+
+        [Theory]
+        [InlineData("bot was blocked by the user")]
+        [InlineData("bot was kicked from the supergroup")]
+        [InlineData("have no rights to send a message")]
+        public async Task HandleError_ApiRequestException_Should_LogWarning(string exceptionMessage)
+        {
+            // Arrange
+            var telegramBotMock = new Mock<ITelegramBotClient>();
+            var loggerMock = new Mock<ILogger<TelegramUpdateHandler>>();
+            var githubServiceMock = new Mock<IGithubService>();
+
+            var handler = new TelegramUpdateHandler(null, githubServiceMock.Object, loggerMock.Object);
+
+            var exception = new ApiRequestException(exceptionMessage);
+
+            // Act
+            await handler.HandleError(telegramBotMock.Object, exception, default);
+
+            // Assert
+
+            // Verify LogWarning was called
+            loggerMock.Verify(x => x.Log(
+                            LogLevel.Warning,
+                            It.IsAny<EventId>(),
+                            It.IsAny<It.IsAnyType>(),
+                            It.IsAny<Exception>(),
+                            (Func<It.IsAnyType, Exception, string>)It.IsAny<object>()));
+            
+            // Verify CreateBugIssue was never called
+            githubServiceMock.Verify(x => x.CreateBugIssue(It.IsAny<string>(), It.IsAny<Exception>(), It.IsAny<GithubIssueLabels>()), Times.Never);
         }
     }
 }
