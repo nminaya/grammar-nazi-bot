@@ -143,7 +143,7 @@ namespace GrammarNazi.Core.Utilities
 
         private Task UnknownUpdateHandlerAsync(Update update)
         {
-            _logger.LogInformation($"Unknown update type: {update.Type}");
+            _logger.LogInformation($"Unknown update type received: {update.Type}");
             return Task.CompletedTask;
         }
 
