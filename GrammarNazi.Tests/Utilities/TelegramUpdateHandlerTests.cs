@@ -102,9 +102,38 @@ namespace GrammarNazi.Tests.Utilities
                             It.IsAny<It.IsAnyType>(),
                             It.IsAny<Exception>(),
                             (Func<It.IsAnyType, Exception, string>)It.IsAny<object>()));
-            
+
             // Verify CreateBugIssue was never called
             githubServiceMock.Verify(x => x.CreateBugIssue(It.IsAny<string>(), It.IsAny<Exception>(), It.IsAny<GithubIssueLabels>()), Times.Never);
+        }
+
+        [Fact]
+        public async Task HandleError_ExceptionCaptured_Should_LogErrorAndCreateBugIssue()
+        {
+            // Arrange
+            var telegramBotMock = new Mock<ITelegramBotClient>();
+            var loggerMock = new Mock<ILogger<TelegramUpdateHandler>>();
+            var githubServiceMock = new Mock<IGithubService>();
+
+            var handler = new TelegramUpdateHandler(null, githubServiceMock.Object, loggerMock.Object);
+
+            var exception = new Exception("Fatal test exception");
+
+            // Act
+            await handler.HandleError(telegramBotMock.Object, exception, default);
+
+            // Assert
+
+            // Verify LogError was called
+            loggerMock.Verify(x => x.Log(
+                            LogLevel.Error,
+                            It.IsAny<EventId>(),
+                            It.IsAny<It.IsAnyType>(),
+                            exception,
+                            (Func<It.IsAnyType, Exception, string>)It.IsAny<object>()));
+
+            // Verify CreateBugIssue was called
+            githubServiceMock.Verify(x => x.CreateBugIssue("Application Exception: Fatal test exception", exception, GithubIssueLabels.Telegram));
         }
     }
 }
