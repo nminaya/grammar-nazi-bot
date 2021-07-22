@@ -38,5 +38,17 @@ namespace GrammarNazi.Core.Extensions
         {
             return source.Select((item, index) => (item, index));
         }
+
+        public static IEnumerable<Exception> GetInnerExceptions(this Exception exception)
+        {
+            var currentException = exception.InnerException;
+
+            while (currentException != null)
+            {
+                yield return currentException;
+
+                currentException = currentException.InnerException;
+            }
+        }
     }
 }
