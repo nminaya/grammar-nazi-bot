@@ -1,4 +1,5 @@
-﻿using GrammarNazi.Domain.Constants;
+﻿using GrammarNazi.Core.Extensions;
+using GrammarNazi.Domain.Constants;
 using GrammarNazi.Domain.Entities;
 using GrammarNazi.Domain.Enums;
 using GrammarNazi.Domain.Services;
@@ -8,6 +9,7 @@ using Microsoft.Extensions.Logging;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Net.Sockets;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
@@ -48,6 +50,16 @@ namespace GrammarNazi.Core.Utilities
                 {
                     _logger.LogError(apiRequestException, apiRequestException.Message);
                 }
+
+                return Task.CompletedTask;
+            }
+
+            var innerExceptions = exception.GetInnerExceptions();
+
+            if (innerExceptions.Any(x => x.GetType() == typeof(SocketException) && x.Message.Contains("Connection reset by peer")))
+            {
+                // The server has reset the connection.
+                _logger.LogWarning(exception, "Socket reseted.");
 
                 return Task.CompletedTask;
             }
