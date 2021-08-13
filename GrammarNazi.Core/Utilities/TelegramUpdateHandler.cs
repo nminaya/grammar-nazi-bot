@@ -9,6 +9,8 @@ using Microsoft.Extensions.Logging;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Net;
+using System.Net.Http;
 using System.Net.Sockets;
 using System.Text;
 using System.Threading;
@@ -50,6 +52,13 @@ namespace GrammarNazi.Core.Utilities
                 {
                     _logger.LogError(apiRequestException, apiRequestException.Message);
                 }
+
+                return Task.CompletedTask;
+            }
+            else if (exception is HttpRequestException requestException
+                && requestException.StatusCode == HttpStatusCode.BadGateway)
+            {
+                _logger.LogWarning("Bad Gateway", requestException);
 
                 return Task.CompletedTask;
             }
