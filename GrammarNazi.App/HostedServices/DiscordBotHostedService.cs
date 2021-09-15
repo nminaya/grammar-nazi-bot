@@ -15,6 +15,7 @@ using Microsoft.Extensions.Options;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Net;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
@@ -62,9 +63,9 @@ namespace GrammarNazi.App.HostedServices
                 {
                     await OnMessageReceived(eventArgs);
                 }
-                catch (HttpException ex) when (ex.Message.Contains("50013") || ex.Message.Contains("Forbidden") || ex.Message.Contains("160002"))
+                catch (HttpException ex) when (ex.Message.ContainsAny("50013", "Forbidden", "160002") || ex.HttpCode == HttpStatusCode.BadRequest)
                 {
-                    _logger.LogWarning($"Missing permissions: {ex.Message}");
+                    _logger.LogWarning(ex, ex.Message);
                 }
                 catch (SqlException ex) when (ex.Message.Contains("SHUTDOWN"))
                 {
