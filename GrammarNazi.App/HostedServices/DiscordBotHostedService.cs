@@ -12,6 +12,7 @@ using Microsoft.Data.SqlClient;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
+using Polly;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -61,7 +62,7 @@ namespace GrammarNazi.App.HostedServices
             {
                 try
                 {
-                    await OnMessageReceived(eventArgs);
+                    await PollyExceptionHandlerHelper.HandleExceptionAndRetry<SqlException>(3, _logger, OnMessageReceived(eventArgs), stoppingToken);
                 }
                 catch (HttpException ex) when (ex.Message.ContainsAny("50013", "Forbidden", "160002") || ex.HttpCode == HttpStatusCode.BadRequest)
                 {

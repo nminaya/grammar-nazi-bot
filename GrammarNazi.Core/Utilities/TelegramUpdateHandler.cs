@@ -92,7 +92,7 @@ namespace GrammarNazi.Core.Utilities
 
             try
             {
-                await handler;
+                await PollyExceptionHandlerHelper.HandleExceptionAndRetry<SqlException>(3, _logger, handler, cancellationToken);
             }
             catch (SqlException ex) when (ex.Message.Contains("SHUTDOWN"))
             {
