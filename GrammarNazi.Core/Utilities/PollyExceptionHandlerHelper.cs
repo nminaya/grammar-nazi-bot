@@ -8,22 +8,24 @@ namespace GrammarNazi.Core.Utilities
 {
     public static class PollyExceptionHandlerHelper
     {
-        public static AsyncPolicy GetSqlExceptionHandler(ILogger logger)
+        public static async Task HandleExceptionAndRetry<T>(Task action, ILogger logger, CancellationToken cancellationToken, int numberOfTimes = 3)
+            where T : Exception
         {
-            return Policy.Handle<Exception>()
-            .WaitAndRetryAsync(3, retryCount =>
+            var handler = Policy.Handle<T>()
+            .WaitAndRetryAsync(numberOfTimes, retryCount =>
             {
-                var timeToWait = TimeSpan.FromSeconds(5);
-                logger.LogWarning($"SqlException captured: Retry #{retryCount}. Waiting 25 seconds.");
+                var timeToWait = TimeSpan.FromSeconds(15);
+                logger.LogWarning($"{typeof(T).Name} captured: Retry #{retryCount}. Waiting 15 seconds.");
 
                 return timeToWait;
             });
-        }
 
-        public static async Task HandleExceptionAndRetry<T>(int numberOfTimes, ILogger logger, Task action, CancellationToken cancellationToken)
-            where T : Exception
-        {
-            // TODO: Implement this method
+            var result = await handler.ExecuteAndCaptureAsync(_ => action, cancellationToken);
+
+            if (result.Outcome == OutcomeType.Failure)
+            {
+                throw result.FinalException;
+            }
         }
     }
 }
