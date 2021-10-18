@@ -11,6 +11,7 @@
     <PackageReference Include="FirebaseDatabase.net" Version="4.0.6" />
     <PackageReference Include="Microsoft.VisualStudio.Azure.Containers.Tools.Targets" Version="1.11.1" />
     <PackageReference Include="Octokit" Version="0.50.0" />
+    <PackageReference Include="Polly" Version="7.2.2" />
     <PackageReference Include="Telegram.Bot" Version="16.0.2" />
     <PackageReference Include="Telegram.Bot.Extensions.Polling" Version="0.2.0" />
     <PackageReference Include="TweetinviAPI" Version="5.0.4" />
