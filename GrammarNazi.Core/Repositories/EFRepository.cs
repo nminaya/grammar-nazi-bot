@@ -55,12 +55,8 @@ namespace GrammarNazi.Core.Repositories
 
         public async Task Update(T entity, Expression<Func<T, bool>> identifier)
         {
-            //TODO: Find way to update without removing
-            var obj = await _dbContext.Set<T>().FirstOrDefaultAsync(identifier);
-            if (obj != default)
-                _dbContext.Set<T>().Remove(obj);
+            _dbContext.Update(entity);
 
-            await _dbContext.Set<T>().AddAsync(entity);
             await _dbContext.SaveChangesAsync();
         }
     }
