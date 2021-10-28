@@ -47,7 +47,7 @@ namespace GrammarNazi.Core.Services
                     // language not supported
                     return new(default);
                 }
-                
+
                 // Use API language auto detection
                 languageCode = "auto";
             }

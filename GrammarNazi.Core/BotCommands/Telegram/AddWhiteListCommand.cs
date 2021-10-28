@@ -22,7 +22,7 @@ namespace GrammarNazi.Core.BotCommands.Telegram
             _chatConfigurationService = chatConfigurationService;
         }
 
-        public async Task Handle(Message message) 
+        public async Task Handle(Message message)
         {
             await SendTypingNotification(message);
 

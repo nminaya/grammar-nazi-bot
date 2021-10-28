@@ -40,9 +40,9 @@ namespace GrammarNazi.Domain.Entities
             return TweetId.GetHashCode();
         }
 
-		public override string ToString()
-		{
-			return $"{TweetId}";
-		}
-	}
+        public override string ToString()
+        {
+            return $"{TweetId}";
+        }
+    }
 }

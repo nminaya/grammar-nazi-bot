@@ -1,5 +1,4 @@
 ﻿using Discord;
-using Discord.WebSocket;
 using GrammarNazi.Core.Extensions;
 using GrammarNazi.Domain.BotCommands;
 using GrammarNazi.Domain.Constants;

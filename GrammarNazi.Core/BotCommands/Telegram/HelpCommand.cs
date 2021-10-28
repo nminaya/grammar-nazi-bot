@@ -15,7 +15,7 @@ namespace GrammarNazi.Core.BotCommands.Telegram
 
         public HelpCommand(ITelegramBotClient telegramBotClient)
             : base(telegramBotClient)
-        {}
+        { }
 
         public async Task Handle(Message message)
         {
