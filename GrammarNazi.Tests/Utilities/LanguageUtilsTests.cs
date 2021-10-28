@@ -13,7 +13,7 @@ namespace GrammarNazi.Tests.Utilities
             // Arrange > Act
             var result = LanguageUtils.GetLanguageCode(actual);
 
-            // Assert 
+            // Assert
             Assert.Equal(expected, result);
         }
     }

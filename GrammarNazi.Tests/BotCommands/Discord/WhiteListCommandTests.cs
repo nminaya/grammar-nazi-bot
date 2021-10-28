@@ -1,7 +1,6 @@
 ﻿using Discord;
 using GrammarNazi.Core.BotCommands.Discord;
 using GrammarNazi.Domain.Entities;
-using GrammarNazi.Domain.Enums;
 using GrammarNazi.Domain.Services;
 using Moq;
 using System.Threading.Tasks;

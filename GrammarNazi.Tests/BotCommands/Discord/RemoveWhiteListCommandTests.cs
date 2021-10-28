@@ -6,6 +6,7 @@ using GrammarNazi.Domain.Services;
 using Moq;
 using System.Threading.Tasks;
 using Xunit;
+
 namespace GrammarNazi.Tests.BotCommands.Discord
 {
     public class RemoveWhiteListCommandTests
