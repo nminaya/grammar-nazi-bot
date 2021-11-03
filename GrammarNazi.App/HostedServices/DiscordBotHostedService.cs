@@ -63,7 +63,7 @@ namespace GrammarNazi.App.HostedServices
                 {
                     await PollyExceptionHandlerHelper.HandleExceptionAndRetry<SqlException>(OnMessageReceived(eventArgs), _logger, stoppingToken);
                 }
-                catch (HttpException ex) when (ex.Message.ContainsAny("50013", "Forbidden", "160002") || ex.HttpCode == HttpStatusCode.BadRequest)
+                catch (HttpException ex) when (ex.Message.ContainsAny("50013", "50001", "Forbidden", "160002") || ex.HttpCode == HttpStatusCode.BadRequest)
                 {
                     _logger.LogWarning(ex, ex.Message);
                 }
