@@ -9,7 +9,6 @@ using GrammarNazi.Domain.Entities.Settings;
 using GrammarNazi.Domain.Enums;
 using GrammarNazi.Domain.Services;
 using Microsoft.Data.SqlClient;
-using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
@@ -29,19 +28,25 @@ namespace GrammarNazi.App.HostedServices
         private readonly DiscordSettings _discordSettings;
         private readonly ILogger<DiscordBotHostedService> _logger;
         private readonly IGithubService _githubService;
-        private readonly IServiceScopeFactory _serviceScopeFactory;
+        private readonly IEnumerable<IGrammarService> _grammarServices;
+        private readonly IDiscordChannelConfigService _discordChannelConfigService;
+        private readonly IDiscordCommandHandlerService _discordCommandHandlerService;
 
         public DiscordBotHostedService(BaseSocketClient baseSocketClient,
             IOptions<DiscordSettings> options,
             IGithubService githubService,
-            ILogger<DiscordBotHostedService> logger,
-            IServiceScopeFactory serviceScopeFactory)
+            IEnumerable<IGrammarService> grammarServices,
+            IDiscordChannelConfigService discordChannelConfigService,
+            IDiscordCommandHandlerService discordCommandHandlerService,
+            ILogger<DiscordBotHostedService> logger)
         {
             _client = baseSocketClient;
             _discordSettings = options.Value;
             _logger = logger;
             _githubService = githubService;
-            _serviceScopeFactory = serviceScopeFactory;
+            _grammarServices = grammarServices;
+            _discordChannelConfigService = discordChannelConfigService;
+            _discordCommandHandlerService = discordCommandHandlerService;
         }
 
         protected override async Task ExecuteAsync(CancellationToken stoppingToken)
@@ -52,33 +57,27 @@ namespace GrammarNazi.App.HostedServices
 
             await _client.StartAsync();
 
-            _client.MessageReceived += (eventArgs) =>
+            _client.MessageReceived += async (eventArgs) =>
             {
-                // fire and forget
-                _ = Task.Run(async () =>
+                try
                 {
-                    try
-                    {
-                        await PollyExceptionHandlerHelper.HandleExceptionAndRetry<SqlException>(OnMessageReceived(eventArgs), _logger, stoppingToken);
-                    }
-                    catch (HttpException ex) when (ex.Message.ContainsAny("50013", "50001", "Forbidden", "160002") || ex.HttpCode == HttpStatusCode.BadRequest)
-                    {
-                        _logger.LogWarning(ex, ex.Message);
-                    }
-                    catch (SqlException ex) when (ex.Message.Contains("SHUTDOWN"))
-                    {
-                        _logger.LogWarning(ex, "Sql Server shutdown in progress");
-                    }
-                    catch (Exception ex)
-                    {
-                        _logger.LogError(ex, ex.Message);
+                    await PollyExceptionHandlerHelper.HandleExceptionAndRetry<SqlException>(OnMessageReceived(eventArgs), _logger, stoppingToken);
+                }
+                catch (HttpException ex) when (ex.Message.ContainsAny("50013", "50001", "Forbidden", "160002") || ex.HttpCode == HttpStatusCode.BadRequest)
+                {
+                    _logger.LogWarning(ex, ex.Message);
+                }
+                catch (SqlException ex) when (ex.Message.Contains("SHUTDOWN"))
+                {
+                    _logger.LogWarning(ex, "Sql Server shutdown in progress");
+                }
+                catch (Exception ex)
+                {
+                    _logger.LogError(ex, ex.Message);
 
-                        // fire and forget
-                        //_ = _githubService.CreateBugIssue($"Application Exception: {ex.Message}", ex, GithubIssueLabels.Discord);
-                    }
-                });
-
-                return Task.CompletedTask;
+                    // fire and forget
+                    _ = _githubService.CreateBugIssue($"Application Exception: {ex.Message}", ex, GithubIssueLabels.Discord);
+                }
             };
 
             // Keep hosted service alive while receiving messages
@@ -90,25 +89,21 @@ namespace GrammarNazi.App.HostedServices
             if (socketMessage is not SocketUserMessage message || message.Author.IsBot || message.Author.IsWebhook)
                 return;
 
-            using var scope = _serviceScopeFactory.CreateScope();
-            var serviceProvider = scope.ServiceProvider;
-
             _logger.LogInformation($"Message received from channel id: {message.Channel.Id}");
 
-            var channelConfig = await GetChatConfiguration(message, serviceProvider);
+            var channelConfig = await GetChatConfiguration(message);
 
             // Text is a command
             if (message.Content.StartsWith(DiscordBotCommands.Prefix))
             {
-                var commandHandler = serviceProvider.GetService<IDiscordCommandHandlerService>();
-                await commandHandler.HandleCommand(message);
+                await _discordCommandHandlerService.HandleCommand(message);
                 return;
             }
 
             if (channelConfig.IsBotStopped)
                 return;
 
-            var grammarService = GetConfiguredGrammarService(channelConfig, serviceProvider);
+            var grammarService = GetConfiguredGrammarService(channelConfig);
 
             var text = GetCleannedText(message.Content);
 
@@ -150,11 +145,9 @@ namespace GrammarNazi.App.HostedServices
             await message.Channel.SendMessageAsync(replyMessage, messageReference: new MessageReference(message.Id));
         }
 
-        private IGrammarService GetConfiguredGrammarService(DiscordChannelConfig channelConfig, IServiceProvider serviceProvider)
+        private IGrammarService GetConfiguredGrammarService(DiscordChannelConfig channelConfig)
         {
-            var grammarServices = serviceProvider.GetService<IEnumerable<IGrammarService>>();
-
-            var grammarService = grammarServices.First(v => v.GrammarAlgorith == channelConfig.GrammarAlgorithm);
+            var grammarService = _grammarServices.First(v => v.GrammarAlgorith == channelConfig.GrammarAlgorithm);
             grammarService.SetSelectedLanguage(channelConfig.SelectedLanguage);
             grammarService.SetStrictnessLevel(channelConfig.CorrectionStrictnessLevel);
             grammarService.SetWhiteListWords(channelConfig.WhiteListWords);
@@ -167,11 +160,9 @@ namespace GrammarNazi.App.HostedServices
             return StringUtils.MarkDownToPlainText(StringUtils.RemoveCodeBlocks(text));
         }
 
-        private async Task<DiscordChannelConfig> GetChatConfiguration(SocketUserMessage message, IServiceProvider serviceProvider)
+        private async Task<DiscordChannelConfig> GetChatConfiguration(SocketUserMessage message)
         {
-            var channelConfigService = serviceProvider.GetService<IDiscordChannelConfigService>();
-
-            var channelConfig = await channelConfigService.GetConfigurationByChannelId(message.Channel.Id);
+            var channelConfig = await _discordChannelConfigService.GetConfigurationByChannelId(message.Channel.Id);
 
             if (channelConfig != null)
                 return channelConfig;
@@ -196,7 +187,7 @@ namespace GrammarNazi.App.HostedServices
                 SelectedLanguage = SupportedLanguages.Auto
             };
 
-            await channelConfigService.AddConfiguration(channelConfiguration);
+            await _discordChannelConfigService.AddConfiguration(channelConfiguration);
 
             await message.Channel.SendMessageAsync(messageBuilder.ToString());
 
