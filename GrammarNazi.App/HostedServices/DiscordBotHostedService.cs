@@ -57,33 +57,27 @@ namespace GrammarNazi.App.HostedServices
 
             await _client.StartAsync();
 
-            _client.MessageReceived += (eventArgs) =>
+            _client.MessageReceived += async (eventArgs) =>
             {
-                // fire and forget
-                _ = Task.Run(async () =>
+                try
                 {
-                    try
-                    {
-                        await PollyExceptionHandlerHelper.HandleExceptionAndRetry<SqlException>(OnMessageReceived(eventArgs), _logger, stoppingToken);
-                    }
-                    catch (HttpException ex) when (ex.Message.ContainsAny("50013", "50001", "Forbidden", "160002") || ex.HttpCode == HttpStatusCode.BadRequest)
-                    {
-                        _logger.LogWarning(ex, ex.Message);
-                    }
-                    catch (SqlException ex) when (ex.Message.Contains("SHUTDOWN"))
-                    {
-                        _logger.LogWarning(ex, "Sql Server shutdown in progress");
-                    }
-                    catch (Exception ex)
-                    {
-                        _logger.LogError(ex, ex.Message);
+                    await PollyExceptionHandlerHelper.HandleExceptionAndRetry<SqlException>(OnMessageReceived(eventArgs), _logger, stoppingToken);
+                }
+                catch (HttpException ex) when (ex.Message.ContainsAny("50013", "50001", "Forbidden", "160002") || ex.HttpCode == HttpStatusCode.BadRequest)
+                {
+                    _logger.LogWarning(ex, ex.Message);
+                }
+                catch (SqlException ex) when (ex.Message.Contains("SHUTDOWN"))
+                {
+                    _logger.LogWarning(ex, "Sql Server shutdown in progress");
+                }
+                catch (Exception ex)
+                {
+                    _logger.LogError(ex, ex.Message);
 
-                        // fire and forget
-                        _ = _githubService.CreateBugIssue($"Application Exception: {ex.Message}", ex, GithubIssueLabels.Discord);
-                    }
-                });
-
-                return Task.CompletedTask;
+                    // fire and forget
+                    _ = _githubService.CreateBugIssue($"Application Exception: {ex.Message}", ex, GithubIssueLabels.Discord);
+                }
             };
 
             // Keep hosted service alive while receiving messages
