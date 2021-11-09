@@ -110,7 +110,7 @@ namespace GrammarNazi.App.HostedServices
 
                 if (replyTweet == null)
                 {
-                    Logger.LogWarning("Not able to tweet Reply", text, replyTo);
+                    Logger.LogWarning("Not able to tweet Reply", text);
                     return;
                 }
 
