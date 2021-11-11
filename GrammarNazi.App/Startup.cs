@@ -42,7 +42,7 @@ namespace GrammarNazi.App
             // Hosted services
             services.AddHostedService<TelegramBotHostedService>();
             // Disabled (see #344)
-            //services.AddHostedService<DiscordBotHostedService>();
+            services.AddHostedService<DiscordBotHostedService>();
             services.AddHostedService<TwitterBotMentionHostedService>();
 
             // Disable Twitter bot due to limitation/suspension
