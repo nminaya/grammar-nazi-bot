@@ -47,7 +47,7 @@ namespace GrammarNazi.Tests.Services
             var callbackQuery = new CallbackQuery { Message = message, From = message.From, Data = callBackQueryData };
 
             telegramBotClientMock.Setup(v => v.GetChatAdministratorsAsync(message.Chat.Id, default))
-                .ReturnsAsync(new[] { new ChatMember { User = new() { Id = message.From.Id } } });
+                .ReturnsAsync(new[] { new ChatMemberMember { User = new() { Id = message.From.Id } } });
 
             telegramBotClientMock.Setup(v => v.GetMeAsync(default))
                 .ReturnsAsync(new User { Id = 123456 });
@@ -93,7 +93,7 @@ namespace GrammarNazi.Tests.Services
             var callbackQuery = new CallbackQuery { Message = message, From = message.From, Data = callBackQueryData };
 
             telegramBotClientMock.Setup(v => v.GetChatAdministratorsAsync(message.Chat.Id, default))
-                .ReturnsAsync(new[] { new ChatMember { User = new() { Id = message.From.Id } } });
+                .ReturnsAsync(new[] { new ChatMemberMember { User = new() { Id = message.From.Id } } });
 
             telegramBotClientMock.Setup(v => v.GetMeAsync(default))
                 .ReturnsAsync(new User { Id = 123456 });
@@ -136,7 +136,7 @@ namespace GrammarNazi.Tests.Services
             var callbackQuery = new CallbackQuery { Message = message, From = message.From, Data = "" };
 
             telegramBotClientMock.Setup(v => v.GetChatAdministratorsAsync(message.Chat.Id, default))
-                .ReturnsAsync(new[] { new ChatMember { User = new() { Id = 100 } } });
+                .ReturnsAsync(new[] { new ChatMemberMember { User = new() { Id = 100 } } });
 
             telegramBotClientMock.Setup(v => v.GetMeAsync(default))
                 .ReturnsAsync(new User { Id = 123456 });
@@ -173,7 +173,7 @@ namespace GrammarNazi.Tests.Services
             };
 
             telegramBotClientMock.Setup(v => v.GetChatAdministratorsAsync(message.Chat.Id, default))
-                .ReturnsAsync(new[] { new ChatMember { User = new() { Id = message.From.Id } } });
+                .ReturnsAsync(new[] { new ChatMemberMember { User = new() { Id = message.From.Id } } });
 
             // Act
             await service.HandleCommand(message);
@@ -207,7 +207,7 @@ namespace GrammarNazi.Tests.Services
             };
 
             telegramBotClientMock.Setup(v => v.GetChatAdministratorsAsync(message.Chat.Id, default))
-                .ReturnsAsync(new[] { new ChatMember { User = new() { Id = message.From.Id } } });
+                .ReturnsAsync(new[] { new ChatMemberMember { User = new() { Id = message.From.Id } } });
 
             // Act
             await service.HandleCommand(message);
