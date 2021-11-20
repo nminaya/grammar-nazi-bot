@@ -50,7 +50,7 @@ namespace GrammarNazi.Tests.BotCommands.Telegram
             // Assert
             Assert.True(chatConfig.IsBotStopped);
             chatConfigurationServiceMock.Verify(v => v.Update(chatConfig));
-            telegramBotClientMock.Verify(v => v.SendTextMessageAsync(message.Chat.Id, It.Is<string>(s => s.Contains(replyMessage)), ParseMode.Default, default, false, false, 0, false, default, default));
+            telegramBotClientMock.Verify(v => v.SendTextMessageAsync(message.Chat.Id, It.Is<string>(s => s.Contains(replyMessage)), ParseMode.Markdown, default, false, false, 0, false, default, default));
         }
 
         [Fact]

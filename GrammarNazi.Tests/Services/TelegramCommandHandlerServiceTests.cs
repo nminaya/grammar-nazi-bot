@@ -181,7 +181,7 @@ namespace GrammarNazi.Tests.Services
             // Assert
 
             // Make sure SendTextMessageAsync method was never called
-            telegramBotClientMock.Verify(v => v.SendTextMessageAsync(message.Chat.Id, It.IsAny<string>(), ParseMode.Default, default, false, false, 0, false, default, default), Times.Never);
+            telegramBotClientMock.Verify(v => v.SendTextMessageAsync(message.Chat.Id, It.IsAny<string>(), ParseMode.Markdown, default, false, false, 0, false, default, default), Times.Never);
         }
 
         [Theory]
@@ -215,7 +215,7 @@ namespace GrammarNazi.Tests.Services
             // Assert
 
             // Make sure SendTextMessageAsync method was never called
-            telegramBotClientMock.Verify(v => v.SendTextMessageAsync(message.Chat.Id, It.IsAny<string>(), ParseMode.Default, default, false, false, 0, false, default, default), Times.Never);
+            telegramBotClientMock.Verify(v => v.SendTextMessageAsync(message.Chat.Id, It.IsAny<string>(), ParseMode.Markdown, default, false, false, 0, false, default, default), Times.Never);
         }
 
         private IEnumerable<ITelegramBotCommand> GetAllCommands()
