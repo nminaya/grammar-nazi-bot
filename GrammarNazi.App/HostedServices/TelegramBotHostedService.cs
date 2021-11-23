@@ -4,6 +4,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using Telegram.Bot;
 using Telegram.Bot.Extensions.Polling;
+using Telegram.Bot.Types.Enums;
 
 namespace GrammarNazi.App.HostedServices
 {
@@ -26,7 +27,11 @@ namespace GrammarNazi.App.HostedServices
         {
             _logger.LogInformation("Telegram Bot Hosted Service started");
 
-            _client.StartReceiving(_updateHandler, stoppingToken);
+            _client.StartReceiving(
+                _updateHandler.HandleUpdateAsync,
+                _updateHandler.HandleErrorAsync,
+                new() { AllowedUpdates = new[] { UpdateType.Message, UpdateType.CallbackQuery } },
+                stoppingToken);
 
             // Keep hosted service alive while receiving messages
             await Task.Delay(Timeout.Infinite, stoppingToken);

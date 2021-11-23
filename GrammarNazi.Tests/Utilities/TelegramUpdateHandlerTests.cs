@@ -2,6 +2,7 @@
 using GrammarNazi.Domain.Entities;
 using GrammarNazi.Domain.Enums;
 using GrammarNazi.Domain.Services;
+using GrammarNazi.Domain.Utilities;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using Moq;
@@ -32,7 +33,7 @@ namespace GrammarNazi.Tests.Utilities
             var handler = new TelegramUpdateHandler(null, null, loggerMock.Object);
 
             // Act
-            await handler.HandleUpdate(telegramBotMock.Object, update, default);
+            await handler.HandleUpdateAsync(telegramBotMock.Object, update, default);
 
             // Assert
 
@@ -71,7 +72,7 @@ namespace GrammarNazi.Tests.Utilities
             var handler = new TelegramUpdateHandler(serviceScopeFactory.Object, null, null);
 
             // Act
-            await handler.HandleUpdate(telegramBotMock.Object, update, default);
+            await handler.HandleUpdateAsync(telegramBotMock.Object, update, default);
 
             // Assert
             chatConfigServiceMock.Verify(x => x.GetConfigurationByChatId(update.Message.Chat.Id), Times.Never);
@@ -112,7 +113,7 @@ namespace GrammarNazi.Tests.Utilities
             var handler = new TelegramUpdateHandler(serviceScopeFactory.Object, null, loggerMock.Object);
 
             // Act
-            await handler.HandleUpdate(telegramBotMock.Object, update, default);
+            await handler.HandleUpdateAsync(telegramBotMock.Object, update, default);
 
             // Assert
             chatConfigServiceMock.Verify(x => x.GetConfigurationByChatId(update.Message.Chat.Id));
@@ -135,7 +136,7 @@ namespace GrammarNazi.Tests.Utilities
             var exception = new ApiRequestException(exceptionMessage);
 
             // Act
-            await handler.HandleError(telegramBotMock.Object, exception, default);
+            await handler.HandleErrorAsync(telegramBotMock.Object, exception, default);
 
             // Assert
 
@@ -164,7 +165,7 @@ namespace GrammarNazi.Tests.Utilities
             var exception = new Exception("Fatal test exception");
 
             // Act
-            await handler.HandleError(telegramBotMock.Object, exception, default);
+            await handler.HandleErrorAsync(telegramBotMock.Object, exception, default);
 
             // Assert
 

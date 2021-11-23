@@ -1,10 +1,10 @@
 ﻿using GrammarNazi.Core.Extensions;
 using GrammarNazi.Core.Utilities;
+using GrammarNazi.Domain.Utilities;
 using System;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
-using Telegram.Bot;
 using Telegram.Bot.Types;
 using Telegram.Bot.Types.Enums;
 using Telegram.Bot.Types.ReplyMarkups;
@@ -13,9 +13,9 @@ namespace GrammarNazi.Core.BotCommands.Telegram
 {
     public abstract class BaseTelegramCommand
     {
-        protected readonly ITelegramBotClient Client;
+        protected readonly ITelegramBotClientWrapper Client;
 
-        protected BaseTelegramCommand(ITelegramBotClient telegramBotClient)
+        protected BaseTelegramCommand(ITelegramBotClientWrapper telegramBotClient)
         {
             Client = telegramBotClient;
         }

@@ -2,9 +2,9 @@
 using GrammarNazi.Domain.BotCommands;
 using GrammarNazi.Domain.Constants;
 using GrammarNazi.Domain.Enums;
+using GrammarNazi.Domain.Utilities;
 using System.Text;
 using System.Threading.Tasks;
-using Telegram.Bot;
 using Telegram.Bot.Types;
 
 namespace GrammarNazi.Core.BotCommands.Telegram
@@ -13,7 +13,7 @@ namespace GrammarNazi.Core.BotCommands.Telegram
     {
         public string Command => TelegramBotCommands.Help;
 
-        public HelpCommand(ITelegramBotClient telegramBotClient)
+        public HelpCommand(ITelegramBotClientWrapper telegramBotClient)
             : base(telegramBotClient)
         { }
 

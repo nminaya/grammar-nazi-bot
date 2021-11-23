@@ -11,6 +11,7 @@ using GrammarNazi.Domain.Entities.Configs;
 using GrammarNazi.Domain.Entities.Settings;
 using GrammarNazi.Domain.Repositories;
 using GrammarNazi.Domain.Services;
+using GrammarNazi.Domain.Utilities;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Http;
@@ -92,6 +93,7 @@ namespace GrammarNazi.App
             services.AddTransient<IDiscordChannelConfigService, DiscordChannelConfigService>();
             services.AddTransient<IDiscordCommandHandlerService, DiscordCommandHandlerService>();
             services.AddTransient<IUpdateHandler, TelegramUpdateHandler>();
+            services.AddTransient<ITelegramBotClientWrapper, TelegramBotClientWrapper>();
 
             // Discord Bot Commands
             services.AddDiscordBotCommands();

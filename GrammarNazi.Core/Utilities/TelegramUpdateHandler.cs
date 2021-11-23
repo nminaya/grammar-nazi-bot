@@ -36,9 +36,7 @@ namespace GrammarNazi.Core.Utilities
             _logger = logger;
         }
 
-        public UpdateType[] AllowedUpdates => new[] { UpdateType.Message, UpdateType.CallbackQuery };
-
-        public Task HandleError(ITelegramBotClient botClient, Exception exception, CancellationToken cancellationToken)
+        public Task HandleErrorAsync(ITelegramBotClient botClient, Exception exception, CancellationToken cancellationToken)
         {
             if (exception is ApiRequestException apiRequestException)
             {
@@ -81,7 +79,7 @@ namespace GrammarNazi.Core.Utilities
             return Task.CompletedTask;
         }
 
-        public async Task HandleUpdate(ITelegramBotClient botClient, Update update, CancellationToken cancellationToken)
+        public async Task HandleUpdateAsync(ITelegramBotClient botClient, Update update, CancellationToken cancellationToken)
         {
             var handler = update.Type switch
             {
@@ -100,7 +98,7 @@ namespace GrammarNazi.Core.Utilities
             }
             catch (Exception exception)
             {
-                await HandleError(botClient, exception, cancellationToken);
+                await HandleErrorAsync(botClient, exception, cancellationToken);
             }
         }
 

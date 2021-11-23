@@ -3,11 +3,11 @@ using GrammarNazi.Domain.BotCommands;
 using GrammarNazi.Domain.Constants;
 using GrammarNazi.Domain.Enums;
 using GrammarNazi.Domain.Services;
+using GrammarNazi.Domain.Utilities;
 using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
-using Telegram.Bot;
 using Telegram.Bot.Types;
 using Telegram.Bot.Types.Enums;
 using static GrammarNazi.Core.Utilities.TelegramBotHelper;
@@ -17,11 +17,11 @@ namespace GrammarNazi.Core.Services
     public class TelegramCommandHandlerService : ITelegramCommandHandlerService
     {
         private readonly IChatConfigurationService _chatConfigurationService;
-        private readonly ITelegramBotClient _client;
+        private readonly ITelegramBotClientWrapper _client;
         private readonly IEnumerable<ITelegramBotCommand> _botCommands;
 
         public TelegramCommandHandlerService(IChatConfigurationService chatConfigurationService,
-            ITelegramBotClient telegramBotClient,
+            ITelegramBotClientWrapper telegramBotClient,
             IEnumerable<ITelegramBotCommand> botCommands)
         {
             _chatConfigurationService = chatConfigurationService;
