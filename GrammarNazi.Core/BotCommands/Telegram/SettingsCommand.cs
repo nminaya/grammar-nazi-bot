@@ -2,9 +2,9 @@
 using GrammarNazi.Domain.BotCommands;
 using GrammarNazi.Domain.Constants;
 using GrammarNazi.Domain.Services;
+using GrammarNazi.Domain.Utilities;
 using System.Text;
 using System.Threading.Tasks;
-using Telegram.Bot;
 using Telegram.Bot.Types;
 
 namespace GrammarNazi.Core.BotCommands.Telegram
@@ -16,7 +16,7 @@ namespace GrammarNazi.Core.BotCommands.Telegram
         public string Command => TelegramBotCommands.Settings;
 
         public SettingsCommand(IChatConfigurationService chatConfigurationService,
-            ITelegramBotClient telegramBotClient)
+            ITelegramBotClientWrapper telegramBotClient)
             : base(telegramBotClient)
         {
             _chatConfigurationService = chatConfigurationService;

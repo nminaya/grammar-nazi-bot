@@ -2,9 +2,9 @@
 using GrammarNazi.Domain.Constants;
 using GrammarNazi.Domain.Entities;
 using GrammarNazi.Domain.Services;
+using GrammarNazi.Domain.Utilities;
 using Moq;
 using System.Threading.Tasks;
-using Telegram.Bot;
 using Telegram.Bot.Types;
 using Telegram.Bot.Types.Enums;
 using Xunit;
@@ -18,7 +18,7 @@ namespace GrammarNazi.Tests.BotCommands.Telegram
         {
             // Arrange
             var chatConfigurationServiceMock = new Mock<IChatConfigurationService>();
-            var telegramBotClientMock = new Mock<ITelegramBotClient>();
+            var telegramBotClientMock = new Mock<ITelegramBotClientWrapper>();
             var command = new WhiteListCommand(chatConfigurationServiceMock.Object, telegramBotClientMock.Object);
             const string replyMessage = "You don't have Whitelist words configured";
 
@@ -51,7 +51,7 @@ namespace GrammarNazi.Tests.BotCommands.Telegram
             await command.Handle(message);
 
             // Assert
-            telegramBotClientMock.Verify(v => v.SendTextMessageAsync(message.Chat.Id, It.Is<string>(s => s.Contains(replyMessage)), ParseMode.Markdown, default, false, false, 0, false, default, default));
+            telegramBotClientMock.Verify(v => v.SendTextMessageAsync(message.Chat.Id, It.Is<string>(s => s.Contains(replyMessage)), default, default, default, default, default, default, default, default));
         }
 
         [Fact]
@@ -59,7 +59,7 @@ namespace GrammarNazi.Tests.BotCommands.Telegram
         {
             // Arrange
             var chatConfigurationServiceMock = new Mock<IChatConfigurationService>();
-            var telegramBotClientMock = new Mock<ITelegramBotClient>();
+            var telegramBotClientMock = new Mock<ITelegramBotClientWrapper>();
             var command = new WhiteListCommand(chatConfigurationServiceMock.Object, telegramBotClientMock.Object);
             const string replyMessage = "Whitelist Words";
 
@@ -89,7 +89,7 @@ namespace GrammarNazi.Tests.BotCommands.Telegram
             await command.Handle(message);
 
             // Assert
-            telegramBotClientMock.Verify(v => v.SendTextMessageAsync(message.Chat.Id, It.Is<string>(s => s.Contains(replyMessage)), ParseMode.Markdown, default, false, false, 0, false, default, default));
+            telegramBotClientMock.Verify(v => v.SendTextMessageAsync(message.Chat.Id, It.Is<string>(s => s.Contains(replyMessage)), default, default, default, default, default, default, default, default));
         }
     }
 }

@@ -3,9 +3,9 @@ using GrammarNazi.Domain.Constants;
 using GrammarNazi.Domain.Entities;
 using GrammarNazi.Domain.Enums;
 using GrammarNazi.Domain.Services;
+using GrammarNazi.Domain.Utilities;
 using Moq;
 using System.Threading.Tasks;
-using Telegram.Bot;
 using Telegram.Bot.Types;
 using Telegram.Bot.Types.Enums;
 using Xunit;
@@ -21,7 +21,7 @@ namespace GrammarNazi.Tests.BotCommands.Telegram
         {
             // Arrange
             var chatConfigurationServiceMock = new Mock<IChatConfigurationService>();
-            var telegramBotClientMock = new Mock<ITelegramBotClient>();
+            var telegramBotClientMock = new Mock<ITelegramBotClientWrapper>();
             var command = new SetAlgorithmCommand(chatConfigurationServiceMock.Object, telegramBotClientMock.Object);
             const string replyMessage = "Invalid parameter";
 
@@ -54,7 +54,7 @@ namespace GrammarNazi.Tests.BotCommands.Telegram
             await command.Handle(message);
 
             // Assert
-            telegramBotClientMock.Verify(v => v.SendTextMessageAsync(message.Chat.Id, It.Is<string>(s => s.Contains(replyMessage)), ParseMode.Markdown, default, false, false, 0, false, default, default));
+            telegramBotClientMock.Verify(v => v.SendTextMessageAsync(message.Chat.Id, It.Is<string>(s => s.Contains(replyMessage)), default, default, default, default, default, default, default, default));
         }
 
         [Theory]
@@ -64,7 +64,7 @@ namespace GrammarNazi.Tests.BotCommands.Telegram
         {
             // Arrange
             var chatConfigurationServiceMock = new Mock<IChatConfigurationService>();
-            var telegramBotClientMock = new Mock<ITelegramBotClient>();
+            var telegramBotClientMock = new Mock<ITelegramBotClientWrapper>();
             var command = new SetAlgorithmCommand(chatConfigurationServiceMock.Object, telegramBotClientMock.Object);
             const string replyMessage = "Invalid parameter";
 
@@ -97,13 +97,13 @@ namespace GrammarNazi.Tests.BotCommands.Telegram
             await command.Handle(message);
 
             // Assert
-            telegramBotClientMock.Verify(v => v.SendTextMessageAsync(message.Chat.Id, It.Is<string>(s => s.Contains(replyMessage)), ParseMode.Markdown, default, false, false, 0, false, default, default));
+            telegramBotClientMock.Verify(v => v.SendTextMessageAsync(message.Chat.Id, It.Is<string>(s => s.Contains(replyMessage)), default, default, default, default, default, default, default, default));
         }
 
         [Fact]
         public async Task UserNotAdmin_Should_ReplyNotAdminMessage()
         {
-            var telegramBotClientMock = new Mock<ITelegramBotClient>();
+            var telegramBotClientMock = new Mock<ITelegramBotClientWrapper>();
             await TestUtilities.TestTelegramNotAdminUser(new SetAlgorithmCommand(null, telegramBotClientMock.Object), telegramBotClientMock);
         }
 
@@ -114,7 +114,7 @@ namespace GrammarNazi.Tests.BotCommands.Telegram
         {
             // Arrange
             var chatConfigurationServiceMock = new Mock<IChatConfigurationService>();
-            var telegramBotClientMock = new Mock<ITelegramBotClient>();
+            var telegramBotClientMock = new Mock<ITelegramBotClientWrapper>();
             var command = new SetAlgorithmCommand(chatConfigurationServiceMock.Object, telegramBotClientMock.Object);
             const string replyMessage = "Algorithm updated";
 
@@ -148,7 +148,7 @@ namespace GrammarNazi.Tests.BotCommands.Telegram
 
             // Assert
             Assert.Equal(algorithmParameter, chatConfig.GrammarAlgorithm);
-            telegramBotClientMock.Verify(v => v.SendTextMessageAsync(message.Chat.Id, It.Is<string>(s => s.Contains(replyMessage)), ParseMode.Markdown, default, false, false, 0, false, default, default));
+            telegramBotClientMock.Verify(v => v.SendTextMessageAsync(message.Chat.Id, It.Is<string>(s => s.Contains(replyMessage)), default, default, default, default, default, default, default, default));
         }
     }
 }

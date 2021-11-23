@@ -27,15 +27,10 @@ namespace GrammarNazi.App.HostedServices
         {
             _logger.LogInformation("Telegram Bot Hosted Service started");
 
-            ReceiverOptions receiverOptions = new()
-            {
-                AllowedUpdates = new[] { UpdateType.Message, UpdateType.CallbackQuery }
-            };
-
             _client.StartReceiving(
                 _updateHandler.HandleUpdateAsync,
                 _updateHandler.HandleErrorAsync,
-                receiverOptions,
+                new() { AllowedUpdates = new[] { UpdateType.Message, UpdateType.CallbackQuery } },
                 stoppingToken);
 
             // Keep hosted service alive while receiving messages

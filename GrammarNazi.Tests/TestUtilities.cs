@@ -1,8 +1,8 @@
 ﻿using Discord;
 using GrammarNazi.Domain.BotCommands;
+using GrammarNazi.Domain.Utilities;
 using Moq;
 using System.Threading.Tasks;
-using Telegram.Bot;
 using Telegram.Bot.Types;
 using Telegram.Bot.Types.Enums;
 
@@ -32,7 +32,7 @@ namespace GrammarNazi.Tests
             channelMock.Verify(v => v.SendMessageAsync(It.Is<string>(s => s.Contains(replyMessage)), false, null, null, null, It.Is<MessageReference>(m => m.MessageId.Value == message.Object.Id)));
         }
 
-        public static async Task TestTelegramNotAdminUser(ITelegramBotCommand command, Mock<ITelegramBotClient> telegramBotClientMock)
+        public static async Task TestTelegramNotAdminUser(ITelegramBotCommand command, Mock<ITelegramBotClientWrapper> telegramBotClientMock)
         {
             // Arrange
             const string replyMessage = "Only admins can use this command.";
@@ -55,7 +55,7 @@ namespace GrammarNazi.Tests
             await command.Handle(message);
 
             // Assert
-            telegramBotClientMock.Verify(v => v.SendTextMessageAsync(message.Chat.Id, It.Is<string>(s => s.Contains(replyMessage)), ParseMode.Markdown, default, false, false, 0, false, default, default));
+            telegramBotClientMock.Verify(v => v.SendTextMessageAsync(message.Chat.Id, It.Is<string>(s => s.Contains(replyMessage)), default, default, default, default, message.MessageId, default, default, default));
         }
     }
 }
