@@ -13,7 +13,7 @@
     <PackageReference Include="Octokit" Version="0.50.0" />
     <PackageReference Include="Polly" Version="7.2.2" />
     <PackageReference Include="Telegram.Bot" Version="17.0.0" />
-    <PackageReference Include="Telegram.Bot.Extensions.Polling" Version="1.0.1" />
+    <PackageReference Include="Telegram.Bot.Extensions.Polling" Version="1.0.2" />
     <PackageReference Include="TweetinviAPI" Version="5.0.4" />
   </ItemGroup>
 
