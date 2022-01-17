@@ -40,7 +40,7 @@ namespace GrammarNazi.Tests.BotCommands.Discord
             // Assert
 
             // Verify SendMessageAsync was called with the reply message "Only admins can use this command"
-            channelMock.Verify(v => v.SendMessageAsync(replyMessage, false, null, null, null, It.Is<MessageReference>(m => m.MessageId.Value == message.Object.Id)));
+            channelMock.Verify(v => v.SendMessageAsync(replyMessage, false, null, null, null, It.Is<MessageReference>(m => m.MessageId.Value == message.Object.Id), null, null, null));
             Assert.False(chatConfig.IsBotStopped); // Make sure IsBotStopped is still false
         }
 
@@ -74,7 +74,7 @@ namespace GrammarNazi.Tests.BotCommands.Discord
             // Assert
 
             // Verify SendMessageAsync was called with the reply message "Bot stopped"
-            channelMock.Verify(v => v.SendMessageAsync(null, false, It.Is<Embed>(e => e.Description.Contains(replyMessage)), null, null, null));
+            channelMock.Verify(v => v.SendMessageAsync(null, false, It.Is<Embed>(e => e.Description.Contains(replyMessage)), null, null, null, null, null, null));
             Assert.True(chatConfig.IsBotStopped);
         }
     }

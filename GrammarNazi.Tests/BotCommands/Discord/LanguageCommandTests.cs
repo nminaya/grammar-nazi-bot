@@ -44,7 +44,7 @@ namespace GrammarNazi.Tests.BotCommands.Discord
             // Assert
 
             // Verify SendMessageAsync was called with the reply message "Invalid parameter"
-            channelMock.Verify(v => v.SendMessageAsync(null, false, It.Is<Embed>(e => e.Description.Contains(replyMessage)), null, null, null));
+            channelMock.Verify(v => v.SendMessageAsync(null, false, It.Is<Embed>(e => e.Description.Contains(replyMessage)), null, null, null, null, null, null));
             Assert.Equal(SupportedLanguages.Auto, chatConfig.SelectedLanguage); // Make sure SelectedLanguage is still Auto
         }
 
@@ -80,7 +80,7 @@ namespace GrammarNazi.Tests.BotCommands.Discord
             // Assert
 
             // Verify SendMessageAsync was called with the reply message "Invalid parameter"
-            channelMock.Verify(v => v.SendMessageAsync(null, false, It.Is<Embed>(e => e.Description.Contains(replyMessage)), null, null, null));
+            channelMock.Verify(v => v.SendMessageAsync(null, false, It.Is<Embed>(e => e.Description.Contains(replyMessage)), null, null, null, null, null, null));
             Assert.Equal(SupportedLanguages.Auto, chatConfig.SelectedLanguage); // Make sure SelectedLanguage is still Auto
         }
 
@@ -114,7 +114,7 @@ namespace GrammarNazi.Tests.BotCommands.Discord
             // Assert
 
             // Verify SendMessageAsync was called with the reply message "Parameter not received"
-            channelMock.Verify(v => v.SendMessageAsync(null, false, It.Is<Embed>(e => e.Description.Contains(replyMessage)), null, null, null));
+            channelMock.Verify(v => v.SendMessageAsync(null, false, It.Is<Embed>(e => e.Description.Contains(replyMessage)), null, null, null, null, null, null));
             Assert.Equal(SupportedLanguages.Auto, chatConfig.SelectedLanguage); // Make sure SelectedLanguage is still Auto
         }
 
@@ -150,7 +150,7 @@ namespace GrammarNazi.Tests.BotCommands.Discord
             // Assert
 
             // Verify SendMessageAsync was called with the reply message "Language updated"
-            channelMock.Verify(v => v.SendMessageAsync(null, false, It.Is<Embed>(e => e.Description.Contains(replyMessage)), null, null, null));
+            channelMock.Verify(v => v.SendMessageAsync(null, false, It.Is<Embed>(e => e.Description.Contains(replyMessage)), null, null, null, null, null, null));
             Assert.Equal(languageParameter, chatConfig.SelectedLanguage);
         }
     }

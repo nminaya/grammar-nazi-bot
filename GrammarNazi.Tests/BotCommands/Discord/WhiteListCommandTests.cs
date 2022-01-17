@@ -40,7 +40,7 @@ namespace GrammarNazi.Tests.BotCommands.Discord
             // Assert
 
             // Verify SendMessageAsync was called with the reply message "You don't have Whitelist words configured"
-            channelMock.Verify(v => v.SendMessageAsync(null, false, It.Is<Embed>(e => e.Description.Contains(replyMessage)), null, null, null));
+            channelMock.Verify(v => v.SendMessageAsync(null, false, It.Is<Embed>(e => e.Description.Contains(replyMessage)), null, null, null, null, null, null));
         }
 
         [Fact]
@@ -73,7 +73,7 @@ namespace GrammarNazi.Tests.BotCommands.Discord
             // Assert
 
             // Verify SendMessageAsync was called with the reply message "Whitelist Words"
-            channelMock.Verify(v => v.SendMessageAsync(null, false, It.Is<Embed>(e => e.Description.Contains(replyMessage)), null, null, null));
+            channelMock.Verify(v => v.SendMessageAsync(null, false, It.Is<Embed>(e => e.Description.Contains(replyMessage)), null, null, null, null, null, null));
         }
     }
 }

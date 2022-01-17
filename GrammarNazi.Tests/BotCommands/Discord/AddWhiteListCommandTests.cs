@@ -41,7 +41,7 @@ namespace GrammarNazi.Tests.BotCommands.Discord
             // Assert
 
             // Verify SendMessageAsync was called with the reply message "Parameter not received"
-            channelMock.Verify(v => v.SendMessageAsync(null, false, It.Is<Embed>(e => e.Description.Contains(replyMessage)), null, null, null));
+            channelMock.Verify(v => v.SendMessageAsync(null, false, It.Is<Embed>(e => e.Description.Contains(replyMessage)), null, null, null, null, null, null));
         }
 
         [Theory]
@@ -78,7 +78,7 @@ namespace GrammarNazi.Tests.BotCommands.Discord
             // Assert
 
             // Verify SendMessageAsync was called with the reply message "is already on the WhiteList"
-            channelMock.Verify(v => v.SendMessageAsync(null, false, It.Is<Embed>(e => e.Description.Contains(replyMessage)), null, null, null));
+            channelMock.Verify(v => v.SendMessageAsync(null, false, It.Is<Embed>(e => e.Description.Contains(replyMessage)), null, null, null, null, null, null));
             Assert.Single(chatConfig.WhiteListWords);
         }
 
@@ -118,7 +118,7 @@ namespace GrammarNazi.Tests.BotCommands.Discord
             // Assert
 
             // Verify SendMessageAsync was called with the reply message "added to the WhiteList"
-            channelMock.Verify(v => v.SendMessageAsync(null, false, It.Is<Embed>(e => e.Description.Contains(replyMessage)), null, null, null));
+            channelMock.Verify(v => v.SendMessageAsync(null, false, It.Is<Embed>(e => e.Description.Contains(replyMessage)), null, null, null, null, null, null));
             Assert.Equal(2, chatConfig.WhiteListWords.Count);
         }
     }
