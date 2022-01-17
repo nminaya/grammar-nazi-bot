@@ -44,7 +44,7 @@ namespace GrammarNazi.Tests.BotCommands.Discord
             // Assert
 
             // Verify SendMessageAsync was called with the reply message "Invalid parameter"
-            channelMock.Verify(v => v.SendMessageAsync(null, false, It.Is<Embed>(e => e.Description.Contains(replyMessage)), null, null, null));
+            channelMock.Verify(v => v.SendMessageAsync(null, false, It.Is<Embed>(e => e.Description.Contains(replyMessage)), null, null, null, null, null, null));
             Assert.Equal(GrammarAlgorithms.InternalAlgorithm, chatConfig.GrammarAlgorithm);
         }
 
@@ -80,7 +80,7 @@ namespace GrammarNazi.Tests.BotCommands.Discord
             // Assert
 
             // Verify SendMessageAsync was called with the reply message "Invalid parameter"
-            channelMock.Verify(v => v.SendMessageAsync(null, false, It.Is<Embed>(e => e.Description.Contains(replyMessage)), null, null, null));
+            channelMock.Verify(v => v.SendMessageAsync(null, false, It.Is<Embed>(e => e.Description.Contains(replyMessage)), null, null, null, null, null, null));
             Assert.Equal(GrammarAlgorithms.InternalAlgorithm, chatConfig.GrammarAlgorithm); // Make sure SelectedLanguage is still Auto
         }
 
@@ -114,7 +114,7 @@ namespace GrammarNazi.Tests.BotCommands.Discord
             // Assert
 
             // Verify SendMessageAsync was called with the reply message "Parameter not received"
-            channelMock.Verify(v => v.SendMessageAsync(null, false, It.Is<Embed>(e => e.Description.Contains(replyMessage)), null, null, null));
+            channelMock.Verify(v => v.SendMessageAsync(null, false, It.Is<Embed>(e => e.Description.Contains(replyMessage)), null, null, null, null, null, null));
             Assert.Equal(GrammarAlgorithms.InternalAlgorithm, chatConfig.GrammarAlgorithm); // Make sure SelectedLanguage is still Auto
         }
 
@@ -157,7 +157,7 @@ namespace GrammarNazi.Tests.BotCommands.Discord
             // Assert
 
             // Verify SendMessageAsync was called with the reply message "Algorithm updated"
-            channelMock.Verify(v => v.SendMessageAsync(null, false, It.Is<Embed>(e => e.Description.Contains(replyMessage)), null, null, null));
+            channelMock.Verify(v => v.SendMessageAsync(null, false, It.Is<Embed>(e => e.Description.Contains(replyMessage)), null, null, null, null, null, null));
             Assert.Equal(algorithmParameter, chatConfig.GrammarAlgorithm);
         }
     }
