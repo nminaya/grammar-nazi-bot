@@ -1,4 +1,5 @@
-﻿using Microsoft.Extensions.Logging;
+﻿using GrammarNazi.Domain.Exceptions;
+using Microsoft.Extensions.Logging;
 using Polly;
 using System;
 using System.Threading;
@@ -24,7 +25,7 @@ namespace GrammarNazi.Core.Utilities
 
             if (result.Outcome == OutcomeType.Failure)
             {
-                throw result.FinalException;
+                throw new TaskFailedException(result.FinalException.Message, result.FinalException);
             }
         }
     }
