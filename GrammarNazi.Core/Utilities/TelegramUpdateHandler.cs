@@ -207,18 +207,24 @@ namespace GrammarNazi.Core.Utilities
 
         private static string GetCleanedText(Message message)
         {
-            var text = GetTextWithoutMentionsWithoutUsername();
+            var text = GetTextWithoutMentionOrSpoiler();
 
             return StringUtils.RemoveEmojis(StringUtils.RemoveHashtags(StringUtils.RemoveMentions(text)));
 
-            string GetTextWithoutMentionsWithoutUsername()
+            string GetTextWithoutMentionOrSpoiler()
             {
                 if (message.Entities == null)
                     return message.Text;
 
                 var messageText = message.Text;
 
-                foreach (var entity in message.Entities.Where(v => v.Type == MessageEntityType.TextMention))
+                var entities = message.Entities.Where(v => v.Type == MessageEntityType.TextMention
+                                                // There isn't a MessageEntityType.Spoiler yet in this current version of Telegram.Bot.
+                                                // So when v.Type == 0, is probably a Spoiler.
+                                                // TODO: Update this when Telegram.Bot v18 is released.
+                                                || v.Type == 0);
+
+                foreach (var entity in entities)
                 {
                     var mention = message.Text.Substring(entity.Offset, entity.Length);
 
