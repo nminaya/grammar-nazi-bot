@@ -29,7 +29,7 @@ namespace GrammarNazi.Tests
             // Assert
 
             // Verify SendMessageAsync was called with the reply message "Only admins can use this command"
-            channelMock.Verify(v => v.SendMessageAsync(It.Is<string>(s => s.Contains(replyMessage)), false, null, null, null, It.Is<MessageReference>(m => m.MessageId.Value == message.Object.Id), null, null, null));
+            channelMock.Verify(v => v.SendMessageAsync(It.Is<string>(s => s.Contains(replyMessage)), false, null, null, null, It.Is<MessageReference>(m => m.MessageId.Value == message.Object.Id), null, null, null, MessageFlags.None));
         }
 
         public static async Task TestTelegramNotAdminUser(ITelegramBotCommand command, Mock<ITelegramBotClientWrapper> telegramBotClientMock)
