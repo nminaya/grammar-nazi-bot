@@ -7,44 +7,43 @@ using System.Text;
 using System.Threading.Tasks;
 using Telegram.Bot.Types;
 
-namespace GrammarNazi.Core.BotCommands.Telegram
+namespace GrammarNazi.Core.BotCommands.Telegram;
+
+public class SettingsCommand : BaseTelegramCommand, ITelegramBotCommand
 {
-    public class SettingsCommand : BaseTelegramCommand, ITelegramBotCommand
+    private readonly IChatConfigurationService _chatConfigurationService;
+
+    public string Command => TelegramBotCommands.Settings;
+
+    public SettingsCommand(IChatConfigurationService chatConfigurationService,
+        ITelegramBotClientWrapper telegramBotClient)
+        : base(telegramBotClient)
     {
-        private readonly IChatConfigurationService _chatConfigurationService;
+        _chatConfigurationService = chatConfigurationService;
+    }
 
-        public string Command => TelegramBotCommands.Settings;
+    public async Task Handle(Message message)
+    {
+        await SendTypingNotification(message);
 
-        public SettingsCommand(IChatConfigurationService chatConfigurationService,
-            ITelegramBotClientWrapper telegramBotClient)
-            : base(telegramBotClient)
-        {
-            _chatConfigurationService = chatConfigurationService;
-        }
+        var chatConfig = await _chatConfigurationService.GetConfigurationByChatId(message.Chat.Id);
 
-        public async Task Handle(Message message)
-        {
-            await SendTypingNotification(message);
+        var messageBuilder = new StringBuilder();
+        messageBuilder.AppendLine("Algorithms Available:");
+        messageBuilder.AppendLine(GetAvailableOptions(chatConfig.GrammarAlgorithm));
+        messageBuilder.AppendLine("Supported Languages:");
+        messageBuilder.AppendLine(GetAvailableOptions(chatConfig.SelectedLanguage));
 
-            var chatConfig = await _chatConfigurationService.GetConfigurationByChatId(message.Chat.Id);
+        var showCorrectionDetailsIcon = chatConfig.HideCorrectionDetails ? "❌" : "✅";
+        messageBuilder.AppendLine($"Show correction details {showCorrectionDetailsIcon}").AppendLine();
+        messageBuilder.AppendLine("Strictness level:").AppendLine($"{chatConfig.CorrectionStrictnessLevel.GetDescription()} ✅").AppendLine();
 
-            var messageBuilder = new StringBuilder();
-            messageBuilder.AppendLine("Algorithms Available:");
-            messageBuilder.AppendLine(GetAvailableOptions(chatConfig.GrammarAlgorithm));
-            messageBuilder.AppendLine("Supported Languages:");
-            messageBuilder.AppendLine(GetAvailableOptions(chatConfig.SelectedLanguage));
+        messageBuilder.AppendLine($"Whitelist Words:").AppendLine($"Type {TelegramBotCommands.WhiteList} to see Whitelist words configured.").AppendLine();
 
-            var showCorrectionDetailsIcon = chatConfig.HideCorrectionDetails ? "❌" : "✅";
-            messageBuilder.AppendLine($"Show correction details {showCorrectionDetailsIcon}").AppendLine();
-            messageBuilder.AppendLine("Strictness level:").AppendLine($"{chatConfig.CorrectionStrictnessLevel.GetDescription()} ✅").AppendLine();
+        if (chatConfig.IsBotStopped)
+            messageBuilder.AppendLine($"The bot is currently stopped. Type {TelegramBotCommands.Start} to activate the Bot.");
 
-            messageBuilder.AppendLine($"Whitelist Words:").AppendLine($"Type {TelegramBotCommands.WhiteList} to see Whitelist words configured.").AppendLine();
-
-            if (chatConfig.IsBotStopped)
-                messageBuilder.AppendLine($"The bot is currently stopped. Type {TelegramBotCommands.Start} to activate the Bot.");
-
-            await Client.SendTextMessageAsync(message.Chat.Id, messageBuilder.ToString());
-            await NotifyIfBotIsNotAdmin(message);
-        }
+        await Client.SendTextMessageAsync(message.Chat.Id, messageBuilder.ToString());
+        await NotifyIfBotIsNotAdmin(message);
     }
 }

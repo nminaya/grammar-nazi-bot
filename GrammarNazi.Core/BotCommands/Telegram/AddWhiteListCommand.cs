@@ -7,57 +7,56 @@ using System.Linq;
 using System.Threading.Tasks;
 using Telegram.Bot.Types;
 
-namespace GrammarNazi.Core.BotCommands.Telegram
+namespace GrammarNazi.Core.BotCommands.Telegram;
+
+public class AddWhiteListCommand : BaseTelegramCommand, ITelegramBotCommand
 {
-    public class AddWhiteListCommand : BaseTelegramCommand, ITelegramBotCommand
+    private readonly IChatConfigurationService _chatConfigurationService;
+
+    public string Command => TelegramBotCommands.AddWhiteList;
+
+    public AddWhiteListCommand(IChatConfigurationService chatConfigurationService,
+        ITelegramBotClientWrapper telegramBotClient)
+        : base(telegramBotClient)
     {
-        private readonly IChatConfigurationService _chatConfigurationService;
+        _chatConfigurationService = chatConfigurationService;
+    }
 
-        public string Command => TelegramBotCommands.AddWhiteList;
+    public async Task Handle(Message message)
+    {
+        await SendTypingNotification(message);
 
-        public AddWhiteListCommand(IChatConfigurationService chatConfigurationService,
-            ITelegramBotClientWrapper telegramBotClient)
-            : base(telegramBotClient)
+        if (!await IsUserAdmin(message))
         {
-            _chatConfigurationService = chatConfigurationService;
+            await Client.SendTextMessageAsync(message.Chat.Id, "Only admins can use this command.", replyToMessageId: message.MessageId);
+            return;
         }
 
-        public async Task Handle(Message message)
-        {
-            await SendTypingNotification(message);
+        var parameters = message.Text.Split(" ");
 
-            if (!await IsUserAdmin(message))
+        if (parameters.Length == 1)
+        {
+            await Client.SendTextMessageAsync(message.Chat.Id, $"Parameter not received. Type {TelegramBotCommands.AddWhiteList} <word> to add a Whitelist word.");
+        }
+        else
+        {
+            var chatConfig = await _chatConfigurationService.GetConfigurationByChatId(message.Chat.Id);
+
+            var word = parameters[1].Trim();
+
+            if (chatConfig.WhiteListWords.Contains(word, new CaseInsensitiveEqualityComparer()))
             {
-                await Client.SendTextMessageAsync(message.Chat.Id, "Only admins can use this command.", replyToMessageId: message.MessageId);
+                await Client.SendTextMessageAsync(message.Chat.Id, $"The word '{word}' is already on the WhiteList");
                 return;
             }
 
-            var parameters = message.Text.Split(" ");
+            chatConfig.WhiteListWords.Add(word);
 
-            if (parameters.Length == 1)
-            {
-                await Client.SendTextMessageAsync(message.Chat.Id, $"Parameter not received. Type {TelegramBotCommands.AddWhiteList} <word> to add a Whitelist word.");
-            }
-            else
-            {
-                var chatConfig = await _chatConfigurationService.GetConfigurationByChatId(message.Chat.Id);
+            await _chatConfigurationService.Update(chatConfig);
 
-                var word = parameters[1].Trim();
-
-                if (chatConfig.WhiteListWords.Contains(word, new CaseInsensitiveEqualityComparer()))
-                {
-                    await Client.SendTextMessageAsync(message.Chat.Id, $"The word '{word}' is already on the WhiteList");
-                    return;
-                }
-
-                chatConfig.WhiteListWords.Add(word);
-
-                await _chatConfigurationService.Update(chatConfig);
-
-                await Client.SendTextMessageAsync(message.Chat.Id, $"Word '{word}' added to the WhiteList.");
-            }
-
-            await NotifyIfBotIsNotAdmin(message);
+            await Client.SendTextMessageAsync(message.Chat.Id, $"Word '{word}' added to the WhiteList.");
         }
+
+        await NotifyIfBotIsNotAdmin(message);
     }
 }

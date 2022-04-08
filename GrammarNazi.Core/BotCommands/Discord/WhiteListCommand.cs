@@ -6,38 +6,37 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace GrammarNazi.Core.BotCommands.Discord
+namespace GrammarNazi.Core.BotCommands.Discord;
+
+public class WhiteListCommand : BaseDiscordCommand, IDiscordBotCommand
 {
-    public class WhiteListCommand : BaseDiscordCommand, IDiscordBotCommand
+    private readonly IDiscordChannelConfigService _channelConfigService;
+
+    public string Command => DiscordBotCommands.WhiteList;
+
+    public WhiteListCommand(IDiscordChannelConfigService discordChannelConfigService)
     {
-        private readonly IDiscordChannelConfigService _channelConfigService;
+        _channelConfigService = discordChannelConfigService;
+    }
 
-        public string Command => DiscordBotCommands.WhiteList;
+    public async Task Handle(IMessage message)
+    {
+        var channelConfig = await _channelConfigService.GetConfigurationByChannelId(message.Channel.Id);
 
-        public WhiteListCommand(IDiscordChannelConfigService discordChannelConfigService)
+        if (channelConfig.WhiteListWords?.Any() != true)
         {
-            _channelConfigService = discordChannelConfigService;
+            await SendMessage(message, $"You don't have Whitelist words configured. Use `{DiscordBotCommands.AddWhiteList}` to add words to the WhiteList.", DiscordBotCommands.WhiteList);
+            return;
         }
 
-        public async Task Handle(IMessage message)
+        var messageBuilder = new StringBuilder();
+        messageBuilder.AppendLine("Whitelist Words:\n");
+
+        foreach (var word in channelConfig.WhiteListWords)
         {
-            var channelConfig = await _channelConfigService.GetConfigurationByChannelId(message.Channel.Id);
-
-            if (channelConfig.WhiteListWords?.Any() != true)
-            {
-                await SendMessage(message, $"You don't have Whitelist words configured. Use `{DiscordBotCommands.AddWhiteList}` to add words to the WhiteList.", DiscordBotCommands.WhiteList);
-                return;
-            }
-
-            var messageBuilder = new StringBuilder();
-            messageBuilder.AppendLine("Whitelist Words:\n");
-
-            foreach (var word in channelConfig.WhiteListWords)
-            {
-                messageBuilder.AppendLine($"- {word}");
-            }
-
-            await SendMessage(message, messageBuilder.ToString(), DiscordBotCommands.WhiteList);
+            messageBuilder.AppendLine($"- {word}");
         }
+
+        await SendMessage(message, messageBuilder.ToString(), DiscordBotCommands.WhiteList);
     }
 }

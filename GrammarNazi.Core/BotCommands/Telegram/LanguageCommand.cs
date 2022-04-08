@@ -8,60 +8,59 @@ using System.Text;
 using System.Threading.Tasks;
 using Telegram.Bot.Types;
 
-namespace GrammarNazi.Core.BotCommands.Telegram
+namespace GrammarNazi.Core.BotCommands.Telegram;
+
+public class LanguageCommand : BaseTelegramCommand, ITelegramBotCommand
 {
-    public class LanguageCommand : BaseTelegramCommand, ITelegramBotCommand
+    private readonly IChatConfigurationService _chatConfigurationService;
+
+    public string Command => TelegramBotCommands.Language;
+
+    public LanguageCommand(IChatConfigurationService chatConfigurationService,
+        ITelegramBotClientWrapper telegramBotClient)
+        : base(telegramBotClient)
     {
-        private readonly IChatConfigurationService _chatConfigurationService;
+        _chatConfigurationService = chatConfigurationService;
+    }
 
-        public string Command => TelegramBotCommands.Language;
+    public async Task Handle(Message message)
+    {
+        await SendTypingNotification(message);
 
-        public LanguageCommand(IChatConfigurationService chatConfigurationService,
-            ITelegramBotClientWrapper telegramBotClient)
-            : base(telegramBotClient)
+        var messageBuilder = new StringBuilder();
+
+        if (!await IsUserAdmin(message))
         {
-            _chatConfigurationService = chatConfigurationService;
+            messageBuilder.AppendLine("Only admins can use this command.");
+            await Client.SendTextMessageAsync(message.Chat.Id, messageBuilder.ToString(), replyToMessageId: message.MessageId);
+            return;
         }
 
-        public async Task Handle(Message message)
+        var parameters = message.Text.Split(" ");
+
+        if (parameters.Length == 1)
         {
-            await SendTypingNotification(message);
+            await ShowOptions<SupportedLanguages>(message, "Choose Language");
+        }
+        else
+        {
+            bool parsedOk = int.TryParse(parameters[1], out int language);
 
-            var messageBuilder = new StringBuilder();
-
-            if (!await IsUserAdmin(message))
+            if (parsedOk && language.IsAssignableToEnum<SupportedLanguages>())
             {
-                messageBuilder.AppendLine("Only admins can use this command.");
-                await Client.SendTextMessageAsync(message.Chat.Id, messageBuilder.ToString(), replyToMessageId: message.MessageId);
-                return;
-            }
+                var chatConfig = await _chatConfigurationService.GetConfigurationByChatId(message.Chat.Id);
+                chatConfig.SelectedLanguage = (SupportedLanguages)language;
 
-            var parameters = message.Text.Split(" ");
+                await _chatConfigurationService.Update(chatConfig);
 
-            if (parameters.Length == 1)
-            {
-                await ShowOptions<SupportedLanguages>(message, "Choose Language");
+                await Client.SendTextMessageAsync(message.Chat.Id, "Language updated.");
             }
             else
             {
-                bool parsedOk = int.TryParse(parameters[1], out int language);
-
-                if (parsedOk && language.IsAssignableToEnum<SupportedLanguages>())
-                {
-                    var chatConfig = await _chatConfigurationService.GetConfigurationByChatId(message.Chat.Id);
-                    chatConfig.SelectedLanguage = (SupportedLanguages)language;
-
-                    await _chatConfigurationService.Update(chatConfig);
-
-                    await Client.SendTextMessageAsync(message.Chat.Id, "Language updated.");
-                }
-                else
-                {
-                    await Client.SendTextMessageAsync(message.Chat.Id, $"Invalid parameter. Type {TelegramBotCommands.Language} <language_number> to set a language.");
-                }
+                await Client.SendTextMessageAsync(message.Chat.Id, $"Invalid parameter. Type {TelegramBotCommands.Language} <language_number> to set a language.");
             }
-
-            await NotifyIfBotIsNotAdmin(message);
         }
+
+        await NotifyIfBotIsNotAdmin(message);
     }
 }
