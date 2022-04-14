@@ -2,10 +2,9 @@
 using System.Collections.Generic;
 using System.Threading.Tasks;
 
-namespace GrammarNazi.Domain.Clients
+namespace GrammarNazi.Domain.Clients;
+
+public interface IYandexSpellerApiClient
 {
-    public interface IYandexSpellerApiClient
-    {
-        Task<IEnumerable<CheckTextResponse>> CheckText(string text, string language);
-    }
+    Task<IEnumerable<CheckTextResponse>> CheckText(string text, string language);
 }

@@ -1,11 +1,10 @@
 ﻿using System.Threading.Tasks;
 
-namespace GrammarNazi.Domain.BotCommands
-{
-    public interface IBotCommand<T>
-    {
-        string Command { get; }
+namespace GrammarNazi.Domain.BotCommands;
 
-        Task Handle(T message);
-    }
+public interface IBotCommand<T>
+{
+    string Command { get; }
+
+    Task Handle(T message);
 }

@@ -7,90 +7,89 @@ using System.Linq.Expressions;
 using System.Threading.Tasks;
 using Xunit;
 
-namespace GrammarNazi.Tests.Services
+namespace GrammarNazi.Tests.Services;
+
+public class TwitterLogServiceTests
 {
-    public class TwitterLogServiceTests
+    [Fact]
+    public async Task GetLastTweetId_RepositoryEmpty_Should_ReturnsZero()
     {
-        [Fact]
-        public async Task GetLastTweetId_RepositoryEmpty_Should_ReturnsZero()
-        {
-            // Arrange
-            var repositoryMock = new Mock<IRepository<TwitterLog>>();
+        // Arrange
+        var repositoryMock = new Mock<IRepository<TwitterLog>>();
 
-            // Returns false when Any is called
-            repositoryMock.Setup(v => v.Any(It.IsAny<Expression<Func<TwitterLog, bool>>>()))
-                .ReturnsAsync(false);
+        // Returns false when Any is called
+        repositoryMock.Setup(v => v.Any(It.IsAny<Expression<Func<TwitterLog, bool>>>()))
+            .ReturnsAsync(false);
 
-            var service = new TwitterLogService(repositoryMock.Object);
+        var service = new TwitterLogService(repositoryMock.Object);
 
-            // Act
-            var result = await service.GetLastTweetId();
+        // Act
+        var result = await service.GetLastTweetId();
 
-            // Assert
-            Assert.Equal(0, result);
-        }
+        // Assert
+        Assert.Equal(0, result);
+    }
 
-        [Fact]
-        public async Task GetLastTweetId_RepositoryNotEmpty_Should_ReturnsMaxTweetId()
-        {
-            // Arrange
-            var repositoryMock = new Mock<IRepository<TwitterLog>>();
+    [Fact]
+    public async Task GetLastTweetId_RepositoryNotEmpty_Should_ReturnsMaxTweetId()
+    {
+        // Arrange
+        var repositoryMock = new Mock<IRepository<TwitterLog>>();
 
-            const long maxTweetId = 123456;
+        const long maxTweetId = 123456;
 
-            // Returns true when Any is called
-            repositoryMock.Setup(v => v.Any(It.IsAny<Expression<Func<TwitterLog, bool>>>()))
-                .ReturnsAsync(true);
+        // Returns true when Any is called
+        repositoryMock.Setup(v => v.Any(It.IsAny<Expression<Func<TwitterLog, bool>>>()))
+            .ReturnsAsync(true);
 
-            // Returns maxTweetId value when Max is called
-            repositoryMock.Setup(v => v.Max(It.IsAny<Expression<Func<TwitterLog, long>>>()))
-                .ReturnsAsync(maxTweetId);
+        // Returns maxTweetId value when Max is called
+        repositoryMock.Setup(v => v.Max(It.IsAny<Expression<Func<TwitterLog, long>>>()))
+            .ReturnsAsync(maxTweetId);
 
-            var service = new TwitterLogService(repositoryMock.Object);
+        var service = new TwitterLogService(repositoryMock.Object);
 
-            // Act
-            var result = await service.GetLastTweetId();
+        // Act
+        var result = await service.GetLastTweetId();
 
-            // Assert
-            Assert.Equal(maxTweetId, result);
-        }
+        // Assert
+        Assert.Equal(maxTweetId, result);
+    }
 
-        [Fact]
-        public async Task LogTweet_TweetExistInRepository_Should_Not_AddTweet()
-        {
-            // Arrange
-            var repositoryMock = new Mock<IRepository<TwitterLog>>();
+    [Fact]
+    public async Task LogTweet_TweetExistInRepository_Should_Not_AddTweet()
+    {
+        // Arrange
+        var repositoryMock = new Mock<IRepository<TwitterLog>>();
 
-            // Returns true when Any is called
-            repositoryMock.Setup(v => v.Any(It.IsAny<Expression<Func<TwitterLog, bool>>>()))
-                .ReturnsAsync(true);
+        // Returns true when Any is called
+        repositoryMock.Setup(v => v.Any(It.IsAny<Expression<Func<TwitterLog, bool>>>()))
+            .ReturnsAsync(true);
 
-            var service = new TwitterLogService(repositoryMock.Object);
+        var service = new TwitterLogService(repositoryMock.Object);
 
-            // Act
-            await service.LogTweet(123456);
+        // Act
+        await service.LogTweet(123456);
 
-            // Assert
-            repositoryMock.Verify(v => v.Add(It.IsAny<TwitterLog>()), Times.Never);
-        }
+        // Assert
+        repositoryMock.Verify(v => v.Add(It.IsAny<TwitterLog>()), Times.Never);
+    }
 
-        [Fact]
-        public async Task LogTweet_NoTweetExistInRepository_Should_AddTweet()
-        {
-            // Arrange
-            var repositoryMock = new Mock<IRepository<TwitterLog>>();
+    [Fact]
+    public async Task LogTweet_NoTweetExistInRepository_Should_AddTweet()
+    {
+        // Arrange
+        var repositoryMock = new Mock<IRepository<TwitterLog>>();
 
-            // Returns false when Any is called
-            repositoryMock.Setup(v => v.Any(It.IsAny<Expression<Func<TwitterLog, bool>>>()))
-                .ReturnsAsync(false);
+        // Returns false when Any is called
+        repositoryMock.Setup(v => v.Any(It.IsAny<Expression<Func<TwitterLog, bool>>>()))
+            .ReturnsAsync(false);
 
-            var service = new TwitterLogService(repositoryMock.Object);
+        var service = new TwitterLogService(repositoryMock.Object);
 
-            // Act
-            await service.LogTweet(123456);
+        // Act
+        await service.LogTweet(123456);
 
-            // Assert
-            repositoryMock.Verify(v => v.Add(It.IsAny<TwitterLog>()), Times.Once);
-        }
+        // Assert
+        repositoryMock.Verify(v => v.Add(It.IsAny<TwitterLog>()), Times.Once);
     }
 }

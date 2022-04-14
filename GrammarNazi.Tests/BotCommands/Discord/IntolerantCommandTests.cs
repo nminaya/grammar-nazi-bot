@@ -7,49 +7,48 @@ using Moq;
 using System.Threading.Tasks;
 using Xunit;
 
-namespace GrammarNazi.Tests.BotCommands.Discord
+namespace GrammarNazi.Tests.BotCommands.Discord;
+
+public class IntolerantCommandTests
 {
-    public class IntolerantCommandTests
+    [Fact]
+    public async Task UserIsAdmin_Should_ChangeChatConfig_And_ReplyMessage()
     {
-        [Fact]
-        public async Task UserIsAdmin_Should_ChangeChatConfig_And_ReplyMessage()
+        // Arrange
+        var channelConfigurationServiceMock = new Mock<IDiscordChannelConfigService>();
+        var command = new IntolerantCommand(channelConfigurationServiceMock.Object);
+        const string replyMessage = "Intolerant ✅";
+
+        var chatConfig = new DiscordChannelConfig
         {
-            // Arrange
-            var channelConfigurationServiceMock = new Mock<IDiscordChannelConfigService>();
-            var command = new IntolerantCommand(channelConfigurationServiceMock.Object);
-            const string replyMessage = "Intolerant ✅";
+            CorrectionStrictnessLevel = CorrectionStrictnessLevels.Tolerant
+        };
 
-            var chatConfig = new DiscordChannelConfig
-            {
-                CorrectionStrictnessLevel = CorrectionStrictnessLevels.Tolerant
-            };
+        var channelMock = new Mock<IMessageChannel>();
+        var user = new Mock<IGuildUser>();
+        user.Setup(v => v.GuildPermissions).Returns(GuildPermissions.All);
+        var message = new Mock<IMessage>();
 
-            var channelMock = new Mock<IMessageChannel>();
-            var user = new Mock<IGuildUser>();
-            user.Setup(v => v.GuildPermissions).Returns(GuildPermissions.All);
-            var message = new Mock<IMessage>();
+        message.Setup(v => v.Author).Returns(user.Object);
+        message.Setup(v => v.Channel).Returns(channelMock.Object);
 
-            message.Setup(v => v.Author).Returns(user.Object);
-            message.Setup(v => v.Channel).Returns(channelMock.Object);
+        channelConfigurationServiceMock.Setup(v => v.GetConfigurationByChannelId(message.Object.Channel.Id))
+            .ReturnsAsync(chatConfig);
 
-            channelConfigurationServiceMock.Setup(v => v.GetConfigurationByChannelId(message.Object.Channel.Id))
-                .ReturnsAsync(chatConfig);
+        // Act
+        await command.Handle(message.Object);
 
-            // Act
-            await command.Handle(message.Object);
+        // Assert
 
-            // Assert
+        // Verify SendMessageAsync was called with the reply message "Intolerant ✅"
+        channelMock.Verify(v => v.SendMessageAsync(null, false, It.Is<Embed>(e => e.Description.Contains(replyMessage)), null, null, null, null, null, null, MessageFlags.None));
+        channelConfigurationServiceMock.Verify(v => v.Update(chatConfig));
+        Assert.Equal(CorrectionStrictnessLevels.Intolerant, chatConfig.CorrectionStrictnessLevel);
+    }
 
-            // Verify SendMessageAsync was called with the reply message "Intolerant ✅"
-            channelMock.Verify(v => v.SendMessageAsync(null, false, It.Is<Embed>(e => e.Description.Contains(replyMessage)), null, null, null, null, null, null, MessageFlags.None));
-            channelConfigurationServiceMock.Verify(v => v.Update(chatConfig));
-            Assert.Equal(CorrectionStrictnessLevels.Intolerant, chatConfig.CorrectionStrictnessLevel);
-        }
-
-        [Fact]
-        public async Task UserNotAdmin_Should_ReplyNotAdminMessage()
-        {
-            await TestUtilities.TestDiscordNotAdminUser(new IntolerantCommand(null));
-        }
+    [Fact]
+    public async Task UserNotAdmin_Should_ReplyNotAdminMessage()
+    {
+        await TestUtilities.TestDiscordNotAdminUser(new IntolerantCommand(null));
     }
 }

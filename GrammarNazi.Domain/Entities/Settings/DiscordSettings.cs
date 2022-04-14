@@ -1,7 +1,6 @@
-﻿namespace GrammarNazi.Domain.Entities.Settings
+﻿namespace GrammarNazi.Domain.Entities.Settings;
+
+public class DiscordSettings
 {
-    public class DiscordSettings
-    {
-        public string Token { get; set; }
-    }
+    public string Token { get; set; }
 }

@@ -8,69 +8,68 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 
-namespace GrammarNazi.Core.Services
+namespace GrammarNazi.Core.Services;
+
+public class DatamuseApiService : BaseGrammarService, IGrammarService
 {
-    public class DatamuseApiService : BaseGrammarService, IGrammarService
+    public GrammarAlgorithms GrammarAlgorith => GrammarAlgorithms.DatamuseApi;
+
+    private readonly IDatamuseApiClient _datamuseApiClient;
+    private readonly ILanguageService _languageService;
+
+    public DatamuseApiService(IDatamuseApiClient datamuseApiClient,
+        ILanguageService languageService)
     {
-        public GrammarAlgorithms GrammarAlgorith => GrammarAlgorithms.DatamuseApi;
+        _datamuseApiClient = datamuseApiClient;
+        _languageService = languageService;
+    }
 
-        private readonly IDatamuseApiClient _datamuseApiClient;
-        private readonly ILanguageService _languageService;
+    public async Task<GrammarCheckResult> GetCorrections(string text)
+    {
+        string language;
 
-        public DatamuseApiService(IDatamuseApiClient datamuseApiClient,
-            ILanguageService languageService)
+        if (SelectedLanguage == SupportedLanguages.Auto)
         {
-            _datamuseApiClient = datamuseApiClient;
-            _languageService = languageService;
+            var languageInfo = _languageService.IdentifyLanguage(text);
+
+            // Language not supported
+            if (languageInfo == default)
+            {
+                return new(default);
+            }
+
+            language = languageInfo.TwoLetterISOLanguageName;
+        }
+        else
+        {
+            language = SelectedLanguage.GetLanguageInformation().TwoLetterISOLanguageName;
         }
 
-        public async Task<GrammarCheckResult> GetCorrections(string text)
+        var words = text.Split(" ")
+            .Select(StringUtils.RemoveSpecialCharacters)
+            .Where(v => !string.IsNullOrEmpty(v) && char.IsLetter(v[0]) && !IsWhiteListWord(v));
+
+        var wordCheckTasks = words.Select(v => _datamuseApiClient.CheckWord(v, language));
+
+        var corrections = new List<GrammarCorrection>();
+
+        foreach (var wordCheckResultTask in wordCheckTasks)
         {
-            string language;
+            var wordCheckResult = await wordCheckResultTask;
 
-            if (SelectedLanguage == SupportedLanguages.Auto)
+            if (!wordCheckResult.IsWrongWord)
             {
-                var languageInfo = _languageService.IdentifyLanguage(text);
-
-                // Language not supported
-                if (languageInfo == default)
-                {
-                    return new(default);
-                }
-
-                language = languageInfo.TwoLetterISOLanguageName;
-            }
-            else
-            {
-                language = SelectedLanguage.GetLanguageInformation().TwoLetterISOLanguageName;
+                continue;
             }
 
-            var words = text.Split(" ")
-                .Select(StringUtils.RemoveSpecialCharacters)
-                .Where(v => !string.IsNullOrEmpty(v) && char.IsLetter(v[0]) && !IsWhiteListWord(v));
-
-            var wordCheckTasks = words.Select(v => _datamuseApiClient.CheckWord(v, language));
-
-            var corrections = new List<GrammarCorrection>();
-
-            foreach (var wordCheckResultTask in wordCheckTasks)
+            corrections.Add(new()
             {
-                var wordCheckResult = await wordCheckResultTask;
-
-                if (!wordCheckResult.IsWrongWord)
-                {
-                    continue;
-                }
-
-                corrections.Add(new()
-                {
-                    WrongWord = wordCheckResult.Word,
-                    PossibleReplacements = wordCheckResult.SimilarWords.Select(v => v.Word),
-                    Message = GetCorrectionMessage(wordCheckResult.Word, language)
-                });
-            }
-
-            return new(corrections);
+                WrongWord = wordCheckResult.Word,
+                PossibleReplacements = wordCheckResult.SimilarWords.Select(v => v.Word),
+                Message = GetCorrectionMessage(wordCheckResult.Word, language)
+            });
         }
+
+        return new(corrections);
     }
 }

@@ -1,12 +1,11 @@
 using System.Threading.Tasks;
 using Telegram.Bot.Types;
 
-namespace GrammarNazi.Domain.Services
-{
-    public interface ITelegramCommandHandlerService
-    {
-        Task HandleCommand(Message message);
+namespace GrammarNazi.Domain.Services;
 
-        Task HandleCallBackQuery(CallbackQuery callbackQuery);
-    }
+public interface ITelegramCommandHandlerService
+{
+    Task HandleCommand(Message message);
+
+    Task HandleCallBackQuery(CallbackQuery callbackQuery);
 }

@@ -8,39 +8,38 @@ using System.Net.Http;
 using System.Threading.Tasks;
 using System.Web;
 
-namespace GrammarNazi.Core.Clients
+namespace GrammarNazi.Core.Clients;
+
+public class YandexSpellerApiClient : IYandexSpellerApiClient
 {
-    public class YandexSpellerApiClient : IYandexSpellerApiClient
+    private readonly IHttpClientFactory _httpClientFactory;
+    private readonly ILogger<YandexSpellerApiClient> _logger;
+
+    public YandexSpellerApiClient(IHttpClientFactory httpClientFactory,
+        ILogger<YandexSpellerApiClient> logger)
     {
-        private readonly IHttpClientFactory _httpClientFactory;
-        private readonly ILogger<YandexSpellerApiClient> _logger;
+        _httpClientFactory = httpClientFactory;
+        _logger = logger;
+    }
 
-        public YandexSpellerApiClient(IHttpClientFactory httpClientFactory,
-            ILogger<YandexSpellerApiClient> logger)
+    public async Task<IEnumerable<CheckTextResponse>> CheckText(string text, string language)
+    {
+        try
         {
-            _httpClientFactory = httpClientFactory;
-            _logger = logger;
+            var httpClient = _httpClientFactory.CreateClient("yandexSpellerApi");
+            var request = new HttpRequestMessage(HttpMethod.Get, $"/services/spellservice.json/checkText?text={HttpUtility.UrlEncode(text)}&lang={language}");
+
+            var response = await httpClient.SendAsync(request);
+            var jsonString = await response.Content.ReadAsStringAsync();
+
+            return JsonConvert.DeserializeObject<IEnumerable<CheckTextResponse>>(jsonString);
         }
-
-        public async Task<IEnumerable<CheckTextResponse>> CheckText(string text, string language)
+        catch (JsonReaderException ex)
         {
-            try
-            {
-                var httpClient = _httpClientFactory.CreateClient("yandexSpellerApi");
-                var request = new HttpRequestMessage(HttpMethod.Get, $"/services/spellservice.json/checkText?text={HttpUtility.UrlEncode(text)}&lang={language}");
+            _logger.LogWarning(ex, ex.ToString());
 
-                var response = await httpClient.SendAsync(request);
-                var jsonString = await response.Content.ReadAsStringAsync();
-
-                return JsonConvert.DeserializeObject<IEnumerable<CheckTextResponse>>(jsonString);
-            }
-            catch (JsonReaderException ex)
-            {
-                _logger.LogWarning(ex, ex.ToString());
-
-                // return empty result
-                return Enumerable.Empty<CheckTextResponse>();
-            }
+            // return empty result
+            return Enumerable.Empty<CheckTextResponse>();
         }
     }
 }

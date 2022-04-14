@@ -4,67 +4,66 @@ using GrammarNazi.Domain.Services;
 using System;
 using System.Threading.Tasks;
 
-namespace GrammarNazi.Core.Services
+namespace GrammarNazi.Core.Services;
+
+public class TwitterLogService : ITwitterLogService
 {
-    public class TwitterLogService : ITwitterLogService
+    private readonly IRepository<TwitterLog> _repository;
+
+    public TwitterLogService(IRepository<TwitterLog> repository)
     {
-        private readonly IRepository<TwitterLog> _repository;
+        _repository = repository;
+    }
 
-        public TwitterLogService(IRepository<TwitterLog> repository)
+    public async Task<long> GetLastTweetId()
+    {
+        if (await _repository.Any())
         {
-            _repository = repository;
+            return await _repository.Max(v => v.TweetId);
         }
 
-        public async Task<long> GetLastTweetId()
-        {
-            if (await _repository.Any())
-            {
-                return await _repository.Max(v => v.TweetId);
-            }
+        return 0;
+    }
 
-            return 0;
+    public async Task LogReply(long tweetId, long replyTweetId, string tweetText)
+    {
+        if (await _repository.Any(x => x.TweetId == tweetId))
+        {
+            return;
         }
 
-        public async Task LogReply(long tweetId, long replyTweetId, string tweetText)
+        var twitterLog = new TwitterLog
         {
-            if (await _repository.Any(x => x.TweetId == tweetId))
-            {
-                return;
-            }
+            TweetId = tweetId,
+            ReplyTweetId = replyTweetId,
+            CreatedDate = DateTime.Now,
+            Text = tweetText
+        };
 
-            var twitterLog = new TwitterLog
-            {
-                TweetId = tweetId,
-                ReplyTweetId = replyTweetId,
-                CreatedDate = DateTime.Now,
-                Text = tweetText
-            };
+        await _repository.Add(twitterLog);
+    }
 
-            await _repository.Add(twitterLog);
-        }
+    public async Task LogTweet(long tweetId)
+    {
+        if (await _repository.Any(x => x.TweetId == tweetId))
+            return;
 
-        public async Task LogTweet(long tweetId)
+        var twitterLog = new TwitterLog
         {
-            if (await _repository.Any(x => x.TweetId == tweetId))
-                return;
+            TweetId = tweetId,
+            CreatedDate = DateTime.Now
+        };
 
-            var twitterLog = new TwitterLog
-            {
-                TweetId = tweetId,
-                CreatedDate = DateTime.Now
-            };
+        await _repository.Add(twitterLog);
+    }
 
-            await _repository.Add(twitterLog);
-        }
+    public Task<bool> ReplyTweetExist(long tweetId)
+    {
+        return _repository.Any(v => v.ReplyTweetId == tweetId);
+    }
 
-        public Task<bool> ReplyTweetExist(long tweetId)
-        {
-            return _repository.Any(v => v.ReplyTweetId == tweetId);
-        }
-
-        public async Task<bool> TweetExist(string tweetText, DateTime createdAfter)
-        {
-            return await _repository.Any(x => x.Text == tweetText && x.CreatedDate >= createdAfter);
-        }
+    public async Task<bool> TweetExist(string tweetText, DateTime createdAfter)
+    {
+        return await _repository.Any(x => x.Text == tweetText && x.CreatedDate >= createdAfter);
     }
 }

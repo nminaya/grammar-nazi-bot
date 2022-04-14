@@ -3,18 +3,17 @@ using GrammarNazi.Domain.Enums;
 using System.Collections.Generic;
 using System.Threading.Tasks;
 
-namespace GrammarNazi.Domain.Services
+namespace GrammarNazi.Domain.Services;
+
+public interface IGrammarService
 {
-    public interface IGrammarService
-    {
-        public GrammarAlgorithms GrammarAlgorith { get; }
+    public GrammarAlgorithms GrammarAlgorith { get; }
 
-        void SetSelectedLanguage(SupportedLanguages supportedLanguage);
+    void SetSelectedLanguage(SupportedLanguages supportedLanguage);
 
-        void SetStrictnessLevel(CorrectionStrictnessLevels correctionStrictnessLevel);
+    void SetStrictnessLevel(CorrectionStrictnessLevels correctionStrictnessLevel);
 
-        void SetWhiteListWords(IEnumerable<string> whiteListWords);
+    void SetWhiteListWords(IEnumerable<string> whiteListWords);
 
-        Task<GrammarCheckResult> GetCorrections(string text);
-    }
+    Task<GrammarCheckResult> GetCorrections(string text);
 }

@@ -1,11 +1,10 @@
 ﻿using System;
 
-namespace GrammarNazi.Domain.Exceptions
+namespace GrammarNazi.Domain.Exceptions;
+
+public class TaskFailedException : Exception
 {
-    public class TaskFailedException : Exception
+    public TaskFailedException(string message, Exception innerException) : base(message, innerException)
     {
-        public TaskFailedException(string message, Exception innerException) : base(message, innerException)
-        {
-        }
     }
 }

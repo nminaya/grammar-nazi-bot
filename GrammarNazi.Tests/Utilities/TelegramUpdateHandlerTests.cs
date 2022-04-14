@@ -14,171 +14,170 @@ using Telegram.Bot.Exceptions;
 using Telegram.Bot.Types;
 using Xunit;
 
-namespace GrammarNazi.Tests.Utilities
+namespace GrammarNazi.Tests.Utilities;
+
+public class TelegramUpdateHandlerTests
 {
-    public class TelegramUpdateHandlerTests
+    [Fact]
+    public async Task HandleUpdate_NonSupportedUpdateTypeReceived_Should_DoNothing()
     {
-        [Fact]
-        public async Task HandleUpdate_NonSupportedUpdateTypeReceived_Should_DoNothing()
-        {
-            // Arrange
-            var telegramBotMock = new Mock<ITelegramBotClient>();
-            var loggerMock = new Mock<ILogger<TelegramUpdateHandler>>();
+        // Arrange
+        var telegramBotMock = new Mock<ITelegramBotClient>();
+        var loggerMock = new Mock<ILogger<TelegramUpdateHandler>>();
 
-            var update = new Update
+        var update = new Update
+        {
+            ChatMember = new ChatMemberUpdated()
+        };
+
+        var handler = new TelegramUpdateHandler(null, null, loggerMock.Object);
+
+        // Act
+        await handler.HandleUpdateAsync(telegramBotMock.Object, update, default);
+
+        // Assert
+
+        // Verify LogInformation was called
+        loggerMock.Verify(x => x.Log(
+                        LogLevel.Information,
+                        It.IsAny<EventId>(),
+                        It.IsAny<It.IsAnyType>(),
+                        It.IsAny<Exception>(),
+                        (Func<It.IsAnyType, Exception, string>)It.IsAny<object>()));
+    }
+
+    [Fact]
+    public async Task HandleUpdate_MessageReceivedNotTextType_Should_DoNothing()
+    {
+        // Arrange
+        var telegramBotMock = new Mock<ITelegramBotClient>();
+        var chatConfigServiceMock = new Mock<IChatConfigurationService>();
+        var serviceScopeFactory = new Mock<IServiceScopeFactory>();
+        var serviceScope = new Mock<IServiceScope>();
+        var serviceProvider = new Mock<IServiceProvider>();
+
+        var update = new Update
+        {
+            Message = new Message
             {
-                ChatMember = new ChatMemberUpdated()
-            };
+                Audio = new Audio(),
+                Chat = new Chat { Id = 1 }
+            }
+        };
 
-            var handler = new TelegramUpdateHandler(null, null, loggerMock.Object);
+        serviceScopeFactory.Setup(x => x.CreateScope()).Returns(serviceScope.Object);
+        serviceScope.Setup(x => x.ServiceProvider).Returns(serviceProvider.Object);
+        serviceProvider.Setup(x => x.GetService(typeof(IChatConfigurationService))).Returns(chatConfigServiceMock.Object);
 
-            // Act
-            await handler.HandleUpdateAsync(telegramBotMock.Object, update, default);
+        var handler = new TelegramUpdateHandler(serviceScopeFactory.Object, null, null);
 
-            // Assert
+        // Act
+        await handler.HandleUpdateAsync(telegramBotMock.Object, update, default);
 
-            // Verify LogInformation was called
-            loggerMock.Verify(x => x.Log(
-                            LogLevel.Information,
-                            It.IsAny<EventId>(),
-                            It.IsAny<It.IsAnyType>(),
-                            It.IsAny<Exception>(),
-                            (Func<It.IsAnyType, Exception, string>)It.IsAny<object>()));
-        }
+        // Assert
+        chatConfigServiceMock.Verify(x => x.GetConfigurationByChatId(update.Message.Chat.Id), Times.Never);
+    }
 
-        [Fact]
-        public async Task HandleUpdate_MessageReceivedNotTextType_Should_DoNothing()
+    [Fact]
+    public async Task HandleUpdate_MessageReceived_Should_GetCorrections()
+    {
+        // Arrange
+        var telegramBotMock = new Mock<ITelegramBotClient>();
+        var chatConfigServiceMock = new Mock<IChatConfigurationService>();
+        var serviceScopeFactory = new Mock<IServiceScopeFactory>();
+        var serviceScope = new Mock<IServiceScope>();
+        var serviceProvider = new Mock<IServiceProvider>();
+        var loggerMock = new Mock<ILogger<TelegramUpdateHandler>>();
+        var grammarService = new Mock<IGrammarService>();
+
+        var update = new Update
         {
-            // Arrange
-            var telegramBotMock = new Mock<ITelegramBotClient>();
-            var chatConfigServiceMock = new Mock<IChatConfigurationService>();
-            var serviceScopeFactory = new Mock<IServiceScopeFactory>();
-            var serviceScope = new Mock<IServiceScope>();
-            var serviceProvider = new Mock<IServiceProvider>();
-
-            var update = new Update
+            Message = new Message
             {
-                Message = new Message
-                {
-                    Audio = new Audio(),
-                    Chat = new Chat { Id = 1 }
-                }
-            };
+                Text = "My Text",
+                Chat = new Chat { Id = 1 }
+            }
+        };
 
-            serviceScopeFactory.Setup(x => x.CreateScope()).Returns(serviceScope.Object);
-            serviceScope.Setup(x => x.ServiceProvider).Returns(serviceProvider.Object);
-            serviceProvider.Setup(x => x.GetService(typeof(IChatConfigurationService))).Returns(chatConfigServiceMock.Object);
+        chatConfigServiceMock.Setup(x => x.GetConfigurationByChatId(update.Message.Chat.Id))
+            .ReturnsAsync(new ChatConfiguration());
 
-            var handler = new TelegramUpdateHandler(serviceScopeFactory.Object, null, null);
+        grammarService.Setup(x => x.GetCorrections("My Text"))
+            .ReturnsAsync(new GrammarCheckResult(null));
 
-            // Act
-            await handler.HandleUpdateAsync(telegramBotMock.Object, update, default);
+        serviceScopeFactory.Setup(x => x.CreateScope()).Returns(serviceScope.Object);
+        serviceScope.Setup(x => x.ServiceProvider).Returns(serviceProvider.Object);
+        serviceProvider.Setup(x => x.GetService(typeof(IChatConfigurationService))).Returns(chatConfigServiceMock.Object);
+        serviceProvider.Setup(x => x.GetService(typeof(IEnumerable<IGrammarService>))).Returns(new[] { grammarService.Object });
 
-            // Assert
-            chatConfigServiceMock.Verify(x => x.GetConfigurationByChatId(update.Message.Chat.Id), Times.Never);
-        }
+        var handler = new TelegramUpdateHandler(serviceScopeFactory.Object, null, loggerMock.Object);
 
-        [Fact]
-        public async Task HandleUpdate_MessageReceived_Should_GetCorrections()
-        {
-            // Arrange
-            var telegramBotMock = new Mock<ITelegramBotClient>();
-            var chatConfigServiceMock = new Mock<IChatConfigurationService>();
-            var serviceScopeFactory = new Mock<IServiceScopeFactory>();
-            var serviceScope = new Mock<IServiceScope>();
-            var serviceProvider = new Mock<IServiceProvider>();
-            var loggerMock = new Mock<ILogger<TelegramUpdateHandler>>();
-            var grammarService = new Mock<IGrammarService>();
+        // Act
+        await handler.HandleUpdateAsync(telegramBotMock.Object, update, default);
 
-            var update = new Update
-            {
-                Message = new Message
-                {
-                    Text = "My Text",
-                    Chat = new Chat { Id = 1 }
-                }
-            };
+        // Assert
+        chatConfigServiceMock.Verify(x => x.GetConfigurationByChatId(update.Message.Chat.Id));
+        grammarService.Verify(x => x.GetCorrections("My Text"));
+    }
 
-            chatConfigServiceMock.Setup(x => x.GetConfigurationByChatId(update.Message.Chat.Id))
-                .ReturnsAsync(new ChatConfiguration());
+    [Theory]
+    [InlineData("bot was blocked by the user")]
+    [InlineData("bot was kicked from the supergroup")]
+    [InlineData("have no rights to send a message")]
+    public async Task HandleError_ApiRequestException_Should_LogWarning(string exceptionMessage)
+    {
+        // Arrange
+        var telegramBotMock = new Mock<ITelegramBotClient>();
+        var loggerMock = new Mock<ILogger<TelegramUpdateHandler>>();
+        var githubServiceMock = new Mock<IGithubService>();
 
-            grammarService.Setup(x => x.GetCorrections("My Text"))
-                .ReturnsAsync(new GrammarCheckResult(null));
+        var handler = new TelegramUpdateHandler(null, githubServiceMock.Object, loggerMock.Object);
 
-            serviceScopeFactory.Setup(x => x.CreateScope()).Returns(serviceScope.Object);
-            serviceScope.Setup(x => x.ServiceProvider).Returns(serviceProvider.Object);
-            serviceProvider.Setup(x => x.GetService(typeof(IChatConfigurationService))).Returns(chatConfigServiceMock.Object);
-            serviceProvider.Setup(x => x.GetService(typeof(IEnumerable<IGrammarService>))).Returns(new[] { grammarService.Object });
+        var exception = new ApiRequestException(exceptionMessage);
 
-            var handler = new TelegramUpdateHandler(serviceScopeFactory.Object, null, loggerMock.Object);
+        // Act
+        await handler.HandleErrorAsync(telegramBotMock.Object, exception, default);
 
-            // Act
-            await handler.HandleUpdateAsync(telegramBotMock.Object, update, default);
+        // Assert
 
-            // Assert
-            chatConfigServiceMock.Verify(x => x.GetConfigurationByChatId(update.Message.Chat.Id));
-            grammarService.Verify(x => x.GetCorrections("My Text"));
-        }
+        // Verify LogWarning was called
+        loggerMock.Verify(x => x.Log(
+                        LogLevel.Warning,
+                        It.IsAny<EventId>(),
+                        It.IsAny<It.IsAnyType>(),
+                        It.IsAny<Exception>(),
+                        (Func<It.IsAnyType, Exception, string>)It.IsAny<object>()));
 
-        [Theory]
-        [InlineData("bot was blocked by the user")]
-        [InlineData("bot was kicked from the supergroup")]
-        [InlineData("have no rights to send a message")]
-        public async Task HandleError_ApiRequestException_Should_LogWarning(string exceptionMessage)
-        {
-            // Arrange
-            var telegramBotMock = new Mock<ITelegramBotClient>();
-            var loggerMock = new Mock<ILogger<TelegramUpdateHandler>>();
-            var githubServiceMock = new Mock<IGithubService>();
+        // Verify CreateBugIssue was never called
+        githubServiceMock.Verify(x => x.CreateBugIssue(It.IsAny<string>(), It.IsAny<Exception>(), It.IsAny<GithubIssueLabels>()), Times.Never);
+    }
 
-            var handler = new TelegramUpdateHandler(null, githubServiceMock.Object, loggerMock.Object);
+    [Fact]
+    public async Task HandleError_ExceptionCaptured_Should_LogErrorAndCreateBugIssue()
+    {
+        // Arrange
+        var telegramBotMock = new Mock<ITelegramBotClient>();
+        var loggerMock = new Mock<ILogger<TelegramUpdateHandler>>();
+        var githubServiceMock = new Mock<IGithubService>();
 
-            var exception = new ApiRequestException(exceptionMessage);
+        var handler = new TelegramUpdateHandler(null, githubServiceMock.Object, loggerMock.Object);
 
-            // Act
-            await handler.HandleErrorAsync(telegramBotMock.Object, exception, default);
+        var exception = new Exception("Fatal test exception");
 
-            // Assert
+        // Act
+        await handler.HandleErrorAsync(telegramBotMock.Object, exception, default);
 
-            // Verify LogWarning was called
-            loggerMock.Verify(x => x.Log(
-                            LogLevel.Warning,
-                            It.IsAny<EventId>(),
-                            It.IsAny<It.IsAnyType>(),
-                            It.IsAny<Exception>(),
-                            (Func<It.IsAnyType, Exception, string>)It.IsAny<object>()));
+        // Assert
 
-            // Verify CreateBugIssue was never called
-            githubServiceMock.Verify(x => x.CreateBugIssue(It.IsAny<string>(), It.IsAny<Exception>(), It.IsAny<GithubIssueLabels>()), Times.Never);
-        }
+        // Verify LogError was called
+        loggerMock.Verify(x => x.Log(
+                        LogLevel.Error,
+                        It.IsAny<EventId>(),
+                        It.IsAny<It.IsAnyType>(),
+                        exception,
+                        (Func<It.IsAnyType, Exception, string>)It.IsAny<object>()));
 
-        [Fact]
-        public async Task HandleError_ExceptionCaptured_Should_LogErrorAndCreateBugIssue()
-        {
-            // Arrange
-            var telegramBotMock = new Mock<ITelegramBotClient>();
-            var loggerMock = new Mock<ILogger<TelegramUpdateHandler>>();
-            var githubServiceMock = new Mock<IGithubService>();
-
-            var handler = new TelegramUpdateHandler(null, githubServiceMock.Object, loggerMock.Object);
-
-            var exception = new Exception("Fatal test exception");
-
-            // Act
-            await handler.HandleErrorAsync(telegramBotMock.Object, exception, default);
-
-            // Assert
-
-            // Verify LogError was called
-            loggerMock.Verify(x => x.Log(
-                            LogLevel.Error,
-                            It.IsAny<EventId>(),
-                            It.IsAny<It.IsAnyType>(),
-                            exception,
-                            (Func<It.IsAnyType, Exception, string>)It.IsAny<object>()));
-
-            // Verify CreateBugIssue was called
-            githubServiceMock.Verify(x => x.CreateBugIssue("Application Exception: Fatal test exception", exception, GithubIssueLabels.Telegram));
-        }
+        // Verify CreateBugIssue was called
+        githubServiceMock.Verify(x => x.CreateBugIssue("Application Exception: Fatal test exception", exception, GithubIssueLabels.Telegram));
     }
 }

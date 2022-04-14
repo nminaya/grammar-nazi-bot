@@ -4,45 +4,44 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 
-namespace GrammarNazi.Core.Services
+namespace GrammarNazi.Core.Services;
+
+public abstract class BaseGrammarService
 {
-    public abstract class BaseGrammarService
+    protected SupportedLanguages SelectedLanguage;
+    protected CorrectionStrictnessLevels SelectedStrictnessLevel;
+    protected List<string> WhiteListWords = new();
+
+    public void SetSelectedLanguage(SupportedLanguages supportedLanguage)
     {
-        protected SupportedLanguages SelectedLanguage;
-        protected CorrectionStrictnessLevels SelectedStrictnessLevel;
-        protected List<string> WhiteListWords = new();
+        SelectedLanguage = supportedLanguage;
+    }
 
-        public void SetSelectedLanguage(SupportedLanguages supportedLanguage)
+    public void SetStrictnessLevel(CorrectionStrictnessLevels correctionStrictnessLevel)
+    {
+        SelectedStrictnessLevel = correctionStrictnessLevel;
+    }
+
+    public void SetWhiteListWords(IEnumerable<string> whiteListWords)
+    {
+        WhiteListWords.RemoveAll(_ => true);
+
+        if (whiteListWords?.Any() == true)
         {
-            SelectedLanguage = supportedLanguage;
+            WhiteListWords.AddRange(whiteListWords);
         }
+    }
 
-        public void SetStrictnessLevel(CorrectionStrictnessLevels correctionStrictnessLevel)
-        {
-            SelectedStrictnessLevel = correctionStrictnessLevel;
-        }
+    protected bool IsWhiteListWord(string word)
+    {
+        return WhiteListWords.Any(w => w.Contains(word, StringComparison.InvariantCultureIgnoreCase));
+    }
 
-        public void SetWhiteListWords(IEnumerable<string> whiteListWords)
-        {
-            WhiteListWords.RemoveAll(_ => true);
+    protected static string GetCorrectionMessage(string word, string language)
+    {
+        if (language == SupportedLanguages.English.GetLanguageInformation().TwoLetterISOLanguageName)
+            return $"The word \"{word}\" doesn't exist or isn't in the dictionary.";
 
-            if (whiteListWords?.Any() == true)
-            {
-                WhiteListWords.AddRange(whiteListWords);
-            }
-        }
-
-        protected bool IsWhiteListWord(string word)
-        {
-            return WhiteListWords.Any(w => w.Contains(word, StringComparison.InvariantCultureIgnoreCase));
-        }
-
-        protected static string GetCorrectionMessage(string word, string language)
-        {
-            if (language == SupportedLanguages.English.GetLanguageInformation().TwoLetterISOLanguageName)
-                return $"The word \"{word}\" doesn't exist or isn't in the dictionary.";
-
-            return $"La palabra \"{word}\" no existe o no está en el diccionario.";
-        }
+        return $"La palabra \"{word}\" no existe o no está en el diccionario.";
     }
 }

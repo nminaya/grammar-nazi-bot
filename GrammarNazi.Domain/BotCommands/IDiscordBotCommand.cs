@@ -1,8 +1,7 @@
 ﻿using Discord;
 
-namespace GrammarNazi.Domain.BotCommands
+namespace GrammarNazi.Domain.BotCommands;
+
+public interface IDiscordBotCommand : IBotCommand<IMessage>
 {
-    public interface IDiscordBotCommand : IBotCommand<IMessage>
-    {
-    }
 }

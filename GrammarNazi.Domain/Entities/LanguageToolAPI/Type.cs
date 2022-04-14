@@ -1,10 +1,9 @@
 ﻿using Newtonsoft.Json;
 
-namespace GrammarNazi.Domain.Entities.LanguageToolAPI
+namespace GrammarNazi.Domain.Entities.LanguageToolAPI;
+
+public class Type
 {
-    public class Type
-    {
-        [JsonProperty("typeName")]
-        public string TypeName { get; set; }
-    }
+    [JsonProperty("typeName")]
+    public string TypeName { get; set; }
 }

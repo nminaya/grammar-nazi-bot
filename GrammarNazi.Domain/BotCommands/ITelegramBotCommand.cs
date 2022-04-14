@@ -1,8 +1,7 @@
 ﻿using Telegram.Bot.Types;
 
-namespace GrammarNazi.Domain.BotCommands
+namespace GrammarNazi.Domain.BotCommands;
+
+public interface ITelegramBotCommand : IBotCommand<Message>
 {
-    public interface ITelegramBotCommand : IBotCommand<Message>
-    {
-    }
 }
