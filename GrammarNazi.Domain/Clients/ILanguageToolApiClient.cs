@@ -1,10 +1,9 @@
 ﻿using GrammarNazi.Domain.Entities.LanguageToolAPI;
 using System.Threading.Tasks;
 
-namespace GrammarNazi.Domain.Clients
+namespace GrammarNazi.Domain.Clients;
+
+public interface ILanguageToolApiClient
 {
-    public interface ILanguageToolApiClient
-    {
-        Task<LanguageToolCheckResult> Check(string text, string languageCode);
-    }
+    Task<LanguageToolCheckResult> Check(string text, string languageCode);
 }

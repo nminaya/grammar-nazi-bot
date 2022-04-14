@@ -1,11 +1,10 @@
-﻿namespace GrammarNazi.Domain.Entities.Configs
+﻿namespace GrammarNazi.Domain.Entities.Configs;
+
+public class TwitterBotSettings
 {
-    public class TwitterBotSettings
-    {
-        public string BotUsername { get; set; }
-        public int TimelineFirstLoadPageSize { get; set; }
-        public int PublishTweetDelayMilliseconds { get; set; }
-        public int HostedServiceIntervalMilliseconds { get; set; }
-        public int PublishRepeatedTweetAfterHours { get; set; }
-    }
+    public string BotUsername { get; set; }
+    public int TimelineFirstLoadPageSize { get; set; }
+    public int PublishTweetDelayMilliseconds { get; set; }
+    public int HostedServiceIntervalMilliseconds { get; set; }
+    public int PublishRepeatedTweetAfterHours { get; set; }
 }

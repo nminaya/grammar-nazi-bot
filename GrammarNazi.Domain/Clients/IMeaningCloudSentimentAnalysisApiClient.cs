@@ -1,10 +1,9 @@
 ﻿using GrammarNazi.Domain.Entities.MeaningCloudAPI;
 using System.Threading.Tasks;
 
-namespace GrammarNazi.Domain.Clients
+namespace GrammarNazi.Domain.Clients;
+
+public interface IMeaningCloudSentimentAnalysisApiClient
 {
-    public interface IMeaningCloudSentimentAnalysisApiClient
-    {
-        Task<SentimentAnalysisResult> GetSentimentResult(string text, string language);
-    }
+    Task<SentimentAnalysisResult> GetSentimentResult(string text, string language);
 }

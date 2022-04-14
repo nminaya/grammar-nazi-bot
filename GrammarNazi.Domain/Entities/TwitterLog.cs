@@ -1,48 +1,47 @@
 ﻿using System;
 
-namespace GrammarNazi.Domain.Entities
+namespace GrammarNazi.Domain.Entities;
+
+/// <summary>
+/// Twitter Log
+/// </summary>
+public class TwitterLog
 {
     /// <summary>
-    /// Twitter Log
+    /// Id of Twwet
     /// </summary>
-    public class TwitterLog
+    public long TweetId { get; set; }
+
+    /// <summary>
+    /// Id of replied Tweet
+    /// </summary>
+    public long ReplyTweetId { get; set; }
+
+    /// <summary>
+    /// Text of the tweeted tweet
+    /// </summary>
+    public string Text { get; set; }
+
+    /// <summary>
+    /// Created Date
+    /// </summary>
+    public DateTime CreatedDate { get; set; }
+
+    public override bool Equals(object obj)
     {
-        /// <summary>
-        /// Id of Twwet
-        /// </summary>
-        public long TweetId { get; set; }
+        if (obj is TwitterLog twitterLog)
+            return TweetId == twitterLog.TweetId;
 
-        /// <summary>
-        /// Id of replied Tweet
-        /// </summary>
-        public long ReplyTweetId { get; set; }
+        return false;
+    }
 
-        /// <summary>
-        /// Text of the tweeted tweet
-        /// </summary>
-        public string Text { get; set; }
+    public override int GetHashCode()
+    {
+        return TweetId.GetHashCode();
+    }
 
-        /// <summary>
-        /// Created Date
-        /// </summary>
-        public DateTime CreatedDate { get; set; }
-
-        public override bool Equals(object obj)
-        {
-            if (obj is TwitterLog twitterLog)
-                return TweetId == twitterLog.TweetId;
-
-            return false;
-        }
-
-        public override int GetHashCode()
-        {
-            return TweetId.GetHashCode();
-        }
-
-        public override string ToString()
-        {
-            return $"{TweetId}";
-        }
+    public override string ToString()
+    {
+        return $"{TweetId}";
     }
 }

@@ -8,59 +8,58 @@ using System.Text;
 using System.Threading.Tasks;
 using Telegram.Bot.Types;
 
-namespace GrammarNazi.Core.BotCommands.Telegram
+namespace GrammarNazi.Core.BotCommands.Telegram;
+
+public class SetAlgorithmCommand : BaseTelegramCommand, ITelegramBotCommand
 {
-    public class SetAlgorithmCommand : BaseTelegramCommand, ITelegramBotCommand
+    private readonly IChatConfigurationService _chatConfigurationService;
+
+    public string Command => TelegramBotCommands.SetAlgorithm;
+
+    public SetAlgorithmCommand(IChatConfigurationService chatConfigurationService,
+        ITelegramBotClientWrapper telegramBotClient)
+        : base(telegramBotClient)
     {
-        private readonly IChatConfigurationService _chatConfigurationService;
+        _chatConfigurationService = chatConfigurationService;
+    }
 
-        public string Command => TelegramBotCommands.SetAlgorithm;
+    public async Task Handle(Message message)
+    {
+        await SendTypingNotification(message);
 
-        public SetAlgorithmCommand(IChatConfigurationService chatConfigurationService,
-            ITelegramBotClientWrapper telegramBotClient)
-            : base(telegramBotClient)
+        var messageBuilder = new StringBuilder();
+
+        if (!await IsUserAdmin(message))
         {
-            _chatConfigurationService = chatConfigurationService;
+            messageBuilder.AppendLine("Only admins can use this command.");
+            await Client.SendTextMessageAsync(message.Chat.Id, messageBuilder.ToString(), replyToMessageId: message.MessageId);
+            return;
         }
 
-        public async Task Handle(Message message)
+        var parameters = message.Text.Split(" ");
+        if (parameters.Length == 1)
         {
-            await SendTypingNotification(message);
+            await ShowOptions<GrammarAlgorithms>(message, "Choose Algorithm");
+        }
+        else
+        {
+            bool parsedOk = int.TryParse(parameters[1], out int algorithm);
 
-            var messageBuilder = new StringBuilder();
-
-            if (!await IsUserAdmin(message))
+            if (parsedOk && algorithm.IsAssignableToEnum<GrammarAlgorithms>())
             {
-                messageBuilder.AppendLine("Only admins can use this command.");
-                await Client.SendTextMessageAsync(message.Chat.Id, messageBuilder.ToString(), replyToMessageId: message.MessageId);
-                return;
-            }
+                var chatConfig = await _chatConfigurationService.GetConfigurationByChatId(message.Chat.Id);
+                chatConfig.GrammarAlgorithm = (GrammarAlgorithms)algorithm;
 
-            var parameters = message.Text.Split(" ");
-            if (parameters.Length == 1)
-            {
-                await ShowOptions<GrammarAlgorithms>(message, "Choose Algorithm");
+                await _chatConfigurationService.Update(chatConfig);
+
+                await Client.SendTextMessageAsync(message.Chat.Id, "Algorithm updated.");
             }
             else
             {
-                bool parsedOk = int.TryParse(parameters[1], out int algorithm);
-
-                if (parsedOk && algorithm.IsAssignableToEnum<GrammarAlgorithms>())
-                {
-                    var chatConfig = await _chatConfigurationService.GetConfigurationByChatId(message.Chat.Id);
-                    chatConfig.GrammarAlgorithm = (GrammarAlgorithms)algorithm;
-
-                    await _chatConfigurationService.Update(chatConfig);
-
-                    await Client.SendTextMessageAsync(message.Chat.Id, "Algorithm updated.");
-                }
-                else
-                {
-                    await Client.SendTextMessageAsync(message.Chat.Id, $"Invalid parameter. Type {TelegramBotCommands.SetAlgorithm} <algorithm_numer> to set an algorithm.");
-                }
+                await Client.SendTextMessageAsync(message.Chat.Id, $"Invalid parameter. Type {TelegramBotCommands.SetAlgorithm} <algorithm_numer> to set an algorithm.");
             }
-
-            await NotifyIfBotIsNotAdmin(message);
         }
+
+        await NotifyIfBotIsNotAdmin(message);
     }
 }

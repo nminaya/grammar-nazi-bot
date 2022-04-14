@@ -7,38 +7,37 @@ using System.Text;
 using System.Threading.Tasks;
 using Telegram.Bot.Types;
 
-namespace GrammarNazi.Core.BotCommands.Telegram
+namespace GrammarNazi.Core.BotCommands.Telegram;
+
+public class HelpCommand : BaseTelegramCommand, ITelegramBotCommand
 {
-    public class HelpCommand : BaseTelegramCommand, ITelegramBotCommand
+    public string Command => TelegramBotCommands.Help;
+
+    public HelpCommand(ITelegramBotClientWrapper telegramBotClient)
+        : base(telegramBotClient)
+    { }
+
+    public async Task Handle(Message message)
     {
-        public string Command => TelegramBotCommands.Help;
+        await SendTypingNotification(message);
 
-        public HelpCommand(ITelegramBotClientWrapper telegramBotClient)
-            : base(telegramBotClient)
-        { }
+        var messageBuilder = new StringBuilder();
+        messageBuilder.AppendLine("Help").AppendLine();
+        messageBuilder.AppendLine("Useful commands:");
+        messageBuilder.AppendLine($"{TelegramBotCommands.Start} start/activate the Bot.");
+        messageBuilder.AppendLine($"{TelegramBotCommands.Stop} stop/disable the Bot.");
+        messageBuilder.AppendLine($"{TelegramBotCommands.Settings} get configured settings.");
+        messageBuilder.AppendLine($"{TelegramBotCommands.SetAlgorithm} <algorithm_number> to set an algorithm.");
+        messageBuilder.AppendLine($"{TelegramBotCommands.Language} <language_number> to set a language.");
+        messageBuilder.AppendLine($"{TelegramBotCommands.ShowDetails} Show correction details");
+        messageBuilder.AppendLine($"{TelegramBotCommands.HideDetails} Hide correction details");
+        messageBuilder.AppendLine($"{TelegramBotCommands.WhiteList} See list of ignored words.");
+        messageBuilder.AppendLine($"{TelegramBotCommands.AddWhiteList} <word> to add a Whitelist word.");
+        messageBuilder.AppendLine($"{TelegramBotCommands.RemoveWhiteList} <word> to remove a Whitelist word.");
+        messageBuilder.AppendLine($"{TelegramBotCommands.Tolerant} Set strictness level to {CorrectionStrictnessLevels.Tolerant.GetDescription()}");
+        messageBuilder.AppendLine($"{TelegramBotCommands.Intolerant} Set strictness level to {CorrectionStrictnessLevels.Intolerant.GetDescription()}");
 
-        public async Task Handle(Message message)
-        {
-            await SendTypingNotification(message);
-
-            var messageBuilder = new StringBuilder();
-            messageBuilder.AppendLine("Help").AppendLine();
-            messageBuilder.AppendLine("Useful commands:");
-            messageBuilder.AppendLine($"{TelegramBotCommands.Start} start/activate the Bot.");
-            messageBuilder.AppendLine($"{TelegramBotCommands.Stop} stop/disable the Bot.");
-            messageBuilder.AppendLine($"{TelegramBotCommands.Settings} get configured settings.");
-            messageBuilder.AppendLine($"{TelegramBotCommands.SetAlgorithm} <algorithm_number> to set an algorithm.");
-            messageBuilder.AppendLine($"{TelegramBotCommands.Language} <language_number> to set a language.");
-            messageBuilder.AppendLine($"{TelegramBotCommands.ShowDetails} Show correction details");
-            messageBuilder.AppendLine($"{TelegramBotCommands.HideDetails} Hide correction details");
-            messageBuilder.AppendLine($"{TelegramBotCommands.WhiteList} See list of ignored words.");
-            messageBuilder.AppendLine($"{TelegramBotCommands.AddWhiteList} <word> to add a Whitelist word.");
-            messageBuilder.AppendLine($"{TelegramBotCommands.RemoveWhiteList} <word> to remove a Whitelist word.");
-            messageBuilder.AppendLine($"{TelegramBotCommands.Tolerant} Set strictness level to {CorrectionStrictnessLevels.Tolerant.GetDescription()}");
-            messageBuilder.AppendLine($"{TelegramBotCommands.Intolerant} Set strictness level to {CorrectionStrictnessLevels.Intolerant.GetDescription()}");
-
-            await Client.SendTextMessageAsync(message.Chat.Id, messageBuilder.ToString());
-            await NotifyIfBotIsNotAdmin(message);
-        }
+        await Client.SendTextMessageAsync(message.Chat.Id, messageBuilder.ToString());
+        await NotifyIfBotIsNotAdmin(message);
     }
 }

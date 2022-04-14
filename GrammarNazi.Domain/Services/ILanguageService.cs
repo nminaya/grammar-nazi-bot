@@ -1,9 +1,8 @@
 ﻿using GrammarNazi.Domain.Entities;
 
-namespace GrammarNazi.Domain.Services
+namespace GrammarNazi.Domain.Services;
+
+public interface ILanguageService
 {
-    public interface ILanguageService
-    {
-        LanguageInformation IdentifyLanguage(string text);
-    }
+    LanguageInformation IdentifyLanguage(string text);
 }

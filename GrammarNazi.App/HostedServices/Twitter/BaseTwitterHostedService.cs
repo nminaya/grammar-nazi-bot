@@ -14,115 +14,114 @@ using Tweetinvi.Exceptions;
 using Tweetinvi.Models;
 using Tweetinvi.Parameters;
 
-namespace GrammarNazi.App.HostedServices
+namespace GrammarNazi.App.HostedServices;
+
+public abstract class BaseTwitterHostedService : BackgroundService
 {
-    public abstract class BaseTwitterHostedService : BackgroundService
+    protected readonly ILogger<TwitterBotHostedService> Logger;
+    protected readonly ITwitterLogService TwitterLogService;
+    protected readonly ITwitterClient TwitterClient;
+    protected readonly TwitterBotSettings TwitterBotSettings;
+    protected readonly IScheduledTweetService ScheduledTweetService;
+    protected readonly ISentimentAnalysisService SentimentAnalysisService;
+
+    protected BaseTwitterHostedService(ILogger<TwitterBotHostedService> logger,
+        ITwitterLogService twitterLogService,
+        ITwitterClient twitterClient,
+        TwitterBotSettings twitterBotSettings,
+        IScheduledTweetService scheduledTweetService,
+        ISentimentAnalysisService sentimentAnalysisService)
     {
-        protected readonly ILogger<TwitterBotHostedService> Logger;
-        protected readonly ITwitterLogService TwitterLogService;
-        protected readonly ITwitterClient TwitterClient;
-        protected readonly TwitterBotSettings TwitterBotSettings;
-        protected readonly IScheduledTweetService ScheduledTweetService;
-        protected readonly ISentimentAnalysisService SentimentAnalysisService;
+        Logger = logger;
+        TwitterLogService = twitterLogService;
+        TwitterClient = twitterClient;
+        TwitterBotSettings = twitterBotSettings;
+        ScheduledTweetService = scheduledTweetService;
+        SentimentAnalysisService = sentimentAnalysisService;
+    }
 
-        protected BaseTwitterHostedService(ILogger<TwitterBotHostedService> logger,
-            ITwitterLogService twitterLogService,
-            ITwitterClient twitterClient,
-            TwitterBotSettings twitterBotSettings,
-            IScheduledTweetService scheduledTweetService,
-            ISentimentAnalysisService sentimentAnalysisService)
+    protected async Task FollowBackUsers(IEnumerable<IUser> followers, IEnumerable<long> friendIds)
+    {
+        var userIdsPendingToFollow = await TwitterClient.Users.GetUserIdsYouRequestedToFollowAsync();
+
+        var userIdsToFollow = followers.Select(v => v.Id).Except(friendIds).Except(userIdsPendingToFollow);
+
+        foreach (var userId in userIdsToFollow)
         {
-            Logger = logger;
-            TwitterLogService = twitterLogService;
-            TwitterClient = twitterClient;
-            TwitterBotSettings = twitterBotSettings;
-            ScheduledTweetService = scheduledTweetService;
-            SentimentAnalysisService = sentimentAnalysisService;
+            await TwitterClient.Users.FollowUserAsync(userId);
         }
+    }
 
-        protected async Task FollowBackUsers(IEnumerable<IUser> followers, IEnumerable<long> friendIds)
+    protected async Task PublishScheduledTweets()
+    {
+        var scheduledTweets = await ScheduledTweetService.GetPendingScheduledTweets();
+
+        foreach (var scheduledTweet in scheduledTweets)
         {
-            var userIdsPendingToFollow = await TwitterClient.Users.GetUserIdsYouRequestedToFollowAsync();
+            var tweet = await TwitterClient.Tweets.PublishTweetAsync(scheduledTweet.TweetText);
 
-            var userIdsToFollow = followers.Select(v => v.Id).Except(friendIds).Except(userIdsPendingToFollow);
-
-            foreach (var userId in userIdsToFollow)
+            if (tweet == null)
             {
-                await TwitterClient.Users.FollowUserAsync(userId);
+                Logger.LogWarning($"Not able to tweet Schedule Tweet {scheduledTweet}");
+                continue;
             }
+
+            scheduledTweet.TweetId = tweet.Id;
+            scheduledTweet.IsPublished = true;
+            scheduledTweet.PublishDate = DateTime.Now;
+
+            await ScheduledTweetService.Update(scheduledTweet);
+            await Task.Delay(TwitterBotSettings.PublishTweetDelayMilliseconds);
         }
+    }
 
-        protected async Task PublishScheduledTweets()
+    protected async Task LikeRepliesToBot(IEnumerable<ITweet> tweets)
+    {
+        var replies = tweets.Where(v => v.InReplyToStatusId != null);
+
+        foreach (var reply in replies)
         {
-            var scheduledTweets = await ScheduledTweetService.GetPendingScheduledTweets();
+            bool isReplyToBot = await TwitterLogService.ReplyTweetExist(reply.InReplyToStatusId.Value);
 
-            foreach (var scheduledTweet in scheduledTweets)
+            if (!isReplyToBot)
+                continue;
+
+            var sentimentAnalysis = await SentimentAnalysisService.GetSentimentAnalysis(reply.Text);
+
+            if (sentimentAnalysis.Type == SentimentTypes.Positive
+                && sentimentAnalysis.Score >= Defaults.ValidPositiveSentimentScore)
             {
-                var tweet = await TwitterClient.Tweets.PublishTweetAsync(scheduledTweet.TweetText);
-
-                if (tweet == null)
-                {
-                    Logger.LogWarning($"Not able to tweet Schedule Tweet {scheduledTweet}");
-                    continue;
-                }
-
-                scheduledTweet.TweetId = tweet.Id;
-                scheduledTweet.IsPublished = true;
-                scheduledTweet.PublishDate = DateTime.Now;
-
-                await ScheduledTweetService.Update(scheduledTweet);
-                await Task.Delay(TwitterBotSettings.PublishTweetDelayMilliseconds);
-            }
-        }
-
-        protected async Task LikeRepliesToBot(IEnumerable<ITweet> tweets)
-        {
-            var replies = tweets.Where(v => v.InReplyToStatusId != null);
-
-            foreach (var reply in replies)
-            {
-                bool isReplyToBot = await TwitterLogService.ReplyTweetExist(reply.InReplyToStatusId.Value);
-
-                if (!isReplyToBot)
-                    continue;
-
-                var sentimentAnalysis = await SentimentAnalysisService.GetSentimentAnalysis(reply.Text);
-
-                if (sentimentAnalysis.Type == SentimentTypes.Positive
-                    && sentimentAnalysis.Score >= Defaults.ValidPositiveSentimentScore)
-                {
-                    await TwitterClient.Tweets.FavoriteTweetAsync(reply.Id);
-                }
+                await TwitterClient.Tweets.FavoriteTweetAsync(reply.Id);
             }
         }
+    }
 
-        protected async Task PublishReplyTweet(string text, long replyTo)
+    protected async Task PublishReplyTweet(string text, long replyTo)
+    {
+        try
         {
-            try
+            var tweetText = StringUtils.RemoveMentions(text);
+
+            var publishTweetsParameters = new PublishTweetParameters(text)
             {
-                var tweetText = StringUtils.RemoveMentions(text);
+                InReplyToTweetId = replyTo
+            };
+            var replyTweet = await TwitterClient.Tweets.PublishTweetAsync(publishTweetsParameters);
 
-                var publishTweetsParameters = new PublishTweetParameters(text)
-                {
-                    InReplyToTweetId = replyTo
-                };
-                var replyTweet = await TwitterClient.Tweets.PublishTweetAsync(publishTweetsParameters);
-
-                if (replyTweet == null)
-                {
-                    Logger.LogWarning("Not able to tweet Reply", text);
-                    return;
-                }
-
-                Logger.LogInformation("Reply sent successfuly");
-                await TwitterLogService.LogReply(replyTweet.Id, replyTo, replyTweet.Text);
-            }
-            catch (TwitterException ex) when (ex.ToString().Contains("The original Tweet author restricted who can reply to this Tweet")
-                || ex.ToString().Contains("Status is a duplicate")
-                || ex.ToString().Contains("blocked from the author of this tweet"))
+            if (replyTweet == null)
             {
-                Logger.LogWarning(ex, $"Error sending reply to {replyTo}");
+                Logger.LogWarning("Not able to tweet Reply", text);
+                return;
             }
+
+            Logger.LogInformation("Reply sent successfuly");
+            await TwitterLogService.LogReply(replyTweet.Id, replyTo, replyTweet.Text);
+        }
+        catch (TwitterException ex) when (ex.ToString().Contains("The original Tweet author restricted who can reply to this Tweet")
+            || ex.ToString().Contains("Status is a duplicate")
+            || ex.ToString().Contains("blocked from the author of this tweet"))
+        {
+            Logger.LogWarning(ex, $"Error sending reply to {replyTo}");
         }
     }
 }

@@ -1,10 +1,9 @@
 ﻿using Discord;
 using System.Threading.Tasks;
 
-namespace GrammarNazi.Domain.Services
+namespace GrammarNazi.Domain.Services;
+
+public interface IDiscordCommandHandlerService
 {
-    public interface IDiscordCommandHandlerService
-    {
-        Task HandleCommand(IMessage message);
-    }
+    Task HandleCommand(IMessage message);
 }

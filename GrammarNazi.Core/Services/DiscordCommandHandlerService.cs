@@ -5,25 +5,24 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 
-namespace GrammarNazi.Core.Services
+namespace GrammarNazi.Core.Services;
+
+public class DiscordCommandHandlerService : IDiscordCommandHandlerService
 {
-    public class DiscordCommandHandlerService : IDiscordCommandHandlerService
+    private readonly IEnumerable<IDiscordBotCommand> _botCommands;
+
+    public DiscordCommandHandlerService(IEnumerable<IDiscordBotCommand> botCommands)
     {
-        private readonly IEnumerable<IDiscordBotCommand> _botCommands;
+        _botCommands = botCommands;
+    }
 
-        public DiscordCommandHandlerService(IEnumerable<IDiscordBotCommand> botCommands)
+    public async Task HandleCommand(IMessage message)
+    {
+        var command = _botCommands.FirstOrDefault(v => message.Content.StartsWith(v.Command));
+
+        if (command != null)
         {
-            _botCommands = botCommands;
-        }
-
-        public async Task HandleCommand(IMessage message)
-        {
-            var command = _botCommands.FirstOrDefault(v => message.Content.StartsWith(v.Command));
-
-            if (command != null)
-            {
-                await command.Handle(message);
-            }
+            await command.Handle(message);
         }
     }
 }

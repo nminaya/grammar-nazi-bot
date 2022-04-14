@@ -7,56 +7,55 @@ using GrammarNazi.Domain.Services;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace GrammarNazi.Core.BotCommands.Discord
+namespace GrammarNazi.Core.BotCommands.Discord;
+
+public class SetAlgorithmCommand : BaseDiscordCommand, IDiscordBotCommand
 {
-    public class SetAlgorithmCommand : BaseDiscordCommand, IDiscordBotCommand
+    private readonly IDiscordChannelConfigService _channelConfigService;
+
+    public string Command => DiscordBotCommands.SetAlgorithm;
+
+    public SetAlgorithmCommand(IDiscordChannelConfigService discordChannelConfigService)
     {
-        private readonly IDiscordChannelConfigService _channelConfigService;
+        _channelConfigService = discordChannelConfigService;
+    }
 
-        public string Command => DiscordBotCommands.SetAlgorithm;
+    public async Task Handle(IMessage message)
+    {
+        var messageBuilder = new StringBuilder();
 
-        public SetAlgorithmCommand(IDiscordChannelConfigService discordChannelConfigService)
+        if (!IsUserAdmin(message))
         {
-            _channelConfigService = discordChannelConfigService;
+            messageBuilder.AppendLine("Only admins can use this command.");
+            await message.Channel.SendMessageAsync(messageBuilder.ToString(), messageReference: new MessageReference(message.Id));
+            return;
         }
 
-        public async Task Handle(IMessage message)
+        var parameters = message.Content.Split(" ");
+        if (parameters.Length == 1)
         {
-            var messageBuilder = new StringBuilder();
+            var channelConfig = await _channelConfigService.GetConfigurationByChannelId(message.Channel.Id);
 
-            if (!IsUserAdmin(message))
-            {
-                messageBuilder.AppendLine("Only admins can use this command.");
-                await message.Channel.SendMessageAsync(messageBuilder.ToString(), messageReference: new MessageReference(message.Id));
-                return;
-            }
-
-            var parameters = message.Content.Split(" ");
-            if (parameters.Length == 1)
-            {
-                var channelConfig = await _channelConfigService.GetConfigurationByChannelId(message.Channel.Id);
-
-                messageBuilder.AppendLine($"Parameter not received. Type `{DiscordBotCommands.SetAlgorithm}` <algorithm_numer> to set an algorithm").AppendLine();
-                messageBuilder.AppendLine($"Algorithms:");
-                messageBuilder.AppendLine(GetAvailableOptions(channelConfig.GrammarAlgorithm));
-                await SendMessage(message, messageBuilder.ToString(), DiscordBotCommands.SetAlgorithm);
-                return;
-            }
-
-            bool parsedOk = int.TryParse(parameters[1], out int algorithm);
-
-            if (parsedOk && algorithm.IsAssignableToEnum<GrammarAlgorithms>())
-            {
-                var channelConfig = await _channelConfigService.GetConfigurationByChannelId(message.Channel.Id);
-                channelConfig.GrammarAlgorithm = (GrammarAlgorithms)algorithm;
-
-                await _channelConfigService.Update(channelConfig);
-
-                await SendMessage(message, $"Algorithm updated: {channelConfig.GrammarAlgorithm.GetDescription()}", DiscordBotCommands.SetAlgorithm);
-                return;
-            }
-
-            await SendMessage(message, $"Invalid parameter. Type `{DiscordBotCommands.SetAlgorithm}` <algorithm_numer> to set an algorithm.", DiscordBotCommands.SetAlgorithm);
+            messageBuilder.AppendLine($"Parameter not received. Type `{DiscordBotCommands.SetAlgorithm}` <algorithm_numer> to set an algorithm").AppendLine();
+            messageBuilder.AppendLine($"Algorithms:");
+            messageBuilder.AppendLine(GetAvailableOptions(channelConfig.GrammarAlgorithm));
+            await SendMessage(message, messageBuilder.ToString(), DiscordBotCommands.SetAlgorithm);
+            return;
         }
+
+        bool parsedOk = int.TryParse(parameters[1], out int algorithm);
+
+        if (parsedOk && algorithm.IsAssignableToEnum<GrammarAlgorithms>())
+        {
+            var channelConfig = await _channelConfigService.GetConfigurationByChannelId(message.Channel.Id);
+            channelConfig.GrammarAlgorithm = (GrammarAlgorithms)algorithm;
+
+            await _channelConfigService.Update(channelConfig);
+
+            await SendMessage(message, $"Algorithm updated: {channelConfig.GrammarAlgorithm.GetDescription()}", DiscordBotCommands.SetAlgorithm);
+            return;
+        }
+
+        await SendMessage(message, $"Invalid parameter. Type `{DiscordBotCommands.SetAlgorithm}` <algorithm_numer> to set an algorithm.", DiscordBotCommands.SetAlgorithm);
     }
 }

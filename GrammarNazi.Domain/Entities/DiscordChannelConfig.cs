@@ -1,78 +1,77 @@
 ﻿using GrammarNazi.Domain.Enums;
 using System.Collections.Generic;
 
-namespace GrammarNazi.Domain.Entities
+namespace GrammarNazi.Domain.Entities;
+
+/// <summary>
+/// Bot Configuration for Discord Channel
+/// </summary>
+public class DiscordChannelConfig
 {
     /// <summary>
-    /// Bot Configuration for Discord Channel
+    /// Backing field for WhitelistWords
     /// </summary>
-    public class DiscordChannelConfig
+    private List<string> _whiteListWords = new();
+
+    /// <summary>
+    /// Channel Id
+    /// </summary>
+    public ulong ChannelId { get; set; }
+
+    /// <summary>
+    /// Selected GrammarAlgorithm
+    /// </summary>
+    public GrammarAlgorithms GrammarAlgorithm { get; set; }
+
+    /// <summary>
+    /// Selected SupportedLanguages
+    /// </summary>
+    public SupportedLanguages SelectedLanguage { get; set; }
+
+    /// <summary>
+    /// Selected CorrectionStrictnessLevels
+    /// </summary>
+    public CorrectionStrictnessLevels CorrectionStrictnessLevel { get; set; } = CorrectionStrictnessLevels.Intolerant;
+
+    /// <summary>
+    /// True if bot stopped
+    /// </summary>
+    public bool IsBotStopped { get; set; }
+
+    /// <summary>
+    /// True if correction details hidden
+    /// </summary>
+    public bool HideCorrectionDetails { get; set; }
+
+    /// <summary>
+    /// Server Id
+    /// </summary>
+    public ulong Guild { get; set; }
+
+    /// <summary>
+    /// List of ignored words
+    /// </summary>
+    public List<string> WhiteListWords
     {
-        /// <summary>
-        /// Backing field for WhitelistWords
-        /// </summary>
-        private List<string> _whiteListWords = new();
+        get => _whiteListWords;
+        set => _whiteListWords = value ?? new();
+    }
 
-        /// <summary>
-        /// Channel Id
-        /// </summary>
-        public ulong ChannelId { get; set; }
+    public override bool Equals(object obj)
+    {
+        if (obj is DiscordChannelConfig channelConfig)
+            return ChannelId == channelConfig.ChannelId;
 
-        /// <summary>
-        /// Selected GrammarAlgorithm
-        /// </summary>
-        public GrammarAlgorithms GrammarAlgorithm { get; set; }
+        return false;
+    }
 
-        /// <summary>
-        /// Selected SupportedLanguages
-        /// </summary>
-        public SupportedLanguages SelectedLanguage { get; set; }
+    public override int GetHashCode()
+    {
+        return ChannelId.GetHashCode();
+    }
 
-        /// <summary>
-        /// Selected CorrectionStrictnessLevels
-        /// </summary>
-        public CorrectionStrictnessLevels CorrectionStrictnessLevel { get; set; } = CorrectionStrictnessLevels.Intolerant;
-
-        /// <summary>
-        /// True if bot stopped
-        /// </summary>
-        public bool IsBotStopped { get; set; }
-
-        /// <summary>
-        /// True if correction details hidden
-        /// </summary>
-        public bool HideCorrectionDetails { get; set; }
-
-        /// <summary>
-        /// Server Id
-        /// </summary>
-        public ulong Guild { get; set; }
-
-        /// <summary>
-        /// List of ignored words
-        /// </summary>
-        public List<string> WhiteListWords
-        {
-            get => _whiteListWords;
-            set => _whiteListWords = value ?? new();
-        }
-
-        public override bool Equals(object obj)
-        {
-            if (obj is DiscordChannelConfig channelConfig)
-                return ChannelId == channelConfig.ChannelId;
-
-            return false;
-        }
-
-        public override int GetHashCode()
-        {
-            return ChannelId.GetHashCode();
-        }
-
-        public override string ToString()
-        {
-            return $"{ChannelId}";
-        }
+    public override string ToString()
+    {
+        return $"{ChannelId}";
     }
 }

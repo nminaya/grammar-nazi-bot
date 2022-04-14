@@ -8,88 +8,87 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 
-namespace GrammarNazi.Core.Services
+namespace GrammarNazi.Core.Services;
+
+public class YandexSpellerApiService : BaseGrammarService, IGrammarService
 {
-    public class YandexSpellerApiService : BaseGrammarService, IGrammarService
+    private readonly IYandexSpellerApiClient _yandexSpellerApiClient;
+    private readonly ILanguageService _languageService;
+
+    public GrammarAlgorithms GrammarAlgorith => GrammarAlgorithms.YandexSpellerApi;
+
+    public YandexSpellerApiService(IYandexSpellerApiClient yandexSpellerApiClient, ILanguageService languageService)
     {
-        private readonly IYandexSpellerApiClient _yandexSpellerApiClient;
-        private readonly ILanguageService _languageService;
+        _yandexSpellerApiClient = yandexSpellerApiClient;
+        _languageService = languageService;
+    }
 
-        public GrammarAlgorithms GrammarAlgorith => GrammarAlgorithms.YandexSpellerApi;
+    public async Task<GrammarCheckResult> GetCorrections(string text)
+    {
+        if (string.IsNullOrWhiteSpace(text))
+            return new(default);
 
-        public YandexSpellerApiService(IYandexSpellerApiClient yandexSpellerApiClient, ILanguageService languageService)
+        string languageCode;
+        if (SelectedLanguage != SupportedLanguages.Auto)
         {
-            _yandexSpellerApiClient = yandexSpellerApiClient;
-            _languageService = languageService;
+            languageCode = SelectedLanguage.GetLanguageInformation().TwoLetterISOLanguageName;
         }
-
-        public async Task<GrammarCheckResult> GetCorrections(string text)
+        else
         {
-            if (string.IsNullOrWhiteSpace(text))
+            var languageInfo = _languageService.IdentifyLanguage(text);
+
+            if (languageInfo == default) // Language not supported
                 return new(default);
 
-            string languageCode;
-            if (SelectedLanguage != SupportedLanguages.Auto)
-            {
-                languageCode = SelectedLanguage.GetLanguageInformation().TwoLetterISOLanguageName;
-            }
-            else
-            {
-                var languageInfo = _languageService.IdentifyLanguage(text);
-
-                if (languageInfo == default) // Language not supported
-                    return new(default);
-
-                languageCode = languageInfo.TwoLetterISOLanguageName;
-            }
-
-            var textCorrections = await _yandexSpellerApiClient.CheckText(text, languageCode);
-
-            if (!textCorrections.Any())
-                return new(default);
-
-            var corrections = new List<GrammarCorrection>();
-
-            foreach (var textCorrection in textCorrections.Where(ErrorCodeFIlter))
-            {
-                if (IsWhiteListWord(textCorrection.Word))
-                    continue;
-
-                corrections.Add(new()
-                {
-                    WrongWord = textCorrection.Word,
-                    PossibleReplacements = textCorrection.Replacements,
-                    Message = GetErrorMessage(textCorrection)
-                });
-            }
-
-            return new(corrections);
+            languageCode = languageInfo.TwoLetterISOLanguageName;
         }
 
-        private static string GetErrorMessage(CheckTextResponse checkTextResponse)
+        var textCorrections = await _yandexSpellerApiClient.CheckText(text, languageCode);
+
+        if (!textCorrections.Any())
+            return new(default);
+
+        var corrections = new List<GrammarCorrection>();
+
+        foreach (var textCorrection in textCorrections.Where(ErrorCodeFIlter))
         {
-            return checkTextResponse.ErrorCode switch
-            {
-                YandexSpellerErrorCodes.RepeatWord => "Repeated word.",
-                YandexSpellerErrorCodes.Capitalization => "Incorrect use of uppercase and lowercase letters.",
-                _ => GetDefaultErrorMessage(),
-            };
+            if (IsWhiteListWord(textCorrection.Word))
+                continue;
 
-            string GetDefaultErrorMessage()
+            corrections.Add(new()
             {
-                if (checkTextResponse.Word.Split(' ').Length > 1)
-                    return $"Possible mistake found.";
-
-                return $"The word \"{checkTextResponse.Word}\" doesn't exist or isn't in the dictionary.";
-            }
+                WrongWord = textCorrection.Word,
+                PossibleReplacements = textCorrection.Replacements,
+                Message = GetErrorMessage(textCorrection)
+            });
         }
 
-        private bool ErrorCodeFIlter(CheckTextResponse response)
+        return new(corrections);
+    }
+
+    private static string GetErrorMessage(CheckTextResponse checkTextResponse)
+    {
+        return checkTextResponse.ErrorCode switch
         {
-            if (SelectedStrictnessLevel == CorrectionStrictnessLevels.Intolerant)
-                return true;
+            YandexSpellerErrorCodes.RepeatWord => "Repeated word.",
+            YandexSpellerErrorCodes.Capitalization => "Incorrect use of uppercase and lowercase letters.",
+            _ => GetDefaultErrorMessage(),
+        };
 
-            return response.ErrorCode == YandexSpellerErrorCodes.UnknownWord;
+        string GetDefaultErrorMessage()
+        {
+            if (checkTextResponse.Word.Split(' ').Length > 1)
+                return $"Possible mistake found.";
+
+            return $"The word \"{checkTextResponse.Word}\" doesn't exist or isn't in the dictionary.";
         }
+    }
+
+    private bool ErrorCodeFIlter(CheckTextResponse response)
+    {
+        if (SelectedStrictnessLevel == CorrectionStrictnessLevels.Intolerant)
+            return true;
+
+        return response.ErrorCode == YandexSpellerErrorCodes.UnknownWord;
     }
 }

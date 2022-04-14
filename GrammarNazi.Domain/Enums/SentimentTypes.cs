@@ -1,9 +1,8 @@
-﻿namespace GrammarNazi.Domain.Enums
+﻿namespace GrammarNazi.Domain.Enums;
+
+public enum SentimentTypes
 {
-    public enum SentimentTypes
-    {
-        Neutral,
-        Negative,
-        Positive
-    }
+    Neutral,
+    Negative,
+    Positive
 }

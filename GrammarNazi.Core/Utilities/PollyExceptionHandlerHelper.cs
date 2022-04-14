@@ -5,28 +5,27 @@ using System;
 using System.Threading;
 using System.Threading.Tasks;
 
-namespace GrammarNazi.Core.Utilities
+namespace GrammarNazi.Core.Utilities;
+
+public static class PollyExceptionHandlerHelper
 {
-    public static class PollyExceptionHandlerHelper
+    public static async Task HandleExceptionAndRetry<T>(Task action, ILogger logger, CancellationToken cancellationToken, int numberOfTimes = 3)
+        where T : Exception
     {
-        public static async Task HandleExceptionAndRetry<T>(Task action, ILogger logger, CancellationToken cancellationToken, int numberOfTimes = 3)
-            where T : Exception
+        var handler = Policy.Handle<T>()
+        .WaitAndRetryAsync(numberOfTimes, retryCount =>
         {
-            var handler = Policy.Handle<T>()
-            .WaitAndRetryAsync(numberOfTimes, retryCount =>
-            {
-                var timeToWait = TimeSpan.FromSeconds(15);
-                logger.LogWarning($"{typeof(T).Name} captured: Retry #{retryCount}. Waiting 15 seconds.");
+            var timeToWait = TimeSpan.FromSeconds(15);
+            logger.LogWarning($"{typeof(T).Name} captured: Retry #{retryCount}. Waiting 15 seconds.");
 
-                return timeToWait;
-            });
+            return timeToWait;
+        });
 
-            var result = await handler.ExecuteAndCaptureAsync(_ => action, cancellationToken);
+        var result = await handler.ExecuteAndCaptureAsync(_ => action, cancellationToken);
 
-            if (result.Outcome == OutcomeType.Failure)
-            {
-                throw new TaskFailedException(result.FinalException.Message, result.FinalException);
-            }
+        if (result.Outcome == OutcomeType.Failure)
+        {
+            throw new TaskFailedException(result.FinalException.Message, result.FinalException);
         }
     }
 }

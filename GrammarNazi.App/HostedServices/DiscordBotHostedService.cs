@@ -21,185 +21,184 @@ using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 
-namespace GrammarNazi.App.HostedServices
+namespace GrammarNazi.App.HostedServices;
+
+public class DiscordBotHostedService : BackgroundService
 {
-    public class DiscordBotHostedService : BackgroundService
+    private readonly BaseSocketClient _client;
+    private readonly DiscordSettings _discordSettings;
+    private readonly ILogger<DiscordBotHostedService> _logger;
+    private readonly IGithubService _githubService;
+    private readonly IServiceScopeFactory _serviceScopeFactory;
+
+    public DiscordBotHostedService(BaseSocketClient baseSocketClient,
+        IOptions<DiscordSettings> options,
+        IGithubService githubService,
+        ILogger<DiscordBotHostedService> logger,
+        IServiceScopeFactory serviceScopeFactory)
     {
-        private readonly BaseSocketClient _client;
-        private readonly DiscordSettings _discordSettings;
-        private readonly ILogger<DiscordBotHostedService> _logger;
-        private readonly IGithubService _githubService;
-        private readonly IServiceScopeFactory _serviceScopeFactory;
+        _client = baseSocketClient;
+        _discordSettings = options.Value;
+        _logger = logger;
+        _githubService = githubService;
+        _serviceScopeFactory = serviceScopeFactory;
+    }
 
-        public DiscordBotHostedService(BaseSocketClient baseSocketClient,
-            IOptions<DiscordSettings> options,
-            IGithubService githubService,
-            ILogger<DiscordBotHostedService> logger,
-            IServiceScopeFactory serviceScopeFactory)
+    protected override async Task ExecuteAsync(CancellationToken stoppingToken)
+    {
+        _logger.LogInformation("Discord Bot Hosted Service started");
+
+        await _client.LoginAsync(TokenType.Bot, _discordSettings.Token);
+
+        await _client.StartAsync();
+
+        _client.MessageReceived += (eventArgs) =>
         {
-            _client = baseSocketClient;
-            _discordSettings = options.Value;
-            _logger = logger;
-            _githubService = githubService;
-            _serviceScopeFactory = serviceScopeFactory;
+            // fire and forget
+            _ = Task.Run(async () =>
+        {
+            try
+            {
+                await PollyExceptionHandlerHelper.HandleExceptionAndRetry<SqlException>(OnMessageReceived(eventArgs), _logger, stoppingToken);
+            }
+            catch (HttpException ex) when (ex.Message.ContainsAny("50013", "50001", "Forbidden", "160002") || ex.HttpCode == HttpStatusCode.BadRequest)
+            {
+                _logger.LogWarning(ex, ex.Message);
+            }
+            catch (SqlException ex) when (ex.Message.Contains("SHUTDOWN"))
+            {
+                _logger.LogWarning(ex, "Sql Server shutdown in progress");
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, ex.Message);
+
+                await _githubService.CreateBugIssue($"Application Exception: {ex.Message}", ex, GithubIssueLabels.Discord);
+            }
+        });
+
+            return Task.CompletedTask;
+        };
+
+        // Keep hosted service alive while receiving messages
+        await Task.Delay(Timeout.Infinite, stoppingToken);
+    }
+
+    private async Task OnMessageReceived(SocketMessage socketMessage)
+    {
+        if (socketMessage is not SocketUserMessage message || message.Author.IsBot || message.Author.IsWebhook)
+            return;
+
+        using var scope = _serviceScopeFactory.CreateScope();
+        var serviceProvider = scope.ServiceProvider;
+
+        _logger.LogInformation($"Message received from channel id: {message.Channel.Id}");
+
+        var channelConfig = await GetChatConfiguration(message, serviceProvider);
+
+        // Text is a command
+        if (message.Content.StartsWith(DiscordBotCommands.Prefix))
+        {
+            var commandHandler = serviceProvider.GetService<IDiscordCommandHandlerService>();
+            await commandHandler.HandleCommand(message);
+            return;
         }
 
-        protected override async Task ExecuteAsync(CancellationToken stoppingToken)
+        if (channelConfig.IsBotStopped)
+            return;
+
+        var grammarService = GetConfiguredGrammarService(channelConfig, serviceProvider);
+
+        var text = GetCleannedText(message.Content);
+
+        var corretionResult = await grammarService.GetCorrections(text);
+
+        if (!corretionResult.HasCorrections)
+            return;
+
+        await message.Channel.TriggerTypingAsync();
+
+        var messageBuilder = new StringBuilder();
+
+        foreach (var correction in corretionResult.Corrections)
         {
-            _logger.LogInformation("Discord Bot Hosted Service started");
+            var correctionDetailMessage = !channelConfig.HideCorrectionDetails && !string.IsNullOrEmpty(correction.Message)
+                ? $"[{correction.Message}]"
+                : string.Empty;
 
-            await _client.LoginAsync(TokenType.Bot, _discordSettings.Token);
-
-            await _client.StartAsync();
-
-            _client.MessageReceived += (eventArgs) =>
-            {
-                // fire and forget
-                _ = Task.Run(async () =>
-                {
-                    try
-                    {
-                        await PollyExceptionHandlerHelper.HandleExceptionAndRetry<SqlException>(OnMessageReceived(eventArgs), _logger, stoppingToken);
-                    }
-                    catch (HttpException ex) when (ex.Message.ContainsAny("50013", "50001", "Forbidden", "160002") || ex.HttpCode == HttpStatusCode.BadRequest)
-                    {
-                        _logger.LogWarning(ex, ex.Message);
-                    }
-                    catch (SqlException ex) when (ex.Message.Contains("SHUTDOWN"))
-                    {
-                        _logger.LogWarning(ex, "Sql Server shutdown in progress");
-                    }
-                    catch (Exception ex)
-                    {
-                        _logger.LogError(ex, ex.Message);
-
-                        await _githubService.CreateBugIssue($"Application Exception: {ex.Message}", ex, GithubIssueLabels.Discord);
-                    }
-                });
-
-                return Task.CompletedTask;
-            };
-
-            // Keep hosted service alive while receiving messages
-            await Task.Delay(Timeout.Infinite, stoppingToken);
+            messageBuilder.AppendLine($"*{correction.PossibleReplacements.First()} {correctionDetailMessage}");
         }
 
-        private async Task OnMessageReceived(SocketMessage socketMessage)
+        var replyMessage = messageBuilder.ToString();
+
+        if (replyMessage.Length >= Defaults.DiscordTextMaxLength) // Split the reply in various messages
         {
-            if (socketMessage is not SocketUserMessage message || message.Author.IsBot || message.Author.IsWebhook)
-                return;
+            var replyMessages = replyMessage.SplitInParts(Defaults.DiscordTextMaxLength);
 
-            using var scope = _serviceScopeFactory.CreateScope();
-            var serviceProvider = scope.ServiceProvider;
+            var replyMessageId = message.Id;
 
-            _logger.LogInformation($"Message received from channel id: {message.Channel.Id}");
-
-            var channelConfig = await GetChatConfiguration(message, serviceProvider);
-
-            // Text is a command
-            if (message.Content.StartsWith(DiscordBotCommands.Prefix))
+            foreach (var reply in replyMessages)
             {
-                var commandHandler = serviceProvider.GetService<IDiscordCommandHandlerService>();
-                await commandHandler.HandleCommand(message);
-                return;
+                var result = await message.Channel.SendMessageAsync(reply, messageReference: new MessageReference(replyMessageId));
+                replyMessageId = result.Id;
             }
 
-            if (channelConfig.IsBotStopped)
-                return;
-
-            var grammarService = GetConfiguredGrammarService(channelConfig, serviceProvider);
-
-            var text = GetCleannedText(message.Content);
-
-            var corretionResult = await grammarService.GetCorrections(text);
-
-            if (!corretionResult.HasCorrections)
-                return;
-
-            await message.Channel.TriggerTypingAsync();
-
-            var messageBuilder = new StringBuilder();
-
-            foreach (var correction in corretionResult.Corrections)
-            {
-                var correctionDetailMessage = !channelConfig.HideCorrectionDetails && !string.IsNullOrEmpty(correction.Message)
-                    ? $"[{correction.Message}]"
-                    : string.Empty;
-
-                messageBuilder.AppendLine($"*{correction.PossibleReplacements.First()} {correctionDetailMessage}");
-            }
-
-            var replyMessage = messageBuilder.ToString();
-
-            if (replyMessage.Length >= Defaults.DiscordTextMaxLength) // Split the reply in various messages
-            {
-                var replyMessages = replyMessage.SplitInParts(Defaults.DiscordTextMaxLength);
-
-                var replyMessageId = message.Id;
-
-                foreach (var reply in replyMessages)
-                {
-                    var result = await message.Channel.SendMessageAsync(reply, messageReference: new MessageReference(replyMessageId));
-                    replyMessageId = result.Id;
-                }
-
-                return;
-            }
-
-            await message.Channel.SendMessageAsync(replyMessage, messageReference: new MessageReference(message.Id));
+            return;
         }
 
-        private IGrammarService GetConfiguredGrammarService(DiscordChannelConfig channelConfig, IServiceProvider serviceProvider)
+        await message.Channel.SendMessageAsync(replyMessage, messageReference: new MessageReference(message.Id));
+    }
+
+    private IGrammarService GetConfiguredGrammarService(DiscordChannelConfig channelConfig, IServiceProvider serviceProvider)
+    {
+        var grammarServices = serviceProvider.GetService<IEnumerable<IGrammarService>>();
+
+        var grammarService = grammarServices.First(v => v.GrammarAlgorith == channelConfig.GrammarAlgorithm);
+        grammarService.SetSelectedLanguage(channelConfig.SelectedLanguage);
+        grammarService.SetStrictnessLevel(channelConfig.CorrectionStrictnessLevel);
+        grammarService.SetWhiteListWords(channelConfig.WhiteListWords);
+
+        return grammarService;
+    }
+
+    private static string GetCleannedText(string text)
+    {
+        return StringUtils.MarkDownToPlainText(StringUtils.RemoveCodeBlocks(text));
+    }
+
+    private async Task<DiscordChannelConfig> GetChatConfiguration(SocketUserMessage message, IServiceProvider serviceProvider)
+    {
+        var channelConfigService = serviceProvider.GetService<IDiscordChannelConfigService>();
+
+        var channelConfig = await channelConfigService.GetConfigurationByChannelId(message.Channel.Id);
+
+        if (channelConfig != null)
+            return channelConfig;
+
+        var messageBuilder = new StringBuilder();
+        messageBuilder.AppendLine("Hi, I'm GrammarNazi.");
+        messageBuilder.AppendLine("I'm currently working and correcting all spelling errors in this channel.");
+        messageBuilder.AppendLine($"Type `{DiscordBotCommands.Help}` to get useful commands.");
+
+        ulong guild = message.Channel switch
         {
-            var grammarServices = serviceProvider.GetService<IEnumerable<IGrammarService>>();
+            SocketDMChannel dmChannel => dmChannel.Id,
+            SocketGuildChannel guildChannel => guildChannel.Guild.Id,
+            _ => default
+        };
 
-            var grammarService = grammarServices.First(v => v.GrammarAlgorith == channelConfig.GrammarAlgorithm);
-            grammarService.SetSelectedLanguage(channelConfig.SelectedLanguage);
-            grammarService.SetStrictnessLevel(channelConfig.CorrectionStrictnessLevel);
-            grammarService.SetWhiteListWords(channelConfig.WhiteListWords);
-
-            return grammarService;
-        }
-
-        private static string GetCleannedText(string text)
+        var channelConfiguration = new DiscordChannelConfig
         {
-            return StringUtils.MarkDownToPlainText(StringUtils.RemoveCodeBlocks(text));
-        }
+            ChannelId = message.Channel.Id,
+            GrammarAlgorithm = Defaults.DefaultAlgorithm,
+            Guild = guild,
+            SelectedLanguage = SupportedLanguages.Auto
+        };
 
-        private async Task<DiscordChannelConfig> GetChatConfiguration(SocketUserMessage message, IServiceProvider serviceProvider)
-        {
-            var channelConfigService = serviceProvider.GetService<IDiscordChannelConfigService>();
+        await channelConfigService.AddConfiguration(channelConfiguration);
 
-            var channelConfig = await channelConfigService.GetConfigurationByChannelId(message.Channel.Id);
+        await message.Channel.SendMessageAsync(messageBuilder.ToString());
 
-            if (channelConfig != null)
-                return channelConfig;
-
-            var messageBuilder = new StringBuilder();
-            messageBuilder.AppendLine("Hi, I'm GrammarNazi.");
-            messageBuilder.AppendLine("I'm currently working and correcting all spelling errors in this channel.");
-            messageBuilder.AppendLine($"Type `{DiscordBotCommands.Help}` to get useful commands.");
-
-            ulong guild = message.Channel switch
-            {
-                SocketDMChannel dmChannel => dmChannel.Id,
-                SocketGuildChannel guildChannel => guildChannel.Guild.Id,
-                _ => default
-            };
-
-            var channelConfiguration = new DiscordChannelConfig
-            {
-                ChannelId = message.Channel.Id,
-                GrammarAlgorithm = Defaults.DefaultAlgorithm,
-                Guild = guild,
-                SelectedLanguage = SupportedLanguages.Auto
-            };
-
-            await channelConfigService.AddConfiguration(channelConfiguration);
-
-            await message.Channel.SendMessageAsync(messageBuilder.ToString());
-
-            return channelConfiguration;
-        }
+        return channelConfiguration;
     }
 }

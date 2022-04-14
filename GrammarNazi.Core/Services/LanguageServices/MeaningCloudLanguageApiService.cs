@@ -4,37 +4,36 @@ using GrammarNazi.Domain.Entities;
 using GrammarNazi.Domain.Services;
 using System.Linq;
 
-namespace GrammarNazi.Core.Services
+namespace GrammarNazi.Core.Services;
+
+public class MeaningCloudLanguageApiService : ILanguageService
 {
-    public class MeaningCloudLanguageApiService : ILanguageService
+    private readonly IMeganingCloudLangApiClient _meganingLanguageIdentificationApi;
+
+    public MeaningCloudLanguageApiService(IMeganingCloudLangApiClient meganingLanguageIdentificationApi)
     {
-        private readonly IMeganingCloudLangApiClient _meganingLanguageIdentificationApi;
+        _meganingLanguageIdentificationApi = meganingLanguageIdentificationApi;
+    }
 
-        public MeaningCloudLanguageApiService(IMeganingCloudLangApiClient meganingLanguageIdentificationApi)
+    public LanguageInformation IdentifyLanguage(string text)
+    {
+        //TODO: Make ILanguageService.IdentifyLanguage async
+        var languageResult = _meganingLanguageIdentificationApi.GetLanguage(text).GetAwaiter().GetResult();
+
+        if (languageResult.Status.RemainingCredits == 0 || !languageResult.LanguageList.Any())
+            return default;
+
+        var languages = languageResult.LanguageList.Where(v => LanguageUtils.GetSupportedLanguages().Contains(v.Iso6393));
+
+        if (!languages.Any())
+            return default;
+
+        var language = languages.First();
+
+        return new()
         {
-            _meganingLanguageIdentificationApi = meganingLanguageIdentificationApi;
-        }
-
-        public LanguageInformation IdentifyLanguage(string text)
-        {
-            //TODO: Make ILanguageService.IdentifyLanguage async
-            var languageResult = _meganingLanguageIdentificationApi.GetLanguage(text).GetAwaiter().GetResult();
-
-            if (languageResult.Status.RemainingCredits == 0 || !languageResult.LanguageList.Any())
-                return default;
-
-            var languages = languageResult.LanguageList.Where(v => LanguageUtils.GetSupportedLanguages().Contains(v.Iso6393));
-
-            if (!languages.Any())
-                return default;
-
-            var language = languages.First();
-
-            return new()
-            {
-                ThreeLetterISOLanguageName = language.Iso6393,
-                TwoLetterISOLanguageName = language.Iso6392
-            };
-        }
+            ThreeLetterISOLanguageName = language.Iso6393,
+            TwoLetterISOLanguageName = language.Iso6392
+        };
     }
 }

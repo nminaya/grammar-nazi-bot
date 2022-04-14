@@ -1,10 +1,9 @@
 ﻿using GrammarNazi.Domain.Entities;
 using System.Threading.Tasks;
 
-namespace GrammarNazi.Domain.Services
+namespace GrammarNazi.Domain.Services;
+
+public interface ISentimentAnalysisService
 {
-    public interface ISentimentAnalysisService
-    {
-        Task<SentimentAnalysisResult> GetSentimentAnalysis(string text);
-    }
+    Task<SentimentAnalysisResult> GetSentimentAnalysis(string text);
 }

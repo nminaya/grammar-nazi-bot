@@ -6,40 +6,39 @@ using GrammarNazi.Domain.Utilities;
 using System.Threading.Tasks;
 using Telegram.Bot.Types;
 
-namespace GrammarNazi.Core.BotCommands.Telegram
+namespace GrammarNazi.Core.BotCommands.Telegram;
+
+public class IntolerantCommand : BaseTelegramCommand, ITelegramBotCommand
 {
-    public class IntolerantCommand : BaseTelegramCommand, ITelegramBotCommand
+    private readonly IChatConfigurationService _chatConfigurationService;
+
+    public string Command => TelegramBotCommands.Intolerant;
+
+    public IntolerantCommand(IChatConfigurationService chatConfigurationService,
+        ITelegramBotClientWrapper telegramBotClient)
+        : base(telegramBotClient)
     {
-        private readonly IChatConfigurationService _chatConfigurationService;
+        _chatConfigurationService = chatConfigurationService;
+    }
 
-        public string Command => TelegramBotCommands.Intolerant;
+    public async Task Handle(Message message)
+    {
+        await SendTypingNotification(message);
 
-        public IntolerantCommand(IChatConfigurationService chatConfigurationService,
-            ITelegramBotClientWrapper telegramBotClient)
-            : base(telegramBotClient)
+        if (!await IsUserAdmin(message))
         {
-            _chatConfigurationService = chatConfigurationService;
+            await Client.SendTextMessageAsync(message.Chat.Id, "Only admins can use this command.", replyToMessageId: message.MessageId);
+            return;
         }
 
-        public async Task Handle(Message message)
-        {
-            await SendTypingNotification(message);
+        var chatConfig = await _chatConfigurationService.GetConfigurationByChatId(message.Chat.Id);
 
-            if (!await IsUserAdmin(message))
-            {
-                await Client.SendTextMessageAsync(message.Chat.Id, "Only admins can use this command.", replyToMessageId: message.MessageId);
-                return;
-            }
+        chatConfig.CorrectionStrictnessLevel = CorrectionStrictnessLevels.Intolerant;
 
-            var chatConfig = await _chatConfigurationService.GetConfigurationByChatId(message.Chat.Id);
+        await _chatConfigurationService.Update(chatConfig);
 
-            chatConfig.CorrectionStrictnessLevel = CorrectionStrictnessLevels.Intolerant;
+        await Client.SendTextMessageAsync(message.Chat.Id, "Intolerant ✅");
 
-            await _chatConfigurationService.Update(chatConfig);
-
-            await Client.SendTextMessageAsync(message.Chat.Id, "Intolerant ✅");
-
-            await NotifyIfBotIsNotAdmin(message);
-        }
+        await NotifyIfBotIsNotAdmin(message);
     }
 }

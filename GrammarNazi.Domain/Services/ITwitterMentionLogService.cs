@@ -1,11 +1,10 @@
 ﻿using System.Threading.Tasks;
 
-namespace GrammarNazi.Domain.Services
-{
-    public interface ITwitterMentionLogService
-    {
-        Task<long> GetLastTweetId();
+namespace GrammarNazi.Domain.Services;
 
-        Task LogTweet(long tweetId, long replyTweetId);
-    }
+public interface ITwitterMentionLogService
+{
+    Task<long> GetLastTweetId();
+
+    Task LogTweet(long tweetId, long replyTweetId);
 }

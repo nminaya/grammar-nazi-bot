@@ -7,45 +7,44 @@ using System.Text;
 using System.Threading.Tasks;
 using Telegram.Bot.Types;
 
-namespace GrammarNazi.Core.BotCommands.Telegram
+namespace GrammarNazi.Core.BotCommands.Telegram;
+
+public class WhiteListCommand : BaseTelegramCommand, ITelegramBotCommand
 {
-    public class WhiteListCommand : BaseTelegramCommand, ITelegramBotCommand
+    private readonly IChatConfigurationService _chatConfigurationService;
+
+    public string Command => TelegramBotCommands.WhiteList;
+
+    public WhiteListCommand(IChatConfigurationService chatConfigurationService,
+        ITelegramBotClientWrapper telegramBotClient)
+        : base(telegramBotClient)
     {
-        private readonly IChatConfigurationService _chatConfigurationService;
+        _chatConfigurationService = chatConfigurationService;
+    }
 
-        public string Command => TelegramBotCommands.WhiteList;
+    public async Task Handle(Message message)
+    {
+        await SendTypingNotification(message);
 
-        public WhiteListCommand(IChatConfigurationService chatConfigurationService,
-            ITelegramBotClientWrapper telegramBotClient)
-            : base(telegramBotClient)
+        var chatConfig = await _chatConfigurationService.GetConfigurationByChatId(message.Chat.Id);
+
+        if (chatConfig.WhiteListWords?.Any() == true)
         {
-            _chatConfigurationService = chatConfigurationService;
-        }
+            var messageBuilder = new StringBuilder();
+            messageBuilder.AppendLine("Whitelist Words:\n");
 
-        public async Task Handle(Message message)
-        {
-            await SendTypingNotification(message);
-
-            var chatConfig = await _chatConfigurationService.GetConfigurationByChatId(message.Chat.Id);
-
-            if (chatConfig.WhiteListWords?.Any() == true)
+            foreach (var word in chatConfig.WhiteListWords)
             {
-                var messageBuilder = new StringBuilder();
-                messageBuilder.AppendLine("Whitelist Words:\n");
-
-                foreach (var word in chatConfig.WhiteListWords)
-                {
-                    messageBuilder.AppendLine($"- {word}");
-                }
-
-                await Client.SendTextMessageAsync(message.Chat.Id, messageBuilder.ToString());
-
-                return;
+                messageBuilder.AppendLine($"- {word}");
             }
 
-            await Client.SendTextMessageAsync(message.Chat.Id, $"You don't have Whitelist words configured. Use {TelegramBotCommands.AddWhiteList} to add words to the WhiteList.");
+            await Client.SendTextMessageAsync(message.Chat.Id, messageBuilder.ToString());
 
-            await NotifyIfBotIsNotAdmin(message);
+            return;
         }
+
+        await Client.SendTextMessageAsync(message.Chat.Id, $"You don't have Whitelist words configured. Use {TelegramBotCommands.AddWhiteList} to add words to the WhiteList.");
+
+        await NotifyIfBotIsNotAdmin(message);
     }
 }

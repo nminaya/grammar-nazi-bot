@@ -2,10 +2,9 @@
 using System;
 using System.Threading.Tasks;
 
-namespace GrammarNazi.Domain.Services
+namespace GrammarNazi.Domain.Services;
+
+public interface IGithubService
 {
-    public interface IGithubService
-    {
-        Task CreateBugIssue(string title, Exception exception, GithubIssueLabels githubIssueSection);
-    }
+    Task CreateBugIssue(string title, Exception exception, GithubIssueLabels githubIssueSection);
 }

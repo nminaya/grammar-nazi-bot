@@ -5,40 +5,39 @@ using GrammarNazi.Domain.Utilities;
 using System.Threading.Tasks;
 using Telegram.Bot.Types;
 
-namespace GrammarNazi.Core.BotCommands.Telegram
+namespace GrammarNazi.Core.BotCommands.Telegram;
+
+public class HideDetailsCommand : BaseTelegramCommand, ITelegramBotCommand
 {
-    public class HideDetailsCommand : BaseTelegramCommand, ITelegramBotCommand
+    private readonly IChatConfigurationService _chatConfigurationService;
+
+    public string Command => TelegramBotCommands.HideDetails;
+
+    public HideDetailsCommand(IChatConfigurationService chatConfigurationService,
+        ITelegramBotClientWrapper telegramBotClient)
+        : base(telegramBotClient)
     {
-        private readonly IChatConfigurationService _chatConfigurationService;
+        _chatConfigurationService = chatConfigurationService;
+    }
 
-        public string Command => TelegramBotCommands.HideDetails;
+    public async Task Handle(Message message)
+    {
+        await SendTypingNotification(message);
 
-        public HideDetailsCommand(IChatConfigurationService chatConfigurationService,
-            ITelegramBotClientWrapper telegramBotClient)
-            : base(telegramBotClient)
+        if (!await IsUserAdmin(message))
         {
-            _chatConfigurationService = chatConfigurationService;
+            await Client.SendTextMessageAsync(message.Chat.Id, "Only admins can use this command.", replyToMessageId: message.MessageId);
+            return;
         }
 
-        public async Task Handle(Message message)
-        {
-            await SendTypingNotification(message);
+        var chatConfig = await _chatConfigurationService.GetConfigurationByChatId(message.Chat.Id);
 
-            if (!await IsUserAdmin(message))
-            {
-                await Client.SendTextMessageAsync(message.Chat.Id, "Only admins can use this command.", replyToMessageId: message.MessageId);
-                return;
-            }
+        chatConfig.HideCorrectionDetails = true;
 
-            var chatConfig = await _chatConfigurationService.GetConfigurationByChatId(message.Chat.Id);
+        await _chatConfigurationService.Update(chatConfig);
 
-            chatConfig.HideCorrectionDetails = true;
+        await Client.SendTextMessageAsync(message.Chat.Id, "Correction details hidden ✅");
 
-            await _chatConfigurationService.Update(chatConfig);
-
-            await Client.SendTextMessageAsync(message.Chat.Id, "Correction details hidden ✅");
-
-            await NotifyIfBotIsNotAdmin(message);
-        }
+        await NotifyIfBotIsNotAdmin(message);
     }
 }

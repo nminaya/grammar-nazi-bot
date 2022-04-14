@@ -1,9 +1,8 @@
-﻿namespace GrammarNazi.Domain.Services
-{
-    public interface IStringDiffService
-    {
-        int ComputeDistance(string a, string b);
+﻿namespace GrammarNazi.Domain.Services;
 
-        bool IsInComparableRange(string a, string b);
-    }
+public interface IStringDiffService
+{
+    int ComputeDistance(string a, string b);
+
+    bool IsInComparableRange(string a, string b);
 }

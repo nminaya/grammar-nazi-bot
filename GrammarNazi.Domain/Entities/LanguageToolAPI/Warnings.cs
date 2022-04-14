@@ -1,10 +1,9 @@
 ﻿using Newtonsoft.Json;
 
-namespace GrammarNazi.Domain.Entities.LanguageToolAPI
+namespace GrammarNazi.Domain.Entities.LanguageToolAPI;
+
+public class Warnings
 {
-    public class Warnings
-    {
-        [JsonProperty("incompleteResults")]
-        public bool IncompleteResults { get; set; }
-    }
+    [JsonProperty("incompleteResults")]
+    public bool IncompleteResults { get; set; }
 }

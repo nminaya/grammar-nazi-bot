@@ -1,16 +1,15 @@
 ﻿using GrammarNazi.Domain.Entities;
 using System.Threading.Tasks;
 
-namespace GrammarNazi.Domain.Services
+namespace GrammarNazi.Domain.Services;
+
+public interface IDiscordChannelConfigService
 {
-    public interface IDiscordChannelConfigService
-    {
-        Task AddConfiguration(DiscordChannelConfig channelConfig);
+    Task AddConfiguration(DiscordChannelConfig channelConfig);
 
-        Task Delete(DiscordChannelConfig channelConfig);
+    Task Delete(DiscordChannelConfig channelConfig);
 
-        Task Update(DiscordChannelConfig channelConfig);
+    Task Update(DiscordChannelConfig channelConfig);
 
-        Task<DiscordChannelConfig> GetConfigurationByChannelId(ulong channelId);
-    }
+    Task<DiscordChannelConfig> GetConfigurationByChannelId(ulong channelId);
 }

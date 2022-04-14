@@ -7,57 +7,56 @@ using GrammarNazi.Domain.Services;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace GrammarNazi.Core.BotCommands.Discord
+namespace GrammarNazi.Core.BotCommands.Discord;
+
+public class LanguageCommand : BaseDiscordCommand, IDiscordBotCommand
 {
-    public class LanguageCommand : BaseDiscordCommand, IDiscordBotCommand
+    private readonly IDiscordChannelConfigService _channelConfigService;
+
+    public string Command => DiscordBotCommands.Language;
+
+    public LanguageCommand(IDiscordChannelConfigService discordChannelConfigService)
     {
-        private readonly IDiscordChannelConfigService _channelConfigService;
+        _channelConfigService = discordChannelConfigService;
+    }
 
-        public string Command => DiscordBotCommands.Language;
+    public async Task Handle(IMessage message)
+    {
+        var messageBuilder = new StringBuilder();
 
-        public LanguageCommand(IDiscordChannelConfigService discordChannelConfigService)
+        if (!IsUserAdmin(message))
         {
-            _channelConfigService = discordChannelConfigService;
+            messageBuilder.AppendLine("Only admins can use this command.");
+            await message.Channel.SendMessageAsync(messageBuilder.ToString(), messageReference: new MessageReference(message.Id));
+            return;
         }
 
-        public async Task Handle(IMessage message)
+        var parameters = message.Content.Split(" ");
+
+        if (parameters.Length == 1)
         {
-            var messageBuilder = new StringBuilder();
+            var channelConfig = await _channelConfigService.GetConfigurationByChannelId(message.Channel.Id);
 
-            if (!IsUserAdmin(message))
-            {
-                messageBuilder.AppendLine("Only admins can use this command.");
-                await message.Channel.SendMessageAsync(messageBuilder.ToString(), messageReference: new MessageReference(message.Id));
-                return;
-            }
-
-            var parameters = message.Content.Split(" ");
-
-            if (parameters.Length == 1)
-            {
-                var channelConfig = await _channelConfigService.GetConfigurationByChannelId(message.Channel.Id);
-
-                messageBuilder.AppendLine($"Parameter not received. Type `{DiscordBotCommands.Language}` <language_number> to set a language.").AppendLine();
-                messageBuilder.AppendLine("Languages:");
-                messageBuilder.AppendLine(GetAvailableOptions(channelConfig.SelectedLanguage));
-                await SendMessage(message, messageBuilder.ToString(), DiscordBotCommands.Language);
-                return;
-            }
-
-            bool parsedOk = int.TryParse(parameters[1], out int language);
-
-            if (parsedOk && language.IsAssignableToEnum<SupportedLanguages>())
-            {
-                var channelConfig = await _channelConfigService.GetConfigurationByChannelId(message.Channel.Id);
-                channelConfig.SelectedLanguage = (SupportedLanguages)language;
-
-                await _channelConfigService.Update(channelConfig);
-
-                await SendMessage(message, $"Language updated: {channelConfig.SelectedLanguage.GetDescription()}", DiscordBotCommands.Language);
-                return;
-            }
-
-            await SendMessage(message, $"Invalid parameter. Type `{DiscordBotCommands.Language}` <language_number> to set a language.", DiscordBotCommands.Language);
+            messageBuilder.AppendLine($"Parameter not received. Type `{DiscordBotCommands.Language}` <language_number> to set a language.").AppendLine();
+            messageBuilder.AppendLine("Languages:");
+            messageBuilder.AppendLine(GetAvailableOptions(channelConfig.SelectedLanguage));
+            await SendMessage(message, messageBuilder.ToString(), DiscordBotCommands.Language);
+            return;
         }
+
+        bool parsedOk = int.TryParse(parameters[1], out int language);
+
+        if (parsedOk && language.IsAssignableToEnum<SupportedLanguages>())
+        {
+            var channelConfig = await _channelConfigService.GetConfigurationByChannelId(message.Channel.Id);
+            channelConfig.SelectedLanguage = (SupportedLanguages)language;
+
+            await _channelConfigService.Update(channelConfig);
+
+            await SendMessage(message, $"Language updated: {channelConfig.SelectedLanguage.GetDescription()}", DiscordBotCommands.Language);
+            return;
+        }
+
+        await SendMessage(message, $"Invalid parameter. Type `{DiscordBotCommands.Language}` <language_number> to set a language.", DiscordBotCommands.Language);
     }
 }

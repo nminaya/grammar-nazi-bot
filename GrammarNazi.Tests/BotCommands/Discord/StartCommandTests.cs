@@ -6,106 +6,105 @@ using Moq;
 using System.Threading.Tasks;
 using Xunit;
 
-namespace GrammarNazi.Tests.BotCommands.Discord
+namespace GrammarNazi.Tests.BotCommands.Discord;
+
+public class StartCommandTests
 {
-    public class StartCommandTests
+    [Fact]
+    public async Task BotNotStopped_Should_ReplyBotStartedMessage()
     {
-        [Fact]
-        public async Task BotNotStopped_Should_ReplyBotStartedMessage()
+        // Arrange
+        var channelConfigurationServiceMock = new Mock<IDiscordChannelConfigService>();
+        var command = new StartCommand(channelConfigurationServiceMock.Object);
+        const string replyMessage = "Bot is already started";
+
+        var chatConfig = new DiscordChannelConfig
         {
-            // Arrange
-            var channelConfigurationServiceMock = new Mock<IDiscordChannelConfigService>();
-            var command = new StartCommand(channelConfigurationServiceMock.Object);
-            const string replyMessage = "Bot is already started";
+            IsBotStopped = false
+        };
 
-            var chatConfig = new DiscordChannelConfig
-            {
-                IsBotStopped = false
-            };
+        var channelMock = new Mock<IMessageChannel>();
+        var message = new Mock<IMessage>();
 
-            var channelMock = new Mock<IMessageChannel>();
-            var message = new Mock<IMessage>();
+        message.Setup(v => v.Channel).Returns(channelMock.Object);
 
-            message.Setup(v => v.Channel).Returns(channelMock.Object);
+        channelConfigurationServiceMock.Setup(v => v.GetConfigurationByChannelId(message.Object.Channel.Id))
+            .ReturnsAsync(chatConfig);
 
-            channelConfigurationServiceMock.Setup(v => v.GetConfigurationByChannelId(message.Object.Channel.Id))
-                .ReturnsAsync(chatConfig);
+        // Act
+        await command.Handle(message.Object);
 
-            // Act
-            await command.Handle(message.Object);
+        // Assert
 
-            // Assert
+        // Verify SendMessageAsync was called with the reply message "Bot is already started"
+        channelMock.Verify(v => v.SendMessageAsync(null, false, It.Is<Embed>(e => e.Description.Contains(replyMessage)), null, null, null, null, null, null, MessageFlags.None));
+    }
 
-            // Verify SendMessageAsync was called with the reply message "Bot is already started"
-            channelMock.Verify(v => v.SendMessageAsync(null, false, It.Is<Embed>(e => e.Description.Contains(replyMessage)), null, null, null, null, null, null, MessageFlags.None));
-        }
+    [Fact]
+    public async Task BotStoppedAndUserNotAdmin_Should_ReplyNotAdminMessage()
+    {
+        // Arrange
+        var channelConfigurationServiceMock = new Mock<IDiscordChannelConfigService>();
+        var command = new StartCommand(channelConfigurationServiceMock.Object);
+        const string replyMessage = "Only admins can use this command";
 
-        [Fact]
-        public async Task BotStoppedAndUserNotAdmin_Should_ReplyNotAdminMessage()
+        var chatConfig = new DiscordChannelConfig
         {
-            // Arrange
-            var channelConfigurationServiceMock = new Mock<IDiscordChannelConfigService>();
-            var command = new StartCommand(channelConfigurationServiceMock.Object);
-            const string replyMessage = "Only admins can use this command";
+            IsBotStopped = true
+        };
 
-            var chatConfig = new DiscordChannelConfig
-            {
-                IsBotStopped = true
-            };
+        var channelMock = new Mock<IMessageChannel>();
+        var user = new Mock<IGuildUser>();
+        user.Setup(v => v.GuildPermissions).Returns(GuildPermissions.None);
+        var message = new Mock<IMessage>();
 
-            var channelMock = new Mock<IMessageChannel>();
-            var user = new Mock<IGuildUser>();
-            user.Setup(v => v.GuildPermissions).Returns(GuildPermissions.None);
-            var message = new Mock<IMessage>();
+        message.Setup(v => v.Author).Returns(user.Object);
+        message.Setup(v => v.Channel).Returns(channelMock.Object);
 
-            message.Setup(v => v.Author).Returns(user.Object);
-            message.Setup(v => v.Channel).Returns(channelMock.Object);
+        channelConfigurationServiceMock.Setup(v => v.GetConfigurationByChannelId(message.Object.Channel.Id))
+            .ReturnsAsync(chatConfig);
 
-            channelConfigurationServiceMock.Setup(v => v.GetConfigurationByChannelId(message.Object.Channel.Id))
-                .ReturnsAsync(chatConfig);
+        // Act
+        await command.Handle(message.Object);
 
-            // Act
-            await command.Handle(message.Object);
+        // Assert
 
-            // Assert
+        // Verify SendMessageAsync was called with the reply message "Only admins can use this command"
+        channelMock.Verify(v => v.SendMessageAsync(null, false, It.Is<Embed>(e => e.Description.Contains(replyMessage)), null, null, null, null, null, null, MessageFlags.None));
+        Assert.True(chatConfig.IsBotStopped); // Make sure IsBotStopped is still true
+    }
 
-            // Verify SendMessageAsync was called with the reply message "Only admins can use this command"
-            channelMock.Verify(v => v.SendMessageAsync(null, false, It.Is<Embed>(e => e.Description.Contains(replyMessage)), null, null, null, null, null, null, MessageFlags.None));
-            Assert.True(chatConfig.IsBotStopped); // Make sure IsBotStopped is still true
-        }
+    [Fact]
+    public async Task BotStoppedAndUserAdmin_Should_ChangeChatConfig_And_ReplyMessage()
+    {
+        // Arrange
+        var channelConfigurationServiceMock = new Mock<IDiscordChannelConfigService>();
+        var command = new StartCommand(channelConfigurationServiceMock.Object);
+        const string replyMessage = "Bot started";
 
-        [Fact]
-        public async Task BotStoppedAndUserAdmin_Should_ChangeChatConfig_And_ReplyMessage()
+        var chatConfig = new DiscordChannelConfig
         {
-            // Arrange
-            var channelConfigurationServiceMock = new Mock<IDiscordChannelConfigService>();
-            var command = new StartCommand(channelConfigurationServiceMock.Object);
-            const string replyMessage = "Bot started";
+            IsBotStopped = true
+        };
 
-            var chatConfig = new DiscordChannelConfig
-            {
-                IsBotStopped = true
-            };
+        var channelMock = new Mock<IMessageChannel>();
+        var user = new Mock<IGuildUser>();
+        user.Setup(v => v.GuildPermissions).Returns(GuildPermissions.All);
+        var message = new Mock<IMessage>();
 
-            var channelMock = new Mock<IMessageChannel>();
-            var user = new Mock<IGuildUser>();
-            user.Setup(v => v.GuildPermissions).Returns(GuildPermissions.All);
-            var message = new Mock<IMessage>();
+        message.Setup(v => v.Author).Returns(user.Object);
+        message.Setup(v => v.Channel).Returns(channelMock.Object);
 
-            message.Setup(v => v.Author).Returns(user.Object);
-            message.Setup(v => v.Channel).Returns(channelMock.Object);
+        channelConfigurationServiceMock.Setup(v => v.GetConfigurationByChannelId(message.Object.Channel.Id))
+            .ReturnsAsync(chatConfig);
 
-            channelConfigurationServiceMock.Setup(v => v.GetConfigurationByChannelId(message.Object.Channel.Id))
-                .ReturnsAsync(chatConfig);
+        // Act
+        await command.Handle(message.Object);
 
-            // Act
-            await command.Handle(message.Object);
+        // Assert
 
-            // Assert
-
-            // Verify SendMessageAsync was called with the reply message "Bot started"
-            channelMock.Verify(v => v.SendMessageAsync(null, false, It.Is<Embed>(e => e.Description.Contains(replyMessage)), null, null, null, null, null, null, MessageFlags.None));
-            Assert.False(chatConfig.IsBotStopped);
-        }
+        // Verify SendMessageAsync was called with the reply message "Bot started"
+        channelMock.Verify(v => v.SendMessageAsync(null, false, It.Is<Embed>(e => e.Description.Contains(replyMessage)), null, null, null, null, null, null, MessageFlags.None));
+        Assert.False(chatConfig.IsBotStopped);
     }
 }

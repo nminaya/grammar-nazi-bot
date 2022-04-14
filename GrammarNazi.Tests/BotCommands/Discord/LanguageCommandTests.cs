@@ -8,150 +8,149 @@ using Moq;
 using System.Threading.Tasks;
 using Xunit;
 
-namespace GrammarNazi.Tests.BotCommands.Discord
+namespace GrammarNazi.Tests.BotCommands.Discord;
+
+public class LanguageCommandTests
 {
-    public class LanguageCommandTests
+    [Theory]
+    [InlineData("fad123")]
+    [InlineData("Test")]
+    public async Task ParameterIsNotNumber_Should_ReplyMessage(string parameter)
     {
-        [Theory]
-        [InlineData("fad123")]
-        [InlineData("Test")]
-        public async Task ParameterIsNotNumber_Should_ReplyMessage(string parameter)
+        // Arrange
+        var channelConfigurationServiceMock = new Mock<IDiscordChannelConfigService>();
+        var command = new LanguageCommand(channelConfigurationServiceMock.Object);
+        const string replyMessage = "Invalid parameter";
+
+        var chatConfig = new DiscordChannelConfig
         {
-            // Arrange
-            var channelConfigurationServiceMock = new Mock<IDiscordChannelConfigService>();
-            var command = new LanguageCommand(channelConfigurationServiceMock.Object);
-            const string replyMessage = "Invalid parameter";
+            SelectedLanguage = SupportedLanguages.Auto
+        };
 
-            var chatConfig = new DiscordChannelConfig
-            {
-                SelectedLanguage = SupportedLanguages.Auto
-            };
+        var channelMock = new Mock<IMessageChannel>();
+        var user = new Mock<IGuildUser>();
+        user.Setup(v => v.GuildPermissions).Returns(GuildPermissions.All);
+        var message = new Mock<IMessage>();
+        message.Setup(v => v.Content).Returns($"{DiscordBotCommands.Language} {parameter}");
+        message.Setup(v => v.Author).Returns(user.Object);
+        message.Setup(v => v.Channel).Returns(channelMock.Object);
 
-            var channelMock = new Mock<IMessageChannel>();
-            var user = new Mock<IGuildUser>();
-            user.Setup(v => v.GuildPermissions).Returns(GuildPermissions.All);
-            var message = new Mock<IMessage>();
-            message.Setup(v => v.Content).Returns($"{DiscordBotCommands.Language} {parameter}");
-            message.Setup(v => v.Author).Returns(user.Object);
-            message.Setup(v => v.Channel).Returns(channelMock.Object);
+        channelConfigurationServiceMock.Setup(v => v.GetConfigurationByChannelId(message.Object.Channel.Id))
+            .ReturnsAsync(chatConfig);
 
-            channelConfigurationServiceMock.Setup(v => v.GetConfigurationByChannelId(message.Object.Channel.Id))
-                .ReturnsAsync(chatConfig);
+        // Act
+        await command.Handle(message.Object);
 
-            // Act
-            await command.Handle(message.Object);
+        // Assert
 
-            // Assert
+        // Verify SendMessageAsync was called with the reply message "Invalid parameter"
+        channelMock.Verify(v => v.SendMessageAsync(null, false, It.Is<Embed>(e => e.Description.Contains(replyMessage)), null, null, null, null, null, null, MessageFlags.None));
+        Assert.Equal(SupportedLanguages.Auto, chatConfig.SelectedLanguage); // Make sure SelectedLanguage is still Auto
+    }
 
-            // Verify SendMessageAsync was called with the reply message "Invalid parameter"
-            channelMock.Verify(v => v.SendMessageAsync(null, false, It.Is<Embed>(e => e.Description.Contains(replyMessage)), null, null, null, null, null, null, MessageFlags.None));
-            Assert.Equal(SupportedLanguages.Auto, chatConfig.SelectedLanguage); // Make sure SelectedLanguage is still Auto
-        }
+    [Theory]
+    [InlineData("500")]
+    [InlineData("123456")]
+    public async Task InvalidParameter_Should_ReplyMessage(string parameter)
+    {
+        // Arrange
+        var channelConfigurationServiceMock = new Mock<IDiscordChannelConfigService>();
+        var command = new LanguageCommand(channelConfigurationServiceMock.Object);
+        const string replyMessage = "Invalid parameter";
 
-        [Theory]
-        [InlineData("500")]
-        [InlineData("123456")]
-        public async Task InvalidParameter_Should_ReplyMessage(string parameter)
+        var chatConfig = new DiscordChannelConfig
         {
-            // Arrange
-            var channelConfigurationServiceMock = new Mock<IDiscordChannelConfigService>();
-            var command = new LanguageCommand(channelConfigurationServiceMock.Object);
-            const string replyMessage = "Invalid parameter";
+            SelectedLanguage = SupportedLanguages.Auto
+        };
 
-            var chatConfig = new DiscordChannelConfig
-            {
-                SelectedLanguage = SupportedLanguages.Auto
-            };
+        var channelMock = new Mock<IMessageChannel>();
+        var user = new Mock<IGuildUser>();
+        user.Setup(v => v.GuildPermissions).Returns(GuildPermissions.All);
+        var message = new Mock<IMessage>();
+        message.Setup(v => v.Content).Returns($"{DiscordBotCommands.Language} {parameter}");
+        message.Setup(v => v.Author).Returns(user.Object);
+        message.Setup(v => v.Channel).Returns(channelMock.Object);
 
-            var channelMock = new Mock<IMessageChannel>();
-            var user = new Mock<IGuildUser>();
-            user.Setup(v => v.GuildPermissions).Returns(GuildPermissions.All);
-            var message = new Mock<IMessage>();
-            message.Setup(v => v.Content).Returns($"{DiscordBotCommands.Language} {parameter}");
-            message.Setup(v => v.Author).Returns(user.Object);
-            message.Setup(v => v.Channel).Returns(channelMock.Object);
+        channelConfigurationServiceMock.Setup(v => v.GetConfigurationByChannelId(message.Object.Channel.Id))
+            .ReturnsAsync(chatConfig);
 
-            channelConfigurationServiceMock.Setup(v => v.GetConfigurationByChannelId(message.Object.Channel.Id))
-                .ReturnsAsync(chatConfig);
+        // Act
+        await command.Handle(message.Object);
 
-            // Act
-            await command.Handle(message.Object);
+        // Assert
 
-            // Assert
+        // Verify SendMessageAsync was called with the reply message "Invalid parameter"
+        channelMock.Verify(v => v.SendMessageAsync(null, false, It.Is<Embed>(e => e.Description.Contains(replyMessage)), null, null, null, null, null, null, MessageFlags.None));
+        Assert.Equal(SupportedLanguages.Auto, chatConfig.SelectedLanguage); // Make sure SelectedLanguage is still Auto
+    }
 
-            // Verify SendMessageAsync was called with the reply message "Invalid parameter"
-            channelMock.Verify(v => v.SendMessageAsync(null, false, It.Is<Embed>(e => e.Description.Contains(replyMessage)), null, null, null, null, null, null, MessageFlags.None));
-            Assert.Equal(SupportedLanguages.Auto, chatConfig.SelectedLanguage); // Make sure SelectedLanguage is still Auto
-        }
+    [Fact]
+    public async Task ParameterNotReceived_Should_ReplyMessage()
+    {
+        // Arrange
+        var channelConfigurationServiceMock = new Mock<IDiscordChannelConfigService>();
+        var command = new LanguageCommand(channelConfigurationServiceMock.Object);
+        const string replyMessage = "Parameter not received";
 
-        [Fact]
-        public async Task ParameterNotReceived_Should_ReplyMessage()
+        var chatConfig = new DiscordChannelConfig
         {
-            // Arrange
-            var channelConfigurationServiceMock = new Mock<IDiscordChannelConfigService>();
-            var command = new LanguageCommand(channelConfigurationServiceMock.Object);
-            const string replyMessage = "Parameter not received";
+            SelectedLanguage = SupportedLanguages.Auto
+        };
 
-            var chatConfig = new DiscordChannelConfig
-            {
-                SelectedLanguage = SupportedLanguages.Auto
-            };
+        var channelMock = new Mock<IMessageChannel>();
+        var user = new Mock<IGuildUser>();
+        user.Setup(v => v.GuildPermissions).Returns(GuildPermissions.All);
+        var message = new Mock<IMessage>();
+        message.Setup(v => v.Content).Returns(DiscordBotCommands.Language);
+        message.Setup(v => v.Author).Returns(user.Object);
+        message.Setup(v => v.Channel).Returns(channelMock.Object);
 
-            var channelMock = new Mock<IMessageChannel>();
-            var user = new Mock<IGuildUser>();
-            user.Setup(v => v.GuildPermissions).Returns(GuildPermissions.All);
-            var message = new Mock<IMessage>();
-            message.Setup(v => v.Content).Returns(DiscordBotCommands.Language);
-            message.Setup(v => v.Author).Returns(user.Object);
-            message.Setup(v => v.Channel).Returns(channelMock.Object);
+        channelConfigurationServiceMock.Setup(v => v.GetConfigurationByChannelId(message.Object.Channel.Id))
+            .ReturnsAsync(chatConfig);
 
-            channelConfigurationServiceMock.Setup(v => v.GetConfigurationByChannelId(message.Object.Channel.Id))
-                .ReturnsAsync(chatConfig);
+        // Act
+        await command.Handle(message.Object);
 
-            // Act
-            await command.Handle(message.Object);
+        // Assert
 
-            // Assert
+        // Verify SendMessageAsync was called with the reply message "Parameter not received"
+        channelMock.Verify(v => v.SendMessageAsync(null, false, It.Is<Embed>(e => e.Description.Contains(replyMessage)), null, null, null, null, null, null, MessageFlags.None));
+        Assert.Equal(SupportedLanguages.Auto, chatConfig.SelectedLanguage); // Make sure SelectedLanguage is still Auto
+    }
 
-            // Verify SendMessageAsync was called with the reply message "Parameter not received"
-            channelMock.Verify(v => v.SendMessageAsync(null, false, It.Is<Embed>(e => e.Description.Contains(replyMessage)), null, null, null, null, null, null, MessageFlags.None));
-            Assert.Equal(SupportedLanguages.Auto, chatConfig.SelectedLanguage); // Make sure SelectedLanguage is still Auto
-        }
+    [Theory]
+    [InlineData(SupportedLanguages.English)]
+    [InlineData(SupportedLanguages.Spanish)]
+    public async Task ValidParameter_Should_ChangeChatConfig_And_ReplyMessage(SupportedLanguages languageParameter)
+    {
+        // Arrange
+        var channelConfigurationServiceMock = new Mock<IDiscordChannelConfigService>();
+        var command = new LanguageCommand(channelConfigurationServiceMock.Object);
+        const string replyMessage = "Language updated";
 
-        [Theory]
-        [InlineData(SupportedLanguages.English)]
-        [InlineData(SupportedLanguages.Spanish)]
-        public async Task ValidParameter_Should_ChangeChatConfig_And_ReplyMessage(SupportedLanguages languageParameter)
+        var chatConfig = new DiscordChannelConfig
         {
-            // Arrange
-            var channelConfigurationServiceMock = new Mock<IDiscordChannelConfigService>();
-            var command = new LanguageCommand(channelConfigurationServiceMock.Object);
-            const string replyMessage = "Language updated";
+            SelectedLanguage = SupportedLanguages.Auto
+        };
 
-            var chatConfig = new DiscordChannelConfig
-            {
-                SelectedLanguage = SupportedLanguages.Auto
-            };
+        var channelMock = new Mock<IMessageChannel>();
+        var user = new Mock<IGuildUser>();
+        user.Setup(v => v.GuildPermissions).Returns(GuildPermissions.All);
+        var message = new Mock<IMessage>();
+        message.Setup(v => v.Content).Returns($"{DiscordBotCommands.Language} {(int)languageParameter}");
+        message.Setup(v => v.Author).Returns(user.Object);
+        message.Setup(v => v.Channel).Returns(channelMock.Object);
 
-            var channelMock = new Mock<IMessageChannel>();
-            var user = new Mock<IGuildUser>();
-            user.Setup(v => v.GuildPermissions).Returns(GuildPermissions.All);
-            var message = new Mock<IMessage>();
-            message.Setup(v => v.Content).Returns($"{DiscordBotCommands.Language} {(int)languageParameter}");
-            message.Setup(v => v.Author).Returns(user.Object);
-            message.Setup(v => v.Channel).Returns(channelMock.Object);
+        channelConfigurationServiceMock.Setup(v => v.GetConfigurationByChannelId(message.Object.Channel.Id))
+            .ReturnsAsync(chatConfig);
 
-            channelConfigurationServiceMock.Setup(v => v.GetConfigurationByChannelId(message.Object.Channel.Id))
-                .ReturnsAsync(chatConfig);
+        // Act
+        await command.Handle(message.Object);
 
-            // Act
-            await command.Handle(message.Object);
+        // Assert
 
-            // Assert
-
-            // Verify SendMessageAsync was called with the reply message "Language updated"
-            channelMock.Verify(v => v.SendMessageAsync(null, false, It.Is<Embed>(e => e.Description.Contains(replyMessage)), null, null, null, null, null, null, MessageFlags.None));
-            Assert.Equal(languageParameter, chatConfig.SelectedLanguage);
-        }
+        // Verify SendMessageAsync was called with the reply message "Language updated"
+        channelMock.Verify(v => v.SendMessageAsync(null, false, It.Is<Embed>(e => e.Description.Contains(replyMessage)), null, null, null, null, null, null, MessageFlags.None));
+        Assert.Equal(languageParameter, chatConfig.SelectedLanguage);
     }
 }

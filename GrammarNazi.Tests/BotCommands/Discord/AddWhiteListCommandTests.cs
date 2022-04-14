@@ -7,119 +7,118 @@ using Moq;
 using System.Threading.Tasks;
 using Xunit;
 
-namespace GrammarNazi.Tests.BotCommands.Discord
+namespace GrammarNazi.Tests.BotCommands.Discord;
+
+public class AddWhiteListCommandTests
 {
-    public class AddWhiteListCommandTests
+    [Fact]
+    public async Task NoParameter_Should_ReplyMessage()
     {
-        [Fact]
-        public async Task NoParameter_Should_ReplyMessage()
+        // Arrange
+        var channelConfigurationServiceMock = new Mock<IDiscordChannelConfigService>();
+        var command = new AddWhiteListCommand(channelConfigurationServiceMock.Object);
+        const string replyMessage = "Parameter not received";
+
+        var chatConfig = new DiscordChannelConfig
         {
-            // Arrange
-            var channelConfigurationServiceMock = new Mock<IDiscordChannelConfigService>();
-            var command = new AddWhiteListCommand(channelConfigurationServiceMock.Object);
-            const string replyMessage = "Parameter not received";
+            WhiteListWords = new() { "Word" }
+        };
 
-            var chatConfig = new DiscordChannelConfig
-            {
-                WhiteListWords = new() { "Word" }
-            };
+        var channelMock = new Mock<IMessageChannel>();
+        var user = new Mock<IGuildUser>();
+        user.Setup(v => v.GuildPermissions).Returns(GuildPermissions.All);
+        var message = new Mock<IMessage>();
+        message.Setup(v => v.Content).Returns(DiscordBotCommands.AddWhiteList);
+        message.Setup(v => v.Author).Returns(user.Object);
+        message.Setup(v => v.Channel).Returns(channelMock.Object);
 
-            var channelMock = new Mock<IMessageChannel>();
-            var user = new Mock<IGuildUser>();
-            user.Setup(v => v.GuildPermissions).Returns(GuildPermissions.All);
-            var message = new Mock<IMessage>();
-            message.Setup(v => v.Content).Returns(DiscordBotCommands.AddWhiteList);
-            message.Setup(v => v.Author).Returns(user.Object);
-            message.Setup(v => v.Channel).Returns(channelMock.Object);
+        channelConfigurationServiceMock.Setup(v => v.GetConfigurationByChannelId(message.Object.Channel.Id))
+            .ReturnsAsync(chatConfig);
 
-            channelConfigurationServiceMock.Setup(v => v.GetConfigurationByChannelId(message.Object.Channel.Id))
-                .ReturnsAsync(chatConfig);
+        // Act
+        await command.Handle(message.Object);
 
-            // Act
-            await command.Handle(message.Object);
+        // Assert
 
-            // Assert
+        // Verify SendMessageAsync was called with the reply message "Parameter not received"
+        channelMock.Verify(v => v.SendMessageAsync(null, false, It.Is<Embed>(e => e.Description.Contains(replyMessage)), null, null, null, null, null, null, MessageFlags.None));
+    }
 
-            // Verify SendMessageAsync was called with the reply message "Parameter not received"
-            channelMock.Verify(v => v.SendMessageAsync(null, false, It.Is<Embed>(e => e.Description.Contains(replyMessage)), null, null, null, null, null, null, MessageFlags.None));
-        }
+    [Theory]
+    [InlineData("Word", "Word")]
+    [InlineData("Word", "word")]
+    [InlineData("Word", "WORD")]
+    [InlineData("Word", "WoRd")]
+    public async Task WordExist_Should_ReplyMessage(string existingWord, string wordToAdd)
+    {
+        // Arrange
+        var channelConfigurationServiceMock = new Mock<IDiscordChannelConfigService>();
+        var command = new AddWhiteListCommand(channelConfigurationServiceMock.Object);
+        const string replyMessage = "is already on the WhiteList";
 
-        [Theory]
-        [InlineData("Word", "Word")]
-        [InlineData("Word", "word")]
-        [InlineData("Word", "WORD")]
-        [InlineData("Word", "WoRd")]
-        public async Task WordExist_Should_ReplyMessage(string existingWord, string wordToAdd)
+        var chatConfig = new DiscordChannelConfig
         {
-            // Arrange
-            var channelConfigurationServiceMock = new Mock<IDiscordChannelConfigService>();
-            var command = new AddWhiteListCommand(channelConfigurationServiceMock.Object);
-            const string replyMessage = "is already on the WhiteList";
+            WhiteListWords = new() { existingWord }
+        };
 
-            var chatConfig = new DiscordChannelConfig
-            {
-                WhiteListWords = new() { existingWord }
-            };
+        var channelMock = new Mock<IMessageChannel>();
+        var user = new Mock<IGuildUser>();
+        user.Setup(v => v.GuildPermissions).Returns(GuildPermissions.All);
+        var message = new Mock<IMessage>();
+        message.Setup(v => v.Content).Returns($"{DiscordBotCommands.AddWhiteList} {wordToAdd}");
+        message.Setup(v => v.Author).Returns(user.Object);
+        message.Setup(v => v.Channel).Returns(channelMock.Object);
 
-            var channelMock = new Mock<IMessageChannel>();
-            var user = new Mock<IGuildUser>();
-            user.Setup(v => v.GuildPermissions).Returns(GuildPermissions.All);
-            var message = new Mock<IMessage>();
-            message.Setup(v => v.Content).Returns($"{DiscordBotCommands.AddWhiteList} {wordToAdd}");
-            message.Setup(v => v.Author).Returns(user.Object);
-            message.Setup(v => v.Channel).Returns(channelMock.Object);
+        channelConfigurationServiceMock.Setup(v => v.GetConfigurationByChannelId(message.Object.Channel.Id))
+            .ReturnsAsync(chatConfig);
 
-            channelConfigurationServiceMock.Setup(v => v.GetConfigurationByChannelId(message.Object.Channel.Id))
-                .ReturnsAsync(chatConfig);
+        // Act
+        await command.Handle(message.Object);
 
-            // Act
-            await command.Handle(message.Object);
+        // Assert
 
-            // Assert
+        // Verify SendMessageAsync was called with the reply message "is already on the WhiteList"
+        channelMock.Verify(v => v.SendMessageAsync(null, false, It.Is<Embed>(e => e.Description.Contains(replyMessage)), null, null, null, null, null, null, MessageFlags.None));
+        Assert.Single(chatConfig.WhiteListWords);
+    }
 
-            // Verify SendMessageAsync was called with the reply message "is already on the WhiteList"
-            channelMock.Verify(v => v.SendMessageAsync(null, false, It.Is<Embed>(e => e.Description.Contains(replyMessage)), null, null, null, null, null, null, MessageFlags.None));
-            Assert.Single(chatConfig.WhiteListWords);
-        }
+    [Fact]
+    public async Task UserNotAdmin_Should_ReplyNotAdminMessage()
+    {
+        await TestUtilities.TestDiscordNotAdminUser(new AddWhiteListCommand(null));
+    }
 
-        [Fact]
-        public async Task UserNotAdmin_Should_ReplyNotAdminMessage()
+    [Fact]
+    public async Task NoWordExist_Should_ChangeChatConfig_And_ReplyMessage()
+    {
+        // Arrange
+        var channelConfigurationServiceMock = new Mock<IDiscordChannelConfigService>();
+        var command = new AddWhiteListCommand(channelConfigurationServiceMock.Object);
+        const string replyMessage = "added to the WhiteList";
+
+        var chatConfig = new DiscordChannelConfig
         {
-            await TestUtilities.TestDiscordNotAdminUser(new AddWhiteListCommand(null));
-        }
+            WhiteListWords = new() { "Word" }
+        };
 
-        [Fact]
-        public async Task NoWordExist_Should_ChangeChatConfig_And_ReplyMessage()
-        {
-            // Arrange
-            var channelConfigurationServiceMock = new Mock<IDiscordChannelConfigService>();
-            var command = new AddWhiteListCommand(channelConfigurationServiceMock.Object);
-            const string replyMessage = "added to the WhiteList";
+        var channelMock = new Mock<IMessageChannel>();
+        var user = new Mock<IGuildUser>();
+        user.Setup(v => v.GuildPermissions).Returns(GuildPermissions.All);
+        var message = new Mock<IMessage>();
+        message.Setup(v => v.Content).Returns($"{DiscordBotCommands.AddWhiteList} Word2");
+        message.Setup(v => v.Author).Returns(user.Object);
+        message.Setup(v => v.Channel).Returns(channelMock.Object);
 
-            var chatConfig = new DiscordChannelConfig
-            {
-                WhiteListWords = new() { "Word" }
-            };
+        channelConfigurationServiceMock.Setup(v => v.GetConfigurationByChannelId(message.Object.Channel.Id))
+            .ReturnsAsync(chatConfig);
 
-            var channelMock = new Mock<IMessageChannel>();
-            var user = new Mock<IGuildUser>();
-            user.Setup(v => v.GuildPermissions).Returns(GuildPermissions.All);
-            var message = new Mock<IMessage>();
-            message.Setup(v => v.Content).Returns($"{DiscordBotCommands.AddWhiteList} Word2");
-            message.Setup(v => v.Author).Returns(user.Object);
-            message.Setup(v => v.Channel).Returns(channelMock.Object);
+        // Act
+        await command.Handle(message.Object);
 
-            channelConfigurationServiceMock.Setup(v => v.GetConfigurationByChannelId(message.Object.Channel.Id))
-                .ReturnsAsync(chatConfig);
+        // Assert
 
-            // Act
-            await command.Handle(message.Object);
-
-            // Assert
-
-            // Verify SendMessageAsync was called with the reply message "added to the WhiteList"
-            channelMock.Verify(v => v.SendMessageAsync(null, false, It.Is<Embed>(e => e.Description.Contains(replyMessage)), null, null, null, null, null, null, MessageFlags.None));
-            Assert.Equal(2, chatConfig.WhiteListWords.Count);
-        }
+        // Verify SendMessageAsync was called with the reply message "added to the WhiteList"
+        channelMock.Verify(v => v.SendMessageAsync(null, false, It.Is<Embed>(e => e.Description.Contains(replyMessage)), null, null, null, null, null, null, MessageFlags.None));
+        Assert.Equal(2, chatConfig.WhiteListWords.Count);
     }
 }

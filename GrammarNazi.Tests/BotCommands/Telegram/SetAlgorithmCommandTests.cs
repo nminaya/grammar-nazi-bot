@@ -10,145 +10,144 @@ using Telegram.Bot.Types;
 using Telegram.Bot.Types.Enums;
 using Xunit;
 
-namespace GrammarNazi.Tests.BotCommands.Telegram
+namespace GrammarNazi.Tests.BotCommands.Telegram;
+
+public class SetAlgorithmCommandTests
 {
-    public class SetAlgorithmCommandTests
+    [Theory]
+    [InlineData("Test")]
+    [InlineData("fjkafdk324")]
+    public async Task ParameterIsNotNumber_Should_ReplyMessage(string parameter)
     {
-        [Theory]
-        [InlineData("Test")]
-        [InlineData("fjkafdk324")]
-        public async Task ParameterIsNotNumber_Should_ReplyMessage(string parameter)
+        // Arrange
+        var chatConfigurationServiceMock = new Mock<IChatConfigurationService>();
+        var telegramBotClientMock = new Mock<ITelegramBotClientWrapper>();
+        var command = new SetAlgorithmCommand(chatConfigurationServiceMock.Object, telegramBotClientMock.Object);
+        const string replyMessage = "Invalid parameter";
+
+        var chatConfig = new ChatConfiguration
         {
-            // Arrange
-            var chatConfigurationServiceMock = new Mock<IChatConfigurationService>();
-            var telegramBotClientMock = new Mock<ITelegramBotClientWrapper>();
-            var command = new SetAlgorithmCommand(chatConfigurationServiceMock.Object, telegramBotClientMock.Object);
-            const string replyMessage = "Invalid parameter";
+            GrammarAlgorithm = GrammarAlgorithms.LanguageToolApi
+        };
 
-            var chatConfig = new ChatConfiguration
-            {
-                GrammarAlgorithm = GrammarAlgorithms.LanguageToolApi
-            };
-
-            var message = new Message
-            {
-                Text = $"{TelegramBotCommands.SetAlgorithm} {parameter}",
-                From = new User { Id = 2 },
-                Chat = new Chat
-                {
-                    Id = 1,
-                    Type = ChatType.Group
-                }
-            };
-
-            telegramBotClientMock.Setup(v => v.GetChatAdministratorsAsync(message.Chat.Id, default))
-                .ReturnsAsync(new[] { new ChatMemberMember { User = new() { Id = message.From.Id } } });
-
-            telegramBotClientMock.Setup(v => v.GetMeAsync(default))
-                .ReturnsAsync(new User { Id = 123456 });
-
-            chatConfigurationServiceMock.Setup(v => v.GetConfigurationByChatId(message.Chat.Id))
-                .ReturnsAsync(chatConfig);
-
-            // Act
-            await command.Handle(message);
-
-            // Assert
-            telegramBotClientMock.Verify(v => v.SendTextMessageAsync(message.Chat.Id, It.Is<string>(s => s.Contains(replyMessage)), default, default, default, default, default, default, default, default));
-        }
-
-        [Theory]
-        [InlineData("500")]
-        [InlineData("123456")]
-        public async Task InvalidParameter_Should_ReplyMessage(string parameter)
+        var message = new Message
         {
-            // Arrange
-            var chatConfigurationServiceMock = new Mock<IChatConfigurationService>();
-            var telegramBotClientMock = new Mock<ITelegramBotClientWrapper>();
-            var command = new SetAlgorithmCommand(chatConfigurationServiceMock.Object, telegramBotClientMock.Object);
-            const string replyMessage = "Invalid parameter";
-
-            var chatConfig = new ChatConfiguration
+            Text = $"{TelegramBotCommands.SetAlgorithm} {parameter}",
+            From = new User { Id = 2 },
+            Chat = new Chat
             {
-                GrammarAlgorithm = GrammarAlgorithms.LanguageToolApi
-            };
+                Id = 1,
+                Type = ChatType.Group
+            }
+        };
 
-            var message = new Message
-            {
-                Text = $"{TelegramBotCommands.SetAlgorithm} {parameter}",
-                From = new User { Id = 2 },
-                Chat = new Chat
-                {
-                    Id = 1,
-                    Type = ChatType.Group
-                }
-            };
+        telegramBotClientMock.Setup(v => v.GetChatAdministratorsAsync(message.Chat.Id, default))
+            .ReturnsAsync(new[] { new ChatMemberMember { User = new() { Id = message.From.Id } } });
 
-            telegramBotClientMock.Setup(v => v.GetChatAdministratorsAsync(message.Chat.Id, default))
-                .ReturnsAsync(new[] { new ChatMemberMember { User = new() { Id = message.From.Id } } });
+        telegramBotClientMock.Setup(v => v.GetMeAsync(default))
+            .ReturnsAsync(new User { Id = 123456 });
 
-            telegramBotClientMock.Setup(v => v.GetMeAsync(default))
-                .ReturnsAsync(new User { Id = 123456 });
+        chatConfigurationServiceMock.Setup(v => v.GetConfigurationByChatId(message.Chat.Id))
+            .ReturnsAsync(chatConfig);
 
-            chatConfigurationServiceMock.Setup(v => v.GetConfigurationByChatId(message.Chat.Id))
-                .ReturnsAsync(chatConfig);
+        // Act
+        await command.Handle(message);
 
-            // Act
-            await command.Handle(message);
+        // Assert
+        telegramBotClientMock.Verify(v => v.SendTextMessageAsync(message.Chat.Id, It.Is<string>(s => s.Contains(replyMessage)), default, default, default, default, default, default, default, default));
+    }
 
-            // Assert
-            telegramBotClientMock.Verify(v => v.SendTextMessageAsync(message.Chat.Id, It.Is<string>(s => s.Contains(replyMessage)), default, default, default, default, default, default, default, default));
-        }
+    [Theory]
+    [InlineData("500")]
+    [InlineData("123456")]
+    public async Task InvalidParameter_Should_ReplyMessage(string parameter)
+    {
+        // Arrange
+        var chatConfigurationServiceMock = new Mock<IChatConfigurationService>();
+        var telegramBotClientMock = new Mock<ITelegramBotClientWrapper>();
+        var command = new SetAlgorithmCommand(chatConfigurationServiceMock.Object, telegramBotClientMock.Object);
+        const string replyMessage = "Invalid parameter";
 
-        [Fact]
-        public async Task UserNotAdmin_Should_ReplyNotAdminMessage()
+        var chatConfig = new ChatConfiguration
         {
-            var telegramBotClientMock = new Mock<ITelegramBotClientWrapper>();
-            await TestUtilities.TestTelegramNotAdminUser(new SetAlgorithmCommand(null, telegramBotClientMock.Object), telegramBotClientMock);
-        }
+            GrammarAlgorithm = GrammarAlgorithms.LanguageToolApi
+        };
 
-        [Theory]
-        [InlineData(GrammarAlgorithms.LanguageToolApi)]
-        [InlineData(GrammarAlgorithms.InternalAlgorithm)]
-        public async Task ValidParameter_Should_ChangeChatConfig_And_ReplyMessage(GrammarAlgorithms algorithmParameter)
+        var message = new Message
         {
-            // Arrange
-            var chatConfigurationServiceMock = new Mock<IChatConfigurationService>();
-            var telegramBotClientMock = new Mock<ITelegramBotClientWrapper>();
-            var command = new SetAlgorithmCommand(chatConfigurationServiceMock.Object, telegramBotClientMock.Object);
-            const string replyMessage = "Algorithm updated";
-
-            var chatConfig = new ChatConfiguration
+            Text = $"{TelegramBotCommands.SetAlgorithm} {parameter}",
+            From = new User { Id = 2 },
+            Chat = new Chat
             {
-                GrammarAlgorithm = GrammarAlgorithms.YandexSpellerApi
-            };
+                Id = 1,
+                Type = ChatType.Group
+            }
+        };
 
-            var message = new Message
+        telegramBotClientMock.Setup(v => v.GetChatAdministratorsAsync(message.Chat.Id, default))
+            .ReturnsAsync(new[] { new ChatMemberMember { User = new() { Id = message.From.Id } } });
+
+        telegramBotClientMock.Setup(v => v.GetMeAsync(default))
+            .ReturnsAsync(new User { Id = 123456 });
+
+        chatConfigurationServiceMock.Setup(v => v.GetConfigurationByChatId(message.Chat.Id))
+            .ReturnsAsync(chatConfig);
+
+        // Act
+        await command.Handle(message);
+
+        // Assert
+        telegramBotClientMock.Verify(v => v.SendTextMessageAsync(message.Chat.Id, It.Is<string>(s => s.Contains(replyMessage)), default, default, default, default, default, default, default, default));
+    }
+
+    [Fact]
+    public async Task UserNotAdmin_Should_ReplyNotAdminMessage()
+    {
+        var telegramBotClientMock = new Mock<ITelegramBotClientWrapper>();
+        await TestUtilities.TestTelegramNotAdminUser(new SetAlgorithmCommand(null, telegramBotClientMock.Object), telegramBotClientMock);
+    }
+
+    [Theory]
+    [InlineData(GrammarAlgorithms.LanguageToolApi)]
+    [InlineData(GrammarAlgorithms.InternalAlgorithm)]
+    public async Task ValidParameter_Should_ChangeChatConfig_And_ReplyMessage(GrammarAlgorithms algorithmParameter)
+    {
+        // Arrange
+        var chatConfigurationServiceMock = new Mock<IChatConfigurationService>();
+        var telegramBotClientMock = new Mock<ITelegramBotClientWrapper>();
+        var command = new SetAlgorithmCommand(chatConfigurationServiceMock.Object, telegramBotClientMock.Object);
+        const string replyMessage = "Algorithm updated";
+
+        var chatConfig = new ChatConfiguration
+        {
+            GrammarAlgorithm = GrammarAlgorithms.YandexSpellerApi
+        };
+
+        var message = new Message
+        {
+            Text = $"{TelegramBotCommands.SetAlgorithm} {(int)algorithmParameter}",
+            From = new User { Id = 2 },
+            Chat = new Chat
             {
-                Text = $"{TelegramBotCommands.SetAlgorithm} {(int)algorithmParameter}",
-                From = new User { Id = 2 },
-                Chat = new Chat
-                {
-                    Id = 1,
-                    Type = ChatType.Group
-                }
-            };
+                Id = 1,
+                Type = ChatType.Group
+            }
+        };
 
-            telegramBotClientMock.Setup(v => v.GetChatAdministratorsAsync(message.Chat.Id, default))
-                .ReturnsAsync(new[] { new ChatMemberMember { User = new() { Id = message.From.Id } } });
+        telegramBotClientMock.Setup(v => v.GetChatAdministratorsAsync(message.Chat.Id, default))
+            .ReturnsAsync(new[] { new ChatMemberMember { User = new() { Id = message.From.Id } } });
 
-            telegramBotClientMock.Setup(v => v.GetMeAsync(default))
-                .ReturnsAsync(new User { Id = 123456 });
+        telegramBotClientMock.Setup(v => v.GetMeAsync(default))
+            .ReturnsAsync(new User { Id = 123456 });
 
-            chatConfigurationServiceMock.Setup(v => v.GetConfigurationByChatId(message.Chat.Id))
-                .ReturnsAsync(chatConfig);
+        chatConfigurationServiceMock.Setup(v => v.GetConfigurationByChatId(message.Chat.Id))
+            .ReturnsAsync(chatConfig);
 
-            // Act
-            await command.Handle(message);
+        // Act
+        await command.Handle(message);
 
-            // Assert
-            Assert.Equal(algorithmParameter, chatConfig.GrammarAlgorithm);
-            telegramBotClientMock.Verify(v => v.SendTextMessageAsync(message.Chat.Id, It.Is<string>(s => s.Contains(replyMessage)), default, default, default, default, default, default, default, default));
-        }
+        // Assert
+        Assert.Equal(algorithmParameter, chatConfig.GrammarAlgorithm);
+        telegramBotClientMock.Verify(v => v.SendTextMessageAsync(message.Chat.Id, It.Is<string>(s => s.Contains(replyMessage)), default, default, default, default, default, default, default, default));
     }
 }
