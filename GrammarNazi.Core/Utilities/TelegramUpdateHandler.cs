@@ -2,6 +2,7 @@
 using GrammarNazi.Domain.Constants;
 using GrammarNazi.Domain.Entities;
 using GrammarNazi.Domain.Enums;
+using GrammarNazi.Domain.Exceptions;
 using GrammarNazi.Domain.Services;
 using Microsoft.Data.SqlClient;
 using Microsoft.Extensions.DependencyInjection;
@@ -38,6 +39,11 @@ public class TelegramUpdateHandler : IUpdateHandler
 
     public Task HandleErrorAsync(ITelegramBotClient botClient, Exception exception, CancellationToken cancellationToken)
     {
+        if (exception is TaskFailedException taskFailedException)
+        {
+            exception = taskFailedException.InnerException;
+        }
+
         if (exception is ApiRequestException apiRequestException)
         {
             var warningMessages = new[] { "bot was blocked by the user", "bot was kicked from the supergroup", "have no rights to send a message" };
@@ -92,6 +98,7 @@ public class TelegramUpdateHandler : IUpdateHandler
         {
             await PollyExceptionHandlerHelper.HandleExceptionAndRetry<SqlException>(handler, _logger, cancellationToken);
         }
+        // TODO: Handle this SqlException in HandleErrorAsync() method
         catch (SqlException ex) when (ex.Message.Contains("SHUTDOWN"))
         {
             _logger.LogWarning(ex, "Sql Server shutdown in progress");
