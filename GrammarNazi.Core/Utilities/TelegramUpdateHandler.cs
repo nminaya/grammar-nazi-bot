@@ -39,6 +39,7 @@ public class TelegramUpdateHandler : IUpdateHandler
 
     public Task HandleErrorAsync(ITelegramBotClient botClient, Exception exception, CancellationToken cancellationToken)
     {
+        // TODO: Move all this to some "CatchExceptionService"
         if (exception is TaskFailedException taskFailedException)
         {
             exception = taskFailedException.InnerException;
