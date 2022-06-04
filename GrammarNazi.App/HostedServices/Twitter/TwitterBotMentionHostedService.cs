@@ -10,6 +10,7 @@ using Microsoft.Extensions.Options;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Net.Sockets;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
@@ -135,6 +136,7 @@ public class TwitterBotMentionHostedService : BaseTwitterHostedService
                 await PublishScheduledTweets();
                 await LikeRepliesToBot(mentions);
             }
+            // TODO: Move all this to some "CatchExceptionService"
             catch (TwitterException ex) when (ex.TwitterDescription.Contains("Try again later") || ex.TwitterDescription.Contains("Timeout limit"))
             {
                 Logger.LogWarning(ex, ex.TwitterDescription);
@@ -147,10 +149,20 @@ public class TwitterBotMentionHostedService : BaseTwitterHostedService
             {
                 var message = ex is TwitterException tEx ? tEx.TwitterDescription : ex.Message;
 
-                Logger.LogError(ex, message);
+                var innerExceptions = ex.GetInnerExceptions();
 
-                // fire and forget
-                _ = _githubService.CreateBugIssue($"Application Exception: {message}", ex, GithubIssueLabels.Twitter);
+                if (innerExceptions.Any(x => x.GetType() == typeof(SocketException) && x.Message.Contains("Connection reset by peer")))
+                {
+                    // The server has reset the connection.
+                    Logger.LogWarning(ex, "Socket reseted.");
+                }
+                else
+                {
+                    Logger.LogError(ex, message);
+
+                    // fire and forget
+                    _ = _githubService.CreateBugIssue($"Application Exception: {message}", ex, GithubIssueLabels.Twitter);
+                }
             }
 
             await Task.Delay(TwitterBotSettings.HostedServiceIntervalMilliseconds);
