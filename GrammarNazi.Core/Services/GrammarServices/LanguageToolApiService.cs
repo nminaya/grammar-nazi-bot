@@ -55,8 +55,10 @@ public class LanguageToolApiService : BaseGrammarService, IGrammarService
         var result = await _apiClient.Check(text, languageCode);
 
         // validate if LanguageTool has detected a valid language
-        if (!IsValidLanguageDetected(result.Language.Code))
+        if (!IsValidLanguageDetected(result?.Language?.Code))
+        {
             return new(default);
+        }
 
         var corrections = new List<GrammarCorrection>();
 
@@ -69,7 +71,9 @@ public class LanguageToolApiService : BaseGrammarService, IGrammarService
             var wrongWord = match.Context.Text.Substring(match.Context.Offset, match.Context.Length);
 
             if (IsWhiteListWord(wrongWord))
+            {
                 continue;
+            }
 
             var correction = new GrammarCorrection
             {
@@ -87,7 +91,9 @@ public class LanguageToolApiService : BaseGrammarService, IGrammarService
     private bool RulesFilter(Match match)
     {
         if (SelectedStrictnessLevel == CorrectionStrictnessLevels.Intolerant)
+        {
             return true;
+        }
 
         // TODO: Create a list of default or disabled rules
         // TODO: Use the API endpoint parameter "disabledRules"
@@ -110,6 +116,11 @@ public class LanguageToolApiService : BaseGrammarService, IGrammarService
 
     private bool IsValidLanguageDetected(string languageCode)
     {
+        if (string.IsNullOrEmpty(languageCode))
+        {
+            return false;
+        }
+
         return LanguageUtils.GetSupportedLanguages()
             .Select(LanguageUtils.GetLanguageCode)
             .Contains(languageCode[..2]);
