@@ -3,7 +3,7 @@ using Microsoft.Extensions.Logging;
 using System.Threading;
 using System.Threading.Tasks;
 using Telegram.Bot;
-using Telegram.Bot.Extensions.Polling;
+using Telegram.Bot.Polling;
 using Telegram.Bot.Types.Enums;
 
 namespace GrammarNazi.App.HostedServices;
@@ -28,10 +28,10 @@ public class TelegramBotHostedService : BackgroundService
         _logger.LogInformation("Telegram Bot Hosted Service started");
 
         _client.StartReceiving(
-            _updateHandler.HandleUpdateAsync,
-            _updateHandler.HandleErrorAsync,
-            new() { AllowedUpdates = new[] { UpdateType.Message, UpdateType.CallbackQuery } },
-            stoppingToken);
+            updateHandler: _updateHandler.HandleUpdateAsync,
+            pollingErrorHandler: _updateHandler.HandlePollingErrorAsync,
+            receiverOptions: new() { AllowedUpdates = new[] { UpdateType.Message, UpdateType.CallbackQuery } },
+            cancellationToken: stoppingToken);
 
         // Keep hosted service alive while receiving messages
         await Task.Delay(Timeout.Infinite, stoppingToken);
