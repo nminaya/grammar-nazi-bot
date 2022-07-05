@@ -54,7 +54,7 @@ public class SetAlgorithmCommandTests
         await command.Handle(message);
 
         // Assert
-        telegramBotClientMock.Verify(v => v.SendTextMessageAsync(message.Chat.Id, It.Is<string>(s => s.Contains(replyMessage)), default, default, default, default, default, default, default, default));
+        telegramBotClientMock.Verify(v => v.SendTextMessageAsync(message.Chat.Id, It.Is<string>(s => s.Contains(replyMessage)), default, default, default, default, default, default, default, default, default));
     }
 
     [Theory]
@@ -97,7 +97,7 @@ public class SetAlgorithmCommandTests
         await command.Handle(message);
 
         // Assert
-        telegramBotClientMock.Verify(v => v.SendTextMessageAsync(message.Chat.Id, It.Is<string>(s => s.Contains(replyMessage)), default, default, default, default, default, default, default, default));
+        telegramBotClientMock.Verify(v => v.SendTextMessageAsync(message.Chat.Id, It.Is<string>(s => s.Contains(replyMessage)), default, default, default, default, default, default, default, default, default));
     }
 
     [Fact]
@@ -148,6 +148,6 @@ public class SetAlgorithmCommandTests
 
         // Assert
         Assert.Equal(algorithmParameter, chatConfig.GrammarAlgorithm);
-        telegramBotClientMock.Verify(v => v.SendTextMessageAsync(message.Chat.Id, It.Is<string>(s => s.Contains(replyMessage)), default, default, default, default, default, default, default, default));
+        telegramBotClientMock.Verify(v => v.SendTextMessageAsync(message.Chat.Id, It.Is<string>(s => s.Contains(replyMessage)), default, default, default, default, default, default, default, default, default));
     }
 }

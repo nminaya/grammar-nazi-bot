@@ -53,7 +53,7 @@ public class ShowDetailsCommandTests
         // Assert
         Assert.False(chatConfig.HideCorrectionDetails);
         chatConfigurationServiceMock.Verify(v => v.Update(chatConfig));
-        telegramBotClientMock.Verify(v => v.SendTextMessageAsync(message.Chat.Id, It.Is<string>(s => s.Contains(replyMessage)), default, default, default, default, default, default, default, default));
+        telegramBotClientMock.Verify(v => v.SendTextMessageAsync(message.Chat.Id, It.Is<string>(s => s.Contains(replyMessage)), default, default, default, default, default, default, default, default, default));
     }
 
     [Fact]

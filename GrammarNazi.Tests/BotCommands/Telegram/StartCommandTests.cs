@@ -43,7 +43,7 @@ public class StartCommandTests
         await command.Handle(message);
 
         // Assert
-        telegramBotClientMock.Verify(v => v.SendTextMessageAsync(message.Chat.Id, It.Is<string>(s => s.Contains(replyMessage)), default, default, default, default, default, default, default, default));
+        telegramBotClientMock.Verify(v => v.SendTextMessageAsync(message.Chat.Id, It.Is<string>(s => s.Contains(replyMessage)), default, default, default, default, default, default, default, default, default));
     }
 
     [Fact]
@@ -77,7 +77,7 @@ public class StartCommandTests
         await command.Handle(message);
 
         // Assert
-        telegramBotClientMock.Verify(v => v.SendTextMessageAsync(message.Chat.Id, It.Is<string>(s => s.Contains(replyMessage)), default, default, default, default, default, default, default, default), Times.Once);
+        telegramBotClientMock.Verify(v => v.SendTextMessageAsync(message.Chat.Id, It.Is<string>(s => s.Contains(replyMessage)), default, default, default, default, default, default, default, default, default), Times.Once);
     }
 
     [Fact]
@@ -115,7 +115,7 @@ public class StartCommandTests
         await command.Handle(message);
 
         // Assert
-        telegramBotClientMock.Verify(v => v.SendTextMessageAsync(message.Chat.Id, It.Is<string>(s => s.Contains(replyMessage)), default, default, default, default, default, default, default, default));
+        telegramBotClientMock.Verify(v => v.SendTextMessageAsync(message.Chat.Id, It.Is<string>(s => s.Contains(replyMessage)), default, default, default, default, default, default, default, default, default));
     }
 
     [Fact]
@@ -158,6 +158,6 @@ public class StartCommandTests
         // Assert
         Assert.False(chatConfig.IsBotStopped);
         chatConfigurationServiceMock.Verify(v => v.Update(chatConfig));
-        telegramBotClientMock.Verify(v => v.SendTextMessageAsync(message.Chat.Id, It.Is<string>(s => s.Contains(replyMessage)), default, default, default, default, default, default, default, default));
+        telegramBotClientMock.Verify(v => v.SendTextMessageAsync(message.Chat.Id, It.Is<string>(s => s.Contains(replyMessage)), default, default, default, default, default, default, default, default, default));
     }
 }
