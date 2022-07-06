@@ -22,7 +22,7 @@ using Microsoft.Extensions.Options;
 using Octokit;
 using System;
 using Telegram.Bot;
-using Telegram.Bot.Extensions.Polling;
+using Telegram.Bot.Polling;
 using Tweetinvi;
 
 namespace GrammarNazi.App;

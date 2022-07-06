@@ -18,7 +18,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using Telegram.Bot;
 using Telegram.Bot.Exceptions;
-using Telegram.Bot.Extensions.Polling;
+using Telegram.Bot.Polling;
 using Telegram.Bot.Types;
 using Telegram.Bot.Types.Enums;
 
@@ -37,7 +37,7 @@ public class TelegramUpdateHandler : IUpdateHandler
         _logger = logger;
     }
 
-    public Task HandleErrorAsync(ITelegramBotClient botClient, Exception exception, CancellationToken cancellationToken)
+    public Task HandlePollingErrorAsync(ITelegramBotClient botClient, Exception exception, CancellationToken cancellationToken)
     {
         // TODO: Move all this to some "CatchExceptionService"
         if (exception is TaskFailedException taskFailedException)
@@ -106,7 +106,7 @@ public class TelegramUpdateHandler : IUpdateHandler
         }
         catch (Exception exception)
         {
-            await HandleErrorAsync(botClient, exception, cancellationToken);
+            await HandlePollingErrorAsync(botClient, exception, cancellationToken);
         }
     }
 
