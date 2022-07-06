@@ -136,7 +136,7 @@ public class TelegramUpdateHandlerTests
         var exception = new ApiRequestException(exceptionMessage);
 
         // Act
-        await handler.HandleErrorAsync(telegramBotMock.Object, exception, default);
+        await handler.HandlePollingErrorAsync(telegramBotMock.Object, exception, default);
 
         // Assert
 
@@ -165,7 +165,7 @@ public class TelegramUpdateHandlerTests
         var exception = new Exception("Fatal test exception");
 
         // Act
-        await handler.HandleErrorAsync(telegramBotMock.Object, exception, default);
+        await handler.HandlePollingErrorAsync(telegramBotMock.Object, exception, default);
 
         // Assert
 

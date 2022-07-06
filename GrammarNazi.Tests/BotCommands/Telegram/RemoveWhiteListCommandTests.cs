@@ -51,7 +51,7 @@ public class RemoveWhiteListCommandTests
         await command.Handle(message);
 
         // Assert
-        telegramBotClientMock.Verify(v => v.SendTextMessageAsync(message.Chat.Id, It.Is<string>(s => s.Contains(replyMessage)), default, default, default, default, default, default, default, default));
+        telegramBotClientMock.Verify(v => v.SendTextMessageAsync(message.Chat.Id, It.Is<string>(s => s.Contains(replyMessage)), default, default, default, default, default, default, default, default, default));
     }
 
     [Fact]
@@ -89,7 +89,7 @@ public class RemoveWhiteListCommandTests
         await command.Handle(message);
 
         // Assert
-        telegramBotClientMock.Verify(v => v.SendTextMessageAsync(message.Chat.Id, It.Is<string>(s => s.Contains(replyMessage)), default, default, default, default, default, default, default, default));
+        telegramBotClientMock.Verify(v => v.SendTextMessageAsync(message.Chat.Id, It.Is<string>(s => s.Contains(replyMessage)), default, default, default, default, default, default, default, default, default));
     }
 
     [Fact]
@@ -142,6 +142,6 @@ public class RemoveWhiteListCommandTests
 
         // Assert
         Assert.Empty(chatConfig.WhiteListWords);
-        telegramBotClientMock.Verify(v => v.SendTextMessageAsync(message.Chat.Id, It.Is<string>(s => s.Contains(replyMessage)), default, default, default, default, default, default, default, default));
+        telegramBotClientMock.Verify(v => v.SendTextMessageAsync(message.Chat.Id, It.Is<string>(s => s.Contains(replyMessage)), default, default, default, default, default, default, default, default, default));
     }
 }
