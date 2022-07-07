@@ -226,11 +226,7 @@ public class TelegramUpdateHandler : IUpdateHandler
 
             var messageText = message.Text;
 
-            var entities = message.Entities.Where(v => v.Type == MessageEntityType.TextMention
-                                            // There isn't a MessageEntityType.Spoiler yet in this current version of Telegram.Bot.
-                                            // So when v.Type == 0, is probably a Spoiler.
-                                            // TODO: Update this when Telegram.Bot v18 is released.
-                                            || v.Type == 0);
+            var entities = message.Entities.Where(v => v.Type == MessageEntityType.TextMention || v.Type == MessageEntityType.Spoiler);
 
             foreach (var entity in entities)
             {
