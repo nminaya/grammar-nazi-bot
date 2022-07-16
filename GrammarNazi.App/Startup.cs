@@ -96,6 +96,7 @@ public class Startup
         services.AddTransient<IDiscordCommandHandlerService, DiscordCommandHandlerService>();
         services.AddTransient<IUpdateHandler, TelegramUpdateHandler>();
         services.AddTransient<ITelegramBotClientWrapper, TelegramBotClientWrapper>();
+        services.AddTransient<ICatchExceptionService, CatchExceptionService>();
 
         // Discord Bot Commands
         services.AddDiscordBotCommands();
@@ -116,7 +117,9 @@ public class Startup
             var apiKey = Environment.GetEnvironmentVariable("TELEGRAM_API_KEY");
 
             if (string.IsNullOrEmpty(apiKey))
+            {
                 throw new InvalidOperationException("Empty TELEGRAM_API_KEY");
+            }
 
             return new TelegramBotClient(apiKey);
         });
@@ -171,10 +174,10 @@ public class Startup
 
             // Return 200 if request is received
             endpoints.MapGet("/", async context =>
-        {
-            context.Response.StatusCode = 200;
-            await context.Response.WriteAsync("App Running");
-        });
+            {
+                context.Response.StatusCode = 200;
+                await context.Response.WriteAsync("App Running");
+            });
         });
     }
 }
