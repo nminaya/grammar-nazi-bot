@@ -62,8 +62,11 @@ public class TelegramUpdateHandler : IUpdateHandler
         using var scope = _serviceScopeFactory.CreateScope();
         var serviceProvider = scope.ServiceProvider;
 
-        if (message.Type != MessageType.Text) // We only analyze Text messages
+        if (message.Type != MessageType.Text)
+        {
+            // We only analyze Text messages
             return;
+        }
 
         _logger.LogInformation($"Message received from chat id: {message.Chat.Id}");
 
@@ -78,7 +81,9 @@ public class TelegramUpdateHandler : IUpdateHandler
         }
 
         if (chatConfig.IsBotStopped)
+        {
             return;
+        }
 
         var grammarService = GetConfiguredGrammarService(chatConfig, serviceProvider);
 
@@ -88,7 +93,9 @@ public class TelegramUpdateHandler : IUpdateHandler
         var corretionResult = await grammarService.GetCorrections(text);
 
         if (!corretionResult.HasCorrections)
+        {
             return;
+        }
 
         // Send "Typing..." notification
         await client.SendChatActionAsync(message.Chat.Id, ChatAction.Typing);
@@ -128,7 +135,10 @@ public class TelegramUpdateHandler : IUpdateHandler
         var chatConfig = await chatConfigurationService.GetConfigurationByChatId(chatId);
 
         if (chatConfig != null)
+        {
             return chatConfig;
+        }
+
         var messageBuilder = new StringBuilder();
 
         messageBuilder.AppendLine("Hi, I'm GrammarNazi.");
@@ -169,7 +179,9 @@ public class TelegramUpdateHandler : IUpdateHandler
         string GetTextWithoutMentionOrSpoiler()
         {
             if (message.Entities == null)
+            {
                 return message.Text;
+            }
 
             var messageText = message.Text;
 

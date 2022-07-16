@@ -77,7 +77,9 @@ public class DiscordBotHostedService : BackgroundService
     private async Task OnMessageReceived(SocketMessage socketMessage)
     {
         if (socketMessage is not SocketUserMessage message || message.Author.IsBot || message.Author.IsWebhook)
+        {
             return;
+        }
 
         using var scope = _serviceScopeFactory.CreateScope();
         var serviceProvider = scope.ServiceProvider;
@@ -95,7 +97,9 @@ public class DiscordBotHostedService : BackgroundService
         }
 
         if (channelConfig.IsBotStopped)
+        {
             return;
+        }
 
         var grammarService = GetConfiguredGrammarService(channelConfig, serviceProvider);
 
@@ -104,7 +108,9 @@ public class DiscordBotHostedService : BackgroundService
         var corretionResult = await grammarService.GetCorrections(text);
 
         if (!corretionResult.HasCorrections)
+        {
             return;
+        }
 
         await message.Channel.TriggerTypingAsync();
 
@@ -163,7 +169,9 @@ public class DiscordBotHostedService : BackgroundService
         var channelConfig = await channelConfigService.GetConfigurationByChannelId(message.Channel.Id);
 
         if (channelConfig != null)
+        {
             return channelConfig;
+        }
 
         var messageBuilder = new StringBuilder();
         messageBuilder.AppendLine("Hi, I'm GrammarNazi.");

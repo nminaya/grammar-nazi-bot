@@ -13,13 +13,13 @@ public static class PollyExceptionHandlerHelper
         where T : Exception
     {
         var handler = Policy.Handle<T>()
-        .WaitAndRetryAsync(numberOfTimes, retryCount =>
-        {
-            var timeToWait = TimeSpan.FromSeconds(15);
-            logger.LogWarning($"{typeof(T).Name} captured: Retry #{retryCount}. Waiting 15 seconds.");
+            .WaitAndRetryAsync(numberOfTimes, retryCount =>
+            {
+                var timeToWait = TimeSpan.FromSeconds(15);
+                logger.LogWarning($"{typeof(T).Name} captured: Retry #{retryCount}. Waiting 15 seconds.");
 
-            return timeToWait;
-        });
+                return timeToWait;
+            });
 
         var result = await handler.ExecuteAndCaptureAsync(_ => action, cancellationToken);
 

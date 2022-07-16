@@ -55,9 +55,13 @@ public class TwitterBotMentionHostedService : BaseTwitterHostedService
                 var getMentionParameters = new GetMentionsTimelineParameters();
 
                 if (lastTweetId == 0)
+                {
                     getMentionParameters.PageSize = TwitterBotSettings.TimelineFirstLoadPageSize;
+                }
                 else
+                {
                     getMentionParameters.SinceId = lastTweetId;
+                }
 
                 var mentions = await TwitterClient.Timelines.GetMentionsTimelineAsync(getMentionParameters);
 
@@ -67,12 +71,16 @@ public class TwitterBotMentionHostedService : BaseTwitterHostedService
                 {
                     // Avoid correcting replies to my own tweets
                     if (mention.InReplyToUserId == myUser.Id)
+                    {
                         continue;
+                    }
 
                     var tweet = await GetTweetFromMention(mention);
 
                     if (tweet == null)
+                    {
                         continue;
+                    }
 
                     var tweetText = StringUtils.RemoveHashtags(StringUtils.RemoveMentions(StringUtils.RemoveEmojis(tweet.Text)));
 
