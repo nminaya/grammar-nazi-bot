@@ -1,8 +1,6 @@
-﻿using GrammarNazi.Core.Extensions;
-using GrammarNazi.Domain.Constants;
+﻿using GrammarNazi.Domain.Constants;
 using GrammarNazi.Domain.Entities;
 using GrammarNazi.Domain.Enums;
-using GrammarNazi.Domain.Exceptions;
 using GrammarNazi.Domain.Services;
 using Microsoft.Data.SqlClient;
 using Microsoft.Extensions.DependencyInjection;
@@ -10,14 +8,10 @@ using Microsoft.Extensions.Logging;
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Net;
-using System.Net.Http;
-using System.Net.Sockets;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 using Telegram.Bot;
-using Telegram.Bot.Exceptions;
 using Telegram.Bot.Polling;
 using Telegram.Bot.Types;
 using Telegram.Bot.Types.Enums;
@@ -27,61 +21,19 @@ namespace GrammarNazi.Core.Utilities;
 public class TelegramUpdateHandler : IUpdateHandler
 {
     private readonly ILogger<TelegramUpdateHandler> _logger;
-    private readonly IGithubService _githubService;
+    private readonly ICatchExceptionService _catchExceptionService;
     private readonly IServiceScopeFactory _serviceScopeFactory;
 
-    public TelegramUpdateHandler(IServiceScopeFactory serviceScopeFactory, IGithubService githubService, ILogger<TelegramUpdateHandler> logger)
+    public TelegramUpdateHandler(IServiceScopeFactory serviceScopeFactory, ICatchExceptionService catchExceptionService, ILogger<TelegramUpdateHandler> logger)
     {
         _serviceScopeFactory = serviceScopeFactory;
-        _githubService = githubService;
+        _catchExceptionService = catchExceptionService;
         _logger = logger;
     }
 
     public Task HandlePollingErrorAsync(ITelegramBotClient botClient, Exception exception, CancellationToken cancellationToken)
     {
-        // TODO: Move all this to some "CatchExceptionService"
-        if (exception is TaskFailedException taskFailedException)
-        {
-            exception = taskFailedException.InnerException;
-        }
-
-        if (exception is ApiRequestException apiRequestException)
-        {
-            var warningMessages = new[] { "bot was blocked by the user", "bot was kicked from the supergroup", "have no rights to send a message" };
-
-            if (warningMessages.Any(x => apiRequestException.Message.Contains(x)))
-            {
-                _logger.LogWarning(apiRequestException.Message);
-            }
-            else
-            {
-                _logger.LogError(apiRequestException, apiRequestException.Message);
-            }
-
-            return Task.CompletedTask;
-        }
-        else if (exception is HttpRequestException requestException
-            && requestException.StatusCode == HttpStatusCode.BadGateway)
-        {
-            _logger.LogWarning("Bad Gateway", requestException);
-
-            return Task.CompletedTask;
-        }
-
-        var innerExceptions = exception.GetInnerExceptions();
-
-        if (innerExceptions.Any(x => x.GetType() == typeof(SocketException) && x.Message.Contains("Connection reset by peer")))
-        {
-            // The server has reset the connection.
-            _logger.LogWarning(exception, "Socket reseted.");
-
-            return Task.CompletedTask;
-        }
-
-        _logger.LogError(exception, exception.Message);
-
-        // fire and forget
-        _ = _githubService.CreateBugIssue($"Application Exception: {exception.Message}", exception, GithubIssueLabels.Telegram);
+        _catchExceptionService.HandleException(exception, GithubIssueLabels.Telegram);
 
         return Task.CompletedTask;
     }
@@ -99,11 +51,6 @@ public class TelegramUpdateHandler : IUpdateHandler
         {
             await PollyExceptionHandlerHelper.HandleExceptionAndRetry<SqlException>(handler, _logger, cancellationToken);
         }
-        // TODO: Handle this SqlException in HandleErrorAsync() method
-        catch (SqlException ex) when (ex.Message.Contains("SHUTDOWN"))
-        {
-            _logger.LogWarning(ex, "Sql Server shutdown in progress");
-        }
         catch (Exception exception)
         {
             await HandlePollingErrorAsync(botClient, exception, cancellationToken);
@@ -115,8 +62,11 @@ public class TelegramUpdateHandler : IUpdateHandler
         using var scope = _serviceScopeFactory.CreateScope();
         var serviceProvider = scope.ServiceProvider;
 
-        if (message.Type != MessageType.Text) // We only analyze Text messages
+        if (message.Type != MessageType.Text)
+        {
+            // We only analyze Text messages
             return;
+        }
 
         _logger.LogInformation($"Message received from chat id: {message.Chat.Id}");
 
@@ -131,7 +81,9 @@ public class TelegramUpdateHandler : IUpdateHandler
         }
 
         if (chatConfig.IsBotStopped)
+        {
             return;
+        }
 
         var grammarService = GetConfiguredGrammarService(chatConfig, serviceProvider);
 
@@ -141,7 +93,9 @@ public class TelegramUpdateHandler : IUpdateHandler
         var corretionResult = await grammarService.GetCorrections(text);
 
         if (!corretionResult.HasCorrections)
+        {
             return;
+        }
 
         // Send "Typing..." notification
         await client.SendChatActionAsync(message.Chat.Id, ChatAction.Typing);
@@ -181,7 +135,10 @@ public class TelegramUpdateHandler : IUpdateHandler
         var chatConfig = await chatConfigurationService.GetConfigurationByChatId(chatId);
 
         if (chatConfig != null)
+        {
             return chatConfig;
+        }
+
         var messageBuilder = new StringBuilder();
 
         messageBuilder.AppendLine("Hi, I'm GrammarNazi.");
@@ -222,7 +179,9 @@ public class TelegramUpdateHandler : IUpdateHandler
         string GetTextWithoutMentionOrSpoiler()
         {
             if (message.Entities == null)
+            {
                 return message.Text;
+            }
 
             var messageText = message.Text;
 

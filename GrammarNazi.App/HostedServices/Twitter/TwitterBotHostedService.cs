@@ -19,6 +19,9 @@ using Tweetinvi.Parameters;
 
 namespace GrammarNazi.App.HostedServices;
 
+/// <summary>
+/// Disabled due to Twitter limits and policy. Using TwitterBotMentionHostedService instead.
+/// </summary>
 public class TwitterBotHostedService : BaseTwitterHostedService
 {
     private readonly IGrammarService _grammarService;

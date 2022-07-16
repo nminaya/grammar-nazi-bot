@@ -4,13 +4,11 @@ using GrammarNazi.Domain.Constants;
 using GrammarNazi.Domain.Entities.Configs;
 using GrammarNazi.Domain.Enums;
 using GrammarNazi.Domain.Services;
-using Microsoft.Data.SqlClient;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Net.Sockets;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
@@ -24,24 +22,24 @@ namespace GrammarNazi.App.HostedServices;
 public class TwitterBotMentionHostedService : BaseTwitterHostedService
 {
     private readonly IGrammarService _grammarService;
-    private readonly IGithubService _githubService;
     private readonly ITwitterMentionLogService _twitterMentionLogService;
+    private readonly ICatchExceptionService _catchExceptionService;
 
     public TwitterBotMentionHostedService(ILogger<TwitterBotHostedService> logger,
         IEnumerable<IGrammarService> grammarServices,
         ITwitterLogService twitterLogService,
         ITwitterClient twitterClient,
         IOptions<TwitterBotSettings> options,
-        IGithubService githubService,
         IScheduledTweetService scheduledTweetService,
         ITwitterMentionLogService twitterMentionLogService,
-        ISentimentAnalysisService sentimentAnalysisService)
+        ISentimentAnalysisService sentimentAnalysisService,
+        ICatchExceptionService catchExceptionService)
         : base(logger, twitterLogService, twitterClient, options.Value, scheduledTweetService, sentimentAnalysisService)
     {
-        _githubService = githubService;
         _twitterMentionLogService = twitterMentionLogService;
         _grammarService = grammarServices.First(v => v.GrammarAlgorith == Defaults.DefaultAlgorithm);
         _grammarService.SetStrictnessLevel(CorrectionStrictnessLevels.Intolerant);
+        _catchExceptionService = catchExceptionService;
     }
 
     protected override async Task ExecuteAsync(CancellationToken stoppingToken)
@@ -57,9 +55,13 @@ public class TwitterBotMentionHostedService : BaseTwitterHostedService
                 var getMentionParameters = new GetMentionsTimelineParameters();
 
                 if (lastTweetId == 0)
+                {
                     getMentionParameters.PageSize = TwitterBotSettings.TimelineFirstLoadPageSize;
+                }
                 else
+                {
                     getMentionParameters.SinceId = lastTweetId;
+                }
 
                 var mentions = await TwitterClient.Timelines.GetMentionsTimelineAsync(getMentionParameters);
 
@@ -69,12 +71,16 @@ public class TwitterBotMentionHostedService : BaseTwitterHostedService
                 {
                     // Avoid correcting replies to my own tweets
                     if (mention.InReplyToUserId == myUser.Id)
+                    {
                         continue;
+                    }
 
                     var tweet = await GetTweetFromMention(mention);
 
                     if (tweet == null)
+                    {
                         continue;
+                    }
 
                     var tweetText = StringUtils.RemoveHashtags(StringUtils.RemoveMentions(StringUtils.RemoveEmojis(tweet.Text)));
 
@@ -136,33 +142,9 @@ public class TwitterBotMentionHostedService : BaseTwitterHostedService
                 await PublishScheduledTweets();
                 await LikeRepliesToBot(mentions);
             }
-            // TODO: Move all this to some "CatchExceptionService"
-            catch (TwitterException ex) when (ex.TwitterDescription.Contains("Try again later") || ex.TwitterDescription.Contains("Timeout limit"))
-            {
-                Logger.LogWarning(ex, ex.TwitterDescription);
-            }
-            catch (SqlException ex) when (ex.Message.Contains("SHUTDOWN"))
-            {
-                Logger.LogWarning(ex, "Sql Server shutdown in progress");
-            }
             catch (Exception ex)
             {
-                var message = ex is TwitterException tEx ? tEx.TwitterDescription : ex.Message;
-
-                var innerExceptions = ex.GetInnerExceptions();
-
-                if (innerExceptions.Any(x => x.GetType() == typeof(SocketException) && x.Message.Contains("Connection reset by peer")))
-                {
-                    // The server has reset the connection.
-                    Logger.LogWarning(ex, "Socket reseted.");
-                }
-                else
-                {
-                    Logger.LogError(ex, message);
-
-                    // fire and forget
-                    _ = _githubService.CreateBugIssue($"Application Exception: {message}", ex, GithubIssueLabels.Twitter);
-                }
+                _catchExceptionService.HandleException(ex, GithubIssueLabels.Twitter);
             }
 
             await Task.Delay(TwitterBotSettings.HostedServiceIntervalMilliseconds);
