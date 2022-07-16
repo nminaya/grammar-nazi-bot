@@ -28,20 +28,20 @@ public class DiscordBotHostedService : BackgroundService
     private readonly BaseSocketClient _client;
     private readonly DiscordSettings _discordSettings;
     private readonly ILogger<DiscordBotHostedService> _logger;
-    private readonly IGithubService _githubService;
     private readonly IServiceScopeFactory _serviceScopeFactory;
+    private readonly ICatchExceptionService _catchExceptionService;
 
     public DiscordBotHostedService(BaseSocketClient baseSocketClient,
         IOptions<DiscordSettings> options,
-        IGithubService githubService,
         ILogger<DiscordBotHostedService> logger,
-        IServiceScopeFactory serviceScopeFactory)
+        IServiceScopeFactory serviceScopeFactory,
+        ICatchExceptionService catchExceptionService)
     {
         _client = baseSocketClient;
         _discordSettings = options.Value;
         _logger = logger;
-        _githubService = githubService;
         _serviceScopeFactory = serviceScopeFactory;
+        _catchExceptionService = catchExceptionService;
     }
 
     protected override async Task ExecuteAsync(CancellationToken stoppingToken)
@@ -56,26 +56,16 @@ public class DiscordBotHostedService : BackgroundService
         {
             // fire and forget
             _ = Task.Run(async () =>
-        {
-            try
             {
-                await PollyExceptionHandlerHelper.HandleExceptionAndRetry<SqlException>(OnMessageReceived(eventArgs), _logger, stoppingToken);
-            }
-            catch (HttpException ex) when (ex.Message.ContainsAny("50013", "50001", "Forbidden", "160002") || ex.HttpCode == HttpStatusCode.BadRequest)
-            {
-                _logger.LogWarning(ex, ex.Message);
-            }
-            catch (SqlException ex) when (ex.Message.Contains("SHUTDOWN"))
-            {
-                _logger.LogWarning(ex, "Sql Server shutdown in progress");
-            }
-            catch (Exception ex)
-            {
-                _logger.LogError(ex, ex.Message);
-
-                await _githubService.CreateBugIssue($"Application Exception: {ex.Message}", ex, GithubIssueLabels.Discord);
-            }
-        });
+                try
+                {
+                    await PollyExceptionHandlerHelper.HandleExceptionAndRetry<SqlException>(OnMessageReceived(eventArgs), _logger, stoppingToken);
+                }
+                catch (Exception ex)
+                {
+                    _catchExceptionService.HandleException(ex, GithubIssueLabels.Discord);
+                }
+            });
 
             return Task.CompletedTask;
         };
