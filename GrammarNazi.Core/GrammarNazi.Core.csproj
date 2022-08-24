@@ -6,7 +6,7 @@
 
   <ItemGroup>
     <PackageReference Include="Discord.Net" Version="3.7.2" />
-    <PackageReference Include="FirebaseDatabase.net" Version="4.0.7" />
+    <PackageReference Include="FirebaseDatabase.net" Version="4.1.0" />
     <PackageReference Include="Markdig" Version="0.30.3" />
     <PackageReference Include="Microsoft.EntityFrameworkCore" Version="6.0.8" />
     <PackageReference Include="Microsoft.EntityFrameworkCore.Sqlite" Version="6.0.8" />
