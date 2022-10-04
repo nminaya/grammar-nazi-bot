@@ -14,5 +14,9 @@ public enum SupportedLanguages
 
     [Description("Spanish")]
     [LanguageInformation("es", "spa")]
-    Spanish = 2
+    Spanish = 2,
+
+    [Description("French")]
+    [LanguageInformation("fr", "fre")]
+    French = 3
 }
