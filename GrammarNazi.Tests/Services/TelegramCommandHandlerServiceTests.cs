@@ -21,6 +21,8 @@ public class TelegramCommandHandlerServiceTests
     [Theory]
     [InlineData("SupportedLanguages.English", SupportedLanguages.English)]
     [InlineData("SupportedLanguages.Spanish", SupportedLanguages.Spanish)]
+    [InlineData("SupportedLanguages.French", SupportedLanguages.French)]
+
     public async Task HandleCallBackQuery_LanguageChange_Should_ChangeSelectedLanguage(string callBackQueryData, SupportedLanguages expectedLanguage)
     {
         // Arrange
