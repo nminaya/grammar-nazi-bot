@@ -266,6 +266,7 @@
 
   <ItemGroup>
     <Folder Include="Library\Dictionary\en\" />
+    <Folder Include="Library\Dictionary\fr\" />
     <Folder Include="Library\Names\" />
   </ItemGroup>
 
