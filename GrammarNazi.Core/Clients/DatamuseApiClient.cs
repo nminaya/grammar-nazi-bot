@@ -21,12 +21,7 @@ public class DatamuseApiClient : IDatamuseApiClient
 
     public async Task<WordCheckResult> CheckWord(string word, string language)
     {
-        string languageParam = "";
-
-        if (language == SupportedLanguages.Spanish.GetLanguageInformation().TwoLetterISOLanguageName)
-        {
-            languageParam = "&v=es";
-        }
+        string languageParam = language == SupportedLanguages.Spanish.GetLanguageInformation().TwoLetterISOLanguageName ? "&v=es" : "";
 
         var httpClient = _httpClientFactory.CreateClient("datamuseApi");
 

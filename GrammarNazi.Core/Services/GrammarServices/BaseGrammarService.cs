@@ -41,7 +41,9 @@ public abstract class BaseGrammarService
     {
         if (language == SupportedLanguages.English.GetLanguageInformation().TwoLetterISOLanguageName)
             return $"The word \"{word}\" doesn't exist or isn't in the dictionary.";
+        else if (language == SupportedLanguages.Spanish.GetLanguageInformation().TwoLetterISOLanguageName)
+            return $"La palabra \"{word}\" no existe o no está en el diccionario.";
 
-        return $"La palabra \"{word}\" no existe o no está en el diccionario.";
+        return $"Le mot \"{word}\" n'existe pas ou n'est pas dans le dictionnaire.";
     }
 }

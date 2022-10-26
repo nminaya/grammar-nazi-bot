@@ -103,6 +103,7 @@ public class LanguageCommandTests
     [Theory]
     [InlineData(SupportedLanguages.English)]
     [InlineData(SupportedLanguages.Spanish)]
+    [InlineData(SupportedLanguages.French)]
     public async Task ValidParameter_Should_ChangeChatConfig_And_ReplyMessage(SupportedLanguages languageParameter)
     {
         // Arrange
