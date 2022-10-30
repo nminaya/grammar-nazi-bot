@@ -41,7 +41,9 @@ public class SettingsCommand : BaseTelegramCommand, ITelegramBotCommand
         messageBuilder.AppendLine($"Whitelist Words:").AppendLine($"Type {TelegramBotCommands.WhiteList} to see Whitelist words configured.").AppendLine();
 
         if (chatConfig.IsBotStopped)
+        {
             messageBuilder.AppendLine($"The bot is currently stopped. Type {TelegramBotCommands.Start} to activate the Bot.");
+        }
 
         await Client.SendTextMessageAsync(message.Chat.Id, messageBuilder.ToString());
         await NotifyIfBotIsNotAdmin(message);

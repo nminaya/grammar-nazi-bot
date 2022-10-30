@@ -18,7 +18,9 @@ public class SentimAnalysisApiService : ISentimentAnalysisService
     public async Task<SentimentAnalysisResult> GetSentimentAnalysis(string text)
     {
         if (string.IsNullOrEmpty(text))
+        {
             return default;
+        }
 
         var analysisResult = await _sentimApiClient.GetSentimentResult(text);
 

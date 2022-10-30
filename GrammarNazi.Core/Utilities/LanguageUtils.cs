@@ -28,9 +28,9 @@ public static class LanguageUtils
     public static string[] GetSupportedLanguages()
     {
         return Enum.GetValues(typeof(SupportedLanguages))
-                .Cast<SupportedLanguages>()
-                .Select(v => v.GetLanguageInformation()?.ThreeLetterISOLanguageName)
-                .Where(v => !string.IsNullOrEmpty(v))
-                .ToArray();
+                   .Cast<SupportedLanguages>()
+                   .Select(v => v.GetLanguageInformation()?.ThreeLetterISOLanguageName)
+                   .Where(v => !string.IsNullOrEmpty(v))
+                   .ToArray();
     }
 }

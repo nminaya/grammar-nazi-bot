@@ -19,10 +19,9 @@ public class InMemoryRepository<T> : IRepository<T> where T : class
 
     public Task<bool> Any(Expression<Func<T, bool>> filter = default)
     {
-        if (filter == default)
-            return Task.FromResult(_list.Count > 0);
-
-        return Task.FromResult(_list.Any(filter.Compile()));
+        return filter == default 
+            ? Task.FromResult(_list.Count > 0) 
+            : Task.FromResult(_list.Any(filter.Compile()));
     }
 
     public Task Delete(T entity)
@@ -53,7 +52,9 @@ public class InMemoryRepository<T> : IRepository<T> where T : class
         var obj = _list.FirstOrDefault(identifier.Compile());
 
         if (obj != default)
+        {
             _list.Remove(obj);
+        }
 
         _list.Add(entity);
 

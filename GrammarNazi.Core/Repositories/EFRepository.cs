@@ -26,10 +26,9 @@ public class EFRepository<T> : IRepository<T> where T : class
 
     public async Task<bool> Any(Expression<Func<T, bool>> filter = default)
     {
-        if (filter == default)
-            return await EntityFrameworkQueryableExtensions.AnyAsync(_dbContext.Set<T>());
-
-        return await _dbContext.Set<T>().AnyAsync(filter);
+        return filter == default
+            ? await EntityFrameworkQueryableExtensions.AnyAsync(_dbContext.Set<T>())
+            : await _dbContext.Set<T>().AnyAsync(filter);
     }
 
     public async Task Delete(T entity)

@@ -68,7 +68,9 @@ public class GithubService : IGithubService
     private static string GetTrimmedTitle(string title)
     {
         if (title.Length <= Defaults.GithubIssueMaxTitleLength)
+        {
             return title;
+        }
 
         const string dots = "...";
 

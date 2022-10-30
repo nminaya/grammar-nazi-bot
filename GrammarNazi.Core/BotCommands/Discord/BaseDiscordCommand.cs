@@ -13,7 +13,9 @@ public abstract class BaseDiscordCommand
     protected bool IsUserAdmin(IMessage message)
     {
         if (message.Channel is IPrivateChannel)
+        {
             return true;
+        }
 
         var user = message.Author as IGuildUser;
         return user.GuildPermissions.Administrator || user.GuildPermissions.ManageChannels;
