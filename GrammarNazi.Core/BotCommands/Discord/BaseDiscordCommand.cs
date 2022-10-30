@@ -1,5 +1,6 @@
 ﻿using Discord;
 using GrammarNazi.Core.Extensions;
+using GrammarNazi.Domain.Enums;
 using System;
 using System.Linq;
 using System.Text;
@@ -43,5 +44,20 @@ public abstract class BaseDiscordCommand
         }
 
         return messageBuilder.ToString();
+    }
+
+    protected async Task SendWarningMessageIfLanguageNotSupported(IMessage message, string command, SupportedLanguages language, GrammarAlgorithms algorithm)
+    {
+        if (language == SupportedLanguages.Auto)
+        {
+            return;
+        }
+
+        if (algorithm.IsLanguageSupported(language))
+        {
+            return;
+        }
+
+        await SendMessage(message, $"WARNING: The selected language ({language.GetDescription()}) is not supported by the selected algorithm ({algorithm.GetDescription()}).", command);
     }
 }

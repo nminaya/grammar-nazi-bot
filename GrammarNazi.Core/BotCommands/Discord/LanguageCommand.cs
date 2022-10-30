@@ -54,6 +54,7 @@ public class LanguageCommand : BaseDiscordCommand, IDiscordBotCommand
             await _channelConfigService.Update(channelConfig);
 
             await SendMessage(message, $"Language updated: {channelConfig.SelectedLanguage.GetDescription()}", DiscordBotCommands.Language);
+            await SendWarningMessageIfLanguageNotSupported(message, DiscordBotCommands.Language, channelConfig.SelectedLanguage, channelConfig.GrammarAlgorithm);
             return;
         }
 

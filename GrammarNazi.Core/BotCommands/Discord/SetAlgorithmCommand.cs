@@ -53,6 +53,7 @@ public class SetAlgorithmCommand : BaseDiscordCommand, IDiscordBotCommand
             await _channelConfigService.Update(channelConfig);
 
             await SendMessage(message, $"Algorithm updated: {channelConfig.GrammarAlgorithm.GetDescription()}", DiscordBotCommands.SetAlgorithm);
+            await SendWarningMessageIfLanguageNotSupported(message, DiscordBotCommands.SetAlgorithm, channelConfig.SelectedLanguage, channelConfig.GrammarAlgorithm);
             return;
         }
 
