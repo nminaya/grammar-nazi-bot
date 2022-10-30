@@ -53,6 +53,7 @@ public class SetAlgorithmCommand : BaseTelegramCommand, ITelegramBotCommand
                 await _chatConfigurationService.Update(chatConfig);
 
                 await Client.SendTextMessageAsync(message.Chat.Id, "Algorithm updated.");
+                await SendWarningMessageIfLanguageNotSupported(message, chatConfig.SelectedLanguage, chatConfig.GrammarAlgorithm);
             }
             else
             {

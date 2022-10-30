@@ -77,9 +77,25 @@ public class TelegramCommandHandlerService : ITelegramCommandHandlerService
         }
 
         await _chatConfigurationService.Update(chatConfig);
+        await SendWarningMessageIfLanguageNotSupported(message, chatConfig.SelectedLanguage, chatConfig.GrammarAlgorithm);
 
         // Fire and forget
         _ = _client.DeleteMessageAsync(callbackQuery.Message.Chat.Id, callbackQuery.Message.MessageId);
+    }
+
+    private async Task SendWarningMessageIfLanguageNotSupported(Message message, SupportedLanguages language, GrammarAlgorithms algorithm)
+    {
+        if (language == SupportedLanguages.Auto)
+        {
+            return;
+        }
+
+        if (algorithm.IsLanguageSupported(language))
+        {
+            return;
+        }
+
+        await _client.SendTextMessageAsync(message.Chat.Id, $"WARNING: The selected language ({language.GetDescription()}) is not supported by the selected algorithm ({algorithm.GetDescription()}).");
     }
 
     private static bool IsCommand(string expected, string actual)
