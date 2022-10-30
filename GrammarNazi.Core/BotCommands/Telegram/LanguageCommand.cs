@@ -54,6 +54,8 @@ public class LanguageCommand : BaseTelegramCommand, ITelegramBotCommand
                 await _chatConfigurationService.Update(chatConfig);
 
                 await Client.SendTextMessageAsync(message.Chat.Id, "Language updated.");
+
+                await SendWarningMessageIfLanguageNotSupported(message, chatConfig.SelectedLanguage, chatConfig.GrammarAlgorithm);
             }
             else
             {

@@ -1,5 +1,6 @@
 ﻿using GrammarNazi.Core.Extensions;
 using GrammarNazi.Core.Utilities;
+using GrammarNazi.Domain.Enums;
 using GrammarNazi.Domain.Utilities;
 using System;
 using System.Linq;
@@ -60,6 +61,21 @@ public abstract class BaseTelegramCommand
     protected async Task SendTypingNotification(Message message)
     {
         await Client.SendChatActionAsync(message.Chat.Id, ChatAction.Typing);
+    }
+
+    protected async Task SendWarningMessageIfLanguageNotSupported(Message message, SupportedLanguages language, GrammarAlgorithms algorithm)
+    {
+        if (language == SupportedLanguages.Auto)
+        {
+            return;
+        }
+
+        if (algorithm.IsLanguageSupported(language))
+        {
+            return;
+        }
+
+        await Client.SendTextMessageAsync(message.Chat.Id, $"WARNING: The selected language ({language.GetDescription()}) is not supported by the selected algorithm ({algorithm.GetDescription()}).");
     }
 
     protected static string GetAvailableOptions<T>(T selectedOption) where T : Enum
