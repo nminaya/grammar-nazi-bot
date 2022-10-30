@@ -43,4 +43,16 @@ public static class EnumExtensions
             ThreeLetterISOLanguageName = langInfo.ThreeLetterISOLanguageName
         };
     }
+
+    public static bool IsLanguageSupported(this GrammarAlgorithms algorithm, SupportedLanguages language)
+    {
+        return algorithm switch
+        {
+            GrammarAlgorithms.InternalAlgorithm => true,
+            GrammarAlgorithms.LanguageToolApi => true,
+            GrammarAlgorithms.DatamuseApi => new[] { SupportedLanguages.English, SupportedLanguages.Spanish }.Contains(language),
+            GrammarAlgorithms.YandexSpellerApi => new[] { SupportedLanguages.English, SupportedLanguages.Spanish }.Contains(language),
+            _ => true,
+        };
+    }
 }
