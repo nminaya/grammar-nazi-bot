@@ -26,7 +26,9 @@ public class YandexSpellerApiService : BaseGrammarService, IGrammarService
     public async Task<GrammarCheckResult> GetCorrections(string text)
     {
         if (string.IsNullOrWhiteSpace(text))
+        {
             return new(default);
+        }
 
         string languageCode;
         if (SelectedLanguage != SupportedLanguages.Auto)
@@ -46,14 +48,18 @@ public class YandexSpellerApiService : BaseGrammarService, IGrammarService
         var textCorrections = await _yandexSpellerApiClient.CheckText(text, languageCode);
 
         if (!textCorrections.Any())
+        {
             return new(default);
+        }
 
         var corrections = new List<GrammarCorrection>();
 
         foreach (var textCorrection in textCorrections.Where(ErrorCodeFIlter))
         {
             if (IsWhiteListWord(textCorrection.Word))
+            {
                 continue;
+            }
 
             corrections.Add(new()
             {
@@ -77,18 +83,16 @@ public class YandexSpellerApiService : BaseGrammarService, IGrammarService
 
         string GetDefaultErrorMessage()
         {
-            if (checkTextResponse.Word.Split(' ').Length > 1)
-                return $"Possible mistake found.";
-
-            return $"The word \"{checkTextResponse.Word}\" doesn't exist or isn't in the dictionary.";
+            return checkTextResponse.Word.Split(' ').Length > 1
+                ? $"Possible mistake found."
+                : $"The word \"{checkTextResponse.Word}\" doesn't exist or isn't in the dictionary.";
         }
     }
 
     private bool ErrorCodeFIlter(CheckTextResponse response)
     {
-        if (SelectedStrictnessLevel == CorrectionStrictnessLevels.Intolerant)
-            return true;
-
-        return response.ErrorCode == YandexSpellerErrorCodes.UnknownWord;
+        return SelectedStrictnessLevel == CorrectionStrictnessLevels.Intolerant
+            ? true
+            : response.ErrorCode == YandexSpellerErrorCodes.UnknownWord;
     }
 }

@@ -21,12 +21,16 @@ public class MeaningCloudLanguageApiService : ILanguageService
         var languageResult = _meganingLanguageIdentificationApi.GetLanguage(text).GetAwaiter().GetResult();
 
         if (languageResult.Status.RemainingCredits == 0 || !languageResult.LanguageList.Any())
+        {
             return default;
+        }
 
         var languages = languageResult.LanguageList.Where(v => LanguageUtils.GetSupportedLanguages().Contains(v.Iso6393));
 
         if (!languages.Any())
+        {
             return default;
+        }
 
         var language = languages.First();
 

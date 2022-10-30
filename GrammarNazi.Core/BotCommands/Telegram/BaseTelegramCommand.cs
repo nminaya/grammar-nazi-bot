@@ -41,7 +41,9 @@ public abstract class BaseTelegramCommand
     protected async Task<bool> IsBotAdmin(Message message)
     {
         if (message.Chat.Type == ChatType.Private)
+        {
             return true;
+        }
 
         var bot = await Client.GetMeAsync();
         var chatAdministrators = await Client.GetChatAdministratorsAsync(message.Chat.Id);

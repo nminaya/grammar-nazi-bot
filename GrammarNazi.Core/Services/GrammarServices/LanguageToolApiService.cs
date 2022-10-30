@@ -27,7 +27,7 @@ public class LanguageToolApiService : BaseGrammarService, IGrammarService
 
     public async Task<GrammarCheckResult> GetCorrections(string text)
     {
-        // Do not evalulate long texts or empty texts
+        // Do not evaluate long texts or empty texts
         if (string.IsNullOrWhiteSpace(text) || text.Length >= Defaults.LanguageToolApiMaxTextLength)
         {
             return new(default);

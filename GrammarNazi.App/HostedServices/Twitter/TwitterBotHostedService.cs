@@ -68,19 +68,27 @@ public class TwitterBotHostedService : BaseTwitterHostedService
                 foreach (var follower in followers)
                 {
                     if (follower.Protected && !friendIds.Contains(follower.Id))
+                    {
                         continue;
+                    }
 
                     var getTimeLineParameters = new GetUserTimelineParameters(follower);
 
                     if (sinceTweetId == 0)
+                    {
                         getTimeLineParameters.PageSize = TwitterBotSettings.TimelineFirstLoadPageSize;
+                    }
                     else
+                    {
                         getTimeLineParameters.SinceId = sinceTweetId;
+                    }
 
                     var timeLine = await TwitterClient.Timelines.GetUserTimelineAsync(getTimeLineParameters);
 
                     if (timeLine.Length == 0)
+                    {
                         continue;
+                    }
 
                     // Avoid Retweets.
                     tweets.AddRange(timeLine.Where(v => !v.Text.StartsWith("RT")));
@@ -93,7 +101,9 @@ public class TwitterBotHostedService : BaseTwitterHostedService
                     var correctionsResult = await _grammarService.GetCorrections(tweetText);
 
                     if (!correctionsResult.HasCorrections)
+                    {
                         continue;
+                    }
 
                     var messageBuilder = new StringBuilder();
 

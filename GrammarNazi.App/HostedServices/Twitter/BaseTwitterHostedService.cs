@@ -84,7 +84,9 @@ public abstract class BaseTwitterHostedService : BackgroundService
             bool isReplyToBot = await TwitterLogService.ReplyTweetExist(reply.InReplyToStatusId.Value);
 
             if (!isReplyToBot)
+            {
                 continue;
+            }
 
             var sentimentAnalysis = await SentimentAnalysisService.GetSentimentAnalysis(reply.Text);
 
@@ -114,7 +116,7 @@ public abstract class BaseTwitterHostedService : BackgroundService
                 return;
             }
 
-            Logger.LogInformation("Reply sent successfuly");
+            Logger.LogInformation("Reply sent successfully");
             await TwitterLogService.LogReply(replyTweet.Id, replyTo, replyTweet.Text);
         }
         catch (TwitterException ex) when (ex.ToString().Contains("The original Tweet author restricted who can reply to this Tweet")

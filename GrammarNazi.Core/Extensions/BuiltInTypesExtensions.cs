@@ -14,7 +14,9 @@ public static class BuiltInTypesExtensions
         foreach (var item in Enum.GetValues(typeof(T)))
         {
             if (Convert.ToInt32(item) == val)
+            {
                 return true;
+            }
         }
 
         return false;
@@ -23,10 +25,14 @@ public static class BuiltInTypesExtensions
     public static IEnumerable<string> SplitInParts(this string str, int partLength)
     {
         if (str == null)
+        {
             throw new ArgumentNullException(nameof(str));
+        }
 
         if (partLength <= 0)
+        {
             throw new ArgumentException("Part length has to be positive.", nameof(partLength));
+        }
 
         for (int i = 0; i < str.Length; i += partLength)
         {

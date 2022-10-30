@@ -87,7 +87,7 @@ public class TelegramCommandHandlerService : ITelegramCommandHandlerService
         if (actual.Contains("@"))
         {
             return actual.StartsWith($"{expected}@{Defaults.TelegramBotUser}")
-                // For test enviroment
+                // For test environment
                 || actual.StartsWith($"{expected}@grammarNaziTest_Bot");
         }
 

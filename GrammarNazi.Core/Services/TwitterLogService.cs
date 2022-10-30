@@ -46,7 +46,9 @@ public class TwitterLogService : ITwitterLogService
     public async Task LogTweet(long tweetId)
     {
         if (await _repository.Any(x => x.TweetId == tweetId))
+        {
             return;
+        }
 
         var twitterLog = new TwitterLog
         {

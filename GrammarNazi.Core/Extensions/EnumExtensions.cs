@@ -25,7 +25,9 @@ public static class EnumExtensions
     public static LanguageInformation GetLanguageInformation(this SupportedLanguages language)
     {
         if (language == SupportedLanguages.Auto)
+        {
             return default;
+        }
 
         var langInfo = language
             .GetType()
@@ -35,7 +37,9 @@ public static class EnumExtensions
             .FirstOrDefault();
 
         if (langInfo == default)
+        {
             throw new InvalidOperationException($"SupportedLanguages.{language} does not have LanguageInformation attribute");
+        }
 
         return new()
         {

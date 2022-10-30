@@ -36,7 +36,9 @@ public class SettingsCommand : BaseDiscordCommand, IDiscordBotCommand
         messageBuilder.AppendLine($"Whitelist Words:").AppendLine($"Type `{DiscordBotCommands.WhiteList}` to see Whitelist words configured.").AppendLine();
 
         if (channelConfig.IsBotStopped)
+        {
             messageBuilder.AppendLine($"The bot is currently stopped. Type `{DiscordBotCommands.Start}` to activate the Bot.");
+        }
 
         await SendMessage(message, messageBuilder.ToString(), DiscordBotCommands.Settings);
     }
