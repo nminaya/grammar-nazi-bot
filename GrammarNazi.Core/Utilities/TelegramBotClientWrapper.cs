@@ -20,12 +20,12 @@ public class TelegramBotClientWrapper : ITelegramBotClientWrapper
 
     public Task DeleteMessageAsync(ChatId chatId, int messageId, CancellationToken cancellationToken = default)
     {
-        return _client.DeleteMessageAsync(chatId, messageId, cancellationToken);
+        return _client.DeleteMessageAsync(chatId, messageId, cancellationToken: cancellationToken);
     }
 
     public Task<ChatMember[]> GetChatAdministratorsAsync(ChatId chatId, CancellationToken cancellationToken = default)
     {
-        return _client.GetChatAdministratorsAsync(chatId, cancellationToken);
+        return _client.GetChatAdministratorsAsync(chatId, cancellationToken: cancellationToken);
     }
 
     public Task<User> GetMeAsync(CancellationToken cancellationToken = default)
@@ -35,11 +35,21 @@ public class TelegramBotClientWrapper : ITelegramBotClientWrapper
 
     public Task SendChatActionAsync(ChatId chatId, ChatAction chatAction, CancellationToken cancellationToken = default)
     {
-        return _client.SendChatActionAsync(chatId, chatAction, cancellationToken);
+        return _client.SendChatActionAsync(chatId,chatAction, cancellationToken: cancellationToken);
     }
 
     public Task<Message> SendTextMessageAsync(ChatId chatId, string text, ParseMode? parseMode = null, IEnumerable<MessageEntity> entities = null, bool? disableWebPagePreview = null, bool? disableNotification = null, bool? protectContent = null, int? replyToMessageId = null, bool? allowSendingWithoutReply = null, IReplyMarkup replyMarkup = null, CancellationToken cancellationToken = default)
     {
-        return _client.SendTextMessageAsync(chatId, text, parseMode, entities, disableWebPagePreview, disableNotification, protectContent, replyToMessageId, allowSendingWithoutReply, replyMarkup, cancellationToken);
+        return _client.SendTextMessageAsync(chatId,
+                                            text,
+                                            parseMode: parseMode,
+                                            entities: entities,
+                                            disableWebPagePreview: disableWebPagePreview,
+                                            disableNotification: disableNotification,
+                                            protectContent: protectContent,
+                                            replyToMessageId: replyToMessageId,
+                                            allowSendingWithoutReply: allowSendingWithoutReply,
+                                            replyMarkup: replyMarkup,
+                                            cancellationToken: cancellationToken);
     }
 }
