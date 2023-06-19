@@ -46,7 +46,8 @@ public class Startup
         // Disabled because of performancee issue (https://github.com/nminaya/grammar-nazi-bot/issues/344)
         //services.AddHostedService<DiscordBotHostedService>();
 
-        services.AddHostedService<TwitterBotMentionHostedService>();
+        // Disabled because of new Twitter API pricing (https://twitter.com/GrammarNBot/status/1670853991511539714)
+        //services.AddHostedService<TwitterBotMentionHostedService>();
 
         // Disable Twitter bot due to limitation/suspension
         //services.AddHostedService<TwitterBotHostedService>();

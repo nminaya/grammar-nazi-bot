@@ -5,6 +5,7 @@ Bot that corrects spelling mistakes.
 [@grammarNz_Bot](https://t.me/grammarNz_Bot): This bot analyzes each message that is sent in a Telegram chat, and if it finds any spelling or grammar errors, it replies to the message with its corrections using the asterisk symbol (*).
 
 #### Twitter Bot
+#### Twitter Bot (Disabled, see [https://twitter.com/GrammarNBot/status/1670853991511539714](https://twitter.com/GrammarNBot/status/1670853991511539714))
 [@GrammarNBot](https://twitter.com/GrammarNBot) Analyzes the tweet you're replying to mentioning the bot, and if it finds any spelling or grammar errors, it will tweet a reply with its corrections using the asterisk symbol (*).
 
 #### Discord Bot (Disabled, see [#344](https://github.com/nminaya/grammar-nazi-bot/issues/344))
