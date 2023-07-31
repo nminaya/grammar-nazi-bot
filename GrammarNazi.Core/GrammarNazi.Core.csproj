@@ -13,7 +13,7 @@
     <PackageReference Include="Microsoft.EntityFrameworkCore.SqlServer" Version="7.0.9" />
     <PackageReference Include="Microsoft.Extensions.Http" Version="7.0.0" />
     <PackageReference Include="NTextCat" Version="0.3.65" />
-    <PackageReference Include="Octokit" Version="7.0.1" />
+    <PackageReference Include="Octokit" Version="7.1.0" />
     <PackageReference Include="Polly" Version="7.2.4" />
     <PackageReference Include="System.ServiceModel.Duplex" Version="6.0.0" />
     <PackageReference Include="System.ServiceModel.Http" Version="6.0.0" />
