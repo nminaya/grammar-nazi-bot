@@ -88,7 +88,7 @@ public class FirebaseRepository<T> : IRepository<T> where T : class
     {
         var allItems = await ExecuteFirebaseQuery(() => _firebaseClient.Child(TypeName).OnceAsync<T>());
 
-        return allItems.Select(v => v);
+        return allItems.Select(v => v.Object);
     }
 
     public async Task<IEnumerable<T>> GetAll(Expression<Func<T, bool>> filter)

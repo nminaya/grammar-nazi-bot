@@ -1,7 +1,7 @@
 ﻿using Discord;
 using GrammarNazi.Domain.BotCommands;
 using GrammarNazi.Domain.Utilities;
-using Moq;
+using NSubstitute;
 using System.Threading.Tasks;
 using Telegram.Bot.Types;
 using Telegram.Bot.Types.Enums;
@@ -17,11 +17,11 @@ public static class TestUtilities
 
         var channelMock = Substitute.For<IMessageChannel>();
         var user = Substitute.For<IGuildUser>();
-        user.Setup(v => v.GuildPermissions).Returns(GuildPermissions.None);
+        user.GuildPermissions.Returns(GuildPermissions.None);
         var message = Substitute.For<IMessage>();
 
-        message.Setup(v => v.Author).Returns(user);
-        message.Setup(v => v.Channel).Returns(channelMock);
+        message.Author.Returns(user);
+        message.Channel.Returns(channelMock);
 
         // Act
         await command.Handle(message);
@@ -29,10 +29,10 @@ public static class TestUtilities
         // Assert
 
         // Verify SendMessageAsync was called with the reply message "Only admins can use this command"
-        channelMock.Verify(v => v.SendMessageAsync(It.Is<string>(s => s.Contains(replyMessage)), false, null, null, null, It.Is<MessageReference>(m => m.MessageId.Value == message.Id), null, null, null, MessageFlags.None));
+        await channelMock.Received().SendMessageAsync(Arg.Is<string>(s => s.Contains(replyMessage)), false, null, null, null, Arg.Is<MessageReference>(m => m.MessageId.Value == message.Id), null, null, null, MessageFlags.None);
     }
 
-    public static async Task TestTelegramNotAdminUser(ITelegramBotCommand command, Mock<ITelegramBotClientWrapper> telegramBotClientMock)
+    public static async Task TestTelegramNotAdminUser(ITelegramBotCommand command, ITelegramBotClientWrapper telegramBotClientMock)
     {
         // Arrange
         const string replyMessage = "Only admins can use this command.";
@@ -48,13 +48,13 @@ public static class TestUtilities
             }
         };
 
-        telegramBotClientMock.Setup(v => v.GetChatAdministratorsAsync(message.Chat.Id, default))
-            .ReturnsAsync(new ChatMember[0]);
+        telegramBotClientMock.GetChatAdministratorsAsync(message.Chat.Id, default)
+            .Returns(new ChatMember[0]);
 
         // Act
         await command.Handle(message);
 
         // Assert
-        telegramBotClientMock.Verify(v => v.SendTextMessageAsync(message.Chat.Id, It.Is<string>(s => s.Contains(replyMessage)), default, default, default, default, default, message.MessageId, default, default, default));
+        await telegramBotClientMock.Received().SendTextMessageAsync(message.Chat.Id, Arg.Is<string>(s => s.Contains(replyMessage)), default, default, default, default, default, message.MessageId, default, default, default);  
     }
 }

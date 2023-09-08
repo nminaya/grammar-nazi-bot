@@ -2,7 +2,7 @@
 using GrammarNazi.Core.BotCommands.Discord;
 using GrammarNazi.Domain.Entities;
 using GrammarNazi.Domain.Services;
-using Moq;
+using NSubstitute;
 using System.Threading.Tasks;
 using Xunit;
 
@@ -25,14 +25,14 @@ public class HideDetailsCommandTests
 
         var channelMock = Substitute.For<IMessageChannel>();
         var user = Substitute.For<IGuildUser>();
-        user.Setup(v => v.GuildPermissions).Returns(GuildPermissions.All);
+        user.GuildPermissions.Returns(GuildPermissions.All);
         var message = Substitute.For<IMessage>();
 
-        message.Setup(v => v.Author).Returns(user);
-        message.Setup(v => v.Channel).Returns(channelMock);
+        message.Author.Returns(user);
+        message.Channel.Returns(channelMock);
 
-        channelConfigurationServiceMock.Setup(v => v.GetConfigurationByChannelId(message.Channel.Id))
-            .ReturnsAsync(chatConfig);
+        channelConfigurationServiceMock.GetConfigurationByChannelId(message.Channel.Id)
+            .Returns(chatConfig);
 
         // Act
         await command.Handle(message);
@@ -40,8 +40,8 @@ public class HideDetailsCommandTests
         // Assert
 
         // Verify SendMessageAsync was called with the reply message "Correction details hidden ✅"
-        channelMock.Verify(v => v.SendMessageAsync(null, false, It.Is<Embed>(e => e.Description.Contains(replyMessage)), null, null, null, null, null, null, MessageFlags.None));
-        channelConfigurationServiceMock.Verify(v => v.Update(chatConfig));
+        await channelMock.Received().SendMessageAsync(null, false, Arg.Is<Embed>(e => e.Description.Contains(replyMessage)), null, null, null, null, null, null, MessageFlags.None);
+        await channelConfigurationServiceMock.Received().Update(chatConfig);
         Assert.True(chatConfig.HideCorrectionDetails);
     }
 

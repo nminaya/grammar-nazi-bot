@@ -1,7 +1,7 @@
 ﻿using GrammarNazi.Core.Services;
 using GrammarNazi.Domain.Entities;
 using GrammarNazi.Domain.Repositories;
-using Moq;
+using NSubstitute;
 using System;
 using System.Linq.Expressions;
 using System.Threading.Tasks;
@@ -18,8 +18,8 @@ public class TwitterLogServiceTests
         var repositoryMock = Substitute.For<IRepository<TwitterLog>>();
 
         // Returns false when Any is called
-        repositoryMock.Setup(v => v.Any(It.IsAny<Expression<Func<TwitterLog, bool>>>()))
-            .ReturnsAsync(false);
+        repositoryMock.Any(Arg.Any<Expression<Func<TwitterLog, bool>>>())
+            .Returns(false);
 
         var service = new TwitterLogService(repositoryMock);
 
@@ -39,12 +39,12 @@ public class TwitterLogServiceTests
         const long maxTweetId = 123456;
 
         // Returns true when Any is called
-        repositoryMock.Setup(v => v.Any(It.IsAny<Expression<Func<TwitterLog, bool>>>()))
-            .ReturnsAsync(true);
+        repositoryMock.Any(Arg.Any<Expression<Func<TwitterLog, bool>>>())
+            .Returns(true);
 
         // Returns maxTweetId value when Max is called
-        repositoryMock.Setup(v => v.Max(It.IsAny<Expression<Func<TwitterLog, long>>>()))
-            .ReturnsAsync(maxTweetId);
+        repositoryMock.Max(Arg.Any<Expression<Func<TwitterLog, long>>>())
+            .Returns(maxTweetId);
 
         var service = new TwitterLogService(repositoryMock);
 
@@ -62,8 +62,8 @@ public class TwitterLogServiceTests
         var repositoryMock = Substitute.For<IRepository<TwitterLog>>();
 
         // Returns true when Any is called
-        repositoryMock.Setup(v => v.Any(It.IsAny<Expression<Func<TwitterLog, bool>>>()))
-            .ReturnsAsync(true);
+        repositoryMock.Any(Arg.Any<Expression<Func<TwitterLog, bool>>>())
+            .Returns(true);
 
         var service = new TwitterLogService(repositoryMock);
 
@@ -71,7 +71,7 @@ public class TwitterLogServiceTests
         await service.LogTweet(123456);
 
         // Assert
-        repositoryMock.Verify(v => v.Add(It.IsAny<TwitterLog>()), Times.Never);
+        repositoryMock.DidNotReceive().Add(Arg.Any<TwitterLog>());
     }
 
     [Fact]
@@ -81,8 +81,8 @@ public class TwitterLogServiceTests
         var repositoryMock = Substitute.For<IRepository<TwitterLog>>();
 
         // Returns false when Any is called
-        repositoryMock.Setup(v => v.Any(It.IsAny<Expression<Func<TwitterLog, bool>>>()))
-            .ReturnsAsync(false);
+        repositoryMock.Any(Arg.Any<Expression<Func<TwitterLog, bool>>>())
+            .Returns(false);
 
         var service = new TwitterLogService(repositoryMock);
 
@@ -90,6 +90,6 @@ public class TwitterLogServiceTests
         await service.LogTweet(123456);
 
         // Assert
-        repositoryMock.Verify(v => v.Add(It.IsAny<TwitterLog>()), Times.Once);
+        repositoryMock.Received().Add(Arg.Any<TwitterLog>());
     }
 }

@@ -4,7 +4,7 @@ using GrammarNazi.Domain.Entities;
 using GrammarNazi.Domain.Enums;
 using GrammarNazi.Domain.Services;
 using GrammarNazi.Domain.Utilities;
-using Moq;
+using NSubstitute;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -47,14 +47,14 @@ public class TelegramCommandHandlerServiceTests
 
         var callbackQuery = new CallbackQuery { Message = message, From = message.From, Data = callBackQueryData };
 
-        telegramBotClientMock.Setup(v => v.GetChatAdministratorsAsync(message.Chat.Id, default))
-            .ReturnsAsync(new[] { new ChatMemberMember { User = new() { Id = message.From.Id } } });
+        telegramBotClientMock.GetChatAdministratorsAsync(message.Chat.Id, default)
+            .Returns(new[] { new ChatMemberMember { User = new() { Id = message.From.Id } } });
 
-        telegramBotClientMock.Setup(v => v.GetMeAsync(default))
-            .ReturnsAsync(new User { Id = 123456 });
+        telegramBotClientMock.GetMeAsync(default)
+            .Returns(new User { Id = 123456 });
 
-        chatConfigurationServiceMock.Setup(v => v.GetConfigurationByChatId(message.Chat.Id))
-            .ReturnsAsync(chatConfig);
+        chatConfigurationServiceMock.GetConfigurationByChatId(message.Chat.Id)
+            .Returns(chatConfig);
 
         // Act
         await service.HandleCallBackQuery(callbackQuery);
@@ -93,14 +93,14 @@ public class TelegramCommandHandlerServiceTests
 
         var callbackQuery = new CallbackQuery { Message = message, From = message.From, Data = callBackQueryData };
 
-        telegramBotClientMock.Setup(v => v.GetChatAdministratorsAsync(message.Chat.Id, default))
-            .ReturnsAsync(new[] { new ChatMemberMember { User = new() { Id = message.From.Id } } });
+        telegramBotClientMock.GetChatAdministratorsAsync(message.Chat.Id, default)
+            .Returns(new[] { new ChatMemberMember { User = new() { Id = message.From.Id } } });
 
-        telegramBotClientMock.Setup(v => v.GetMeAsync(default))
-            .ReturnsAsync(new User { Id = 123456 });
+        telegramBotClientMock.GetMeAsync(default)
+            .Returns(new User { Id = 123456 });
 
-        chatConfigurationServiceMock.Setup(v => v.GetConfigurationByChatId(message.Chat.Id))
-            .ReturnsAsync(chatConfig);
+        chatConfigurationServiceMock.GetConfigurationByChatId(message.Chat.Id)
+            .Returns(chatConfig);
 
         // Act
         await service.HandleCallBackQuery(callbackQuery);
@@ -136,20 +136,20 @@ public class TelegramCommandHandlerServiceTests
 
         var callbackQuery = new CallbackQuery { Message = message, From = message.From, Data = "" };
 
-        telegramBotClientMock.Setup(v => v.GetChatAdministratorsAsync(message.Chat.Id, default))
-            .ReturnsAsync(new[] { new ChatMemberMember { User = new() { Id = 100 } } });
+        telegramBotClientMock.GetChatAdministratorsAsync(message.Chat.Id, default)
+            .Returns(new[] { new ChatMemberMember { User = new() { Id = 100 } } });
 
-        telegramBotClientMock.Setup(v => v.GetMeAsync(default))
-            .ReturnsAsync(new User { Id = 123456 });
+        telegramBotClientMock.GetMeAsync(default)
+            .Returns(new User { Id = 123456 });
 
-        chatConfigurationServiceMock.Setup(v => v.GetConfigurationByChatId(message.Chat.Id))
-            .ReturnsAsync(chatConfig);
+        chatConfigurationServiceMock.GetConfigurationByChatId(message.Chat.Id)
+            .Returns(chatConfig);
 
         // Act
         await service.HandleCallBackQuery(callbackQuery);
 
         // Assert
-        telegramBotClientMock.Verify(v => v.SendTextMessageAsync(message.Chat.Id, It.Is<string>(s => s.Contains(replyMessage)), ParseMode.Markdown, default, default, default, default, default, default, default, default));
+        await telegramBotClientMock.Received().SendTextMessageAsync(message.Chat.Id, Arg.Is<string>(s => s.Contains(replyMessage)), ParseMode.Markdown, default, default, default, default, default, default, default, default);
     }
 
     [Theory]
@@ -173,8 +173,8 @@ public class TelegramCommandHandlerServiceTests
             }
         };
 
-        telegramBotClientMock.Setup(v => v.GetChatAdministratorsAsync(message.Chat.Id, default))
-            .ReturnsAsync(new[] { new ChatMemberMember { User = new() { Id = message.From.Id } } });
+        telegramBotClientMock.GetChatAdministratorsAsync(message.Chat.Id, default)
+            .Returns(new[] { new ChatMemberMember { User = new() { Id = message.From.Id } } });
 
         // Act
         await service.HandleCommand(message);
@@ -182,7 +182,7 @@ public class TelegramCommandHandlerServiceTests
         // Assert
 
         // Make sure SendTextMessageAsync method was never called
-        telegramBotClientMock.Verify(v => v.SendTextMessageAsync(message.Chat.Id, It.IsAny<string>(), default, default, default, default, default, default, default, default, default), Times.Never);
+        telegramBotClientMock.DidNotReceive().SendTextMessageAsync(message.Chat.Id, Arg.Any<string>(), default, default, default, default, default, default, default, default, default);
     }
 
     [Theory]
@@ -207,8 +207,8 @@ public class TelegramCommandHandlerServiceTests
             }
         };
 
-        telegramBotClientMock.Setup(v => v.GetChatAdministratorsAsync(message.Chat.Id, default))
-            .ReturnsAsync(new[] { new ChatMemberMember { User = new() { Id = message.From.Id } } });
+        telegramBotClientMock.GetChatAdministratorsAsync(message.Chat.Id, default)
+            .Returns(new[] { new ChatMemberMember { User = new() { Id = message.From.Id } } });
 
         // Act
         await service.HandleCommand(message);
@@ -216,7 +216,7 @@ public class TelegramCommandHandlerServiceTests
         // Assert
 
         // Make sure SendTextMessageAsync method was never called
-        telegramBotClientMock.Verify(v => v.SendTextMessageAsync(message.Chat.Id, It.IsAny<string>(), default, default, default, default, default, default, default, default, default), Times.Never);
+        telegramBotClientMock.DidNotReceive().SendTextMessageAsync(message.Chat.Id, Arg.Any<string>(), default, default, default, default, default, default, default, default, default);
     }
 
     private IEnumerable<ITelegramBotCommand> GetAllCommands()

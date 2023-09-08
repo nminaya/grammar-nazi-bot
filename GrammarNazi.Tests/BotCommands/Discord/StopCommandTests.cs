@@ -2,7 +2,7 @@
 using GrammarNazi.Core.BotCommands.Discord;
 using GrammarNazi.Domain.Entities;
 using GrammarNazi.Domain.Services;
-using Moq;
+using NSubstitute;
 using System.Threading.Tasks;
 using Xunit;
 
@@ -25,14 +25,14 @@ public class StopCommandTests
 
         var channelMock = Substitute.For<IMessageChannel>();
         var user = Substitute.For<IGuildUser>();
-        user.Setup(v => v.GuildPermissions).Returns(GuildPermissions.None);
+        user.GuildPermissions.Returns(GuildPermissions.None);
         var message = Substitute.For<IMessage>();
 
-        message.Setup(v => v.Author).Returns(user);
-        message.Setup(v => v.Channel).Returns(channelMock);
+        message.Author.Returns(user);
+        message.Channel.Returns(channelMock);
 
-        channelConfigurationServiceMock.Setup(v => v.GetConfigurationByChannelId(message.Channel.Id))
-            .ReturnsAsync(chatConfig);
+        channelConfigurationServiceMock.GetConfigurationByChannelId(message.Channel.Id)
+            .Returns(chatConfig);
 
         // Act
         await command.Handle(message);
@@ -40,7 +40,7 @@ public class StopCommandTests
         // Assert
 
         // Verify SendMessageAsync was called with the reply message "Only admins can use this command"
-        channelMock.Verify(v => v.SendMessageAsync(replyMessage, false, null, null, null, It.Is<MessageReference>(m => m.MessageId.Value == message.Id), null, null, null, MessageFlags.None));
+        await channelMock.Received().SendMessageAsync(replyMessage, false, null, null, null, Arg.Is<MessageReference>(m => m.MessageId.Value == message.Id), null, null, null, MessageFlags.None);
         Assert.False(chatConfig.IsBotStopped); // Make sure IsBotStopped is still false
     }
 
@@ -59,14 +59,14 @@ public class StopCommandTests
 
         var channelMock = Substitute.For<IMessageChannel>();
         var user = Substitute.For<IGuildUser>();
-        user.Setup(v => v.GuildPermissions).Returns(GuildPermissions.All);
+        user.GuildPermissions.Returns(GuildPermissions.All);
         var message = Substitute.For<IMessage>();
 
-        message.Setup(v => v.Author).Returns(user);
-        message.Setup(v => v.Channel).Returns(channelMock);
+        message.Author.Returns(user);
+        message.Channel.Returns(channelMock);
 
-        channelConfigurationServiceMock.Setup(v => v.GetConfigurationByChannelId(message.Channel.Id))
-            .ReturnsAsync(chatConfig);
+        channelConfigurationServiceMock.GetConfigurationByChannelId(message.Channel.Id)
+            .Returns(chatConfig);
 
         // Act
         await command.Handle(message);
@@ -74,7 +74,7 @@ public class StopCommandTests
         // Assert
 
         // Verify SendMessageAsync was called with the reply message "Bot stopped"
-        channelMock.Verify(v => v.SendMessageAsync(null, false, It.Is<Embed>(e => e.Description.Contains(replyMessage)), null, null, null, null, null, null, MessageFlags.None));
+        await channelMock.Received().SendMessageAsync(null, false, Arg.Is<Embed>(e => e.Description.Contains(replyMessage)), null, null, null, null, null, null, MessageFlags.None);
         Assert.True(chatConfig.IsBotStopped);
     }
 }

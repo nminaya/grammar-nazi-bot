@@ -3,7 +3,8 @@ using GrammarNazi.Domain.Constants;
 using GrammarNazi.Domain.Entities;
 using GrammarNazi.Domain.Services;
 using GrammarNazi.Domain.Utilities;
-using Moq;
+using NSubstitute;
+using NSubstitute;
 using System.Threading.Tasks;
 using Telegram.Bot.Types;
 using Telegram.Bot.Types.Enums;
@@ -38,20 +39,20 @@ public class AddWhiteListCommandTests
             }
         };
 
-        telegramBotClientMock.Setup(v => v.GetChatAdministratorsAsync(message.Chat.Id, default))
-            .ReturnsAsync(new[] { new ChatMemberMember { User = new() { Id = message.From.Id } } });
+        telegramBotClientMock.GetChatAdministratorsAsync(message.Chat.Id, default)
+            .Returns(new[] { new ChatMemberMember { User = new() { Id = message.From.Id } } });
 
-        telegramBotClientMock.Setup(v => v.GetMeAsync(default))
-            .ReturnsAsync(new User { Id = 123456 });
+        telegramBotClientMock.GetMeAsync(default)
+            .Returns(new User { Id = 123456 });
 
-        chatConfigurationServiceMock.Setup(v => v.GetConfigurationByChatId(message.Chat.Id))
-            .ReturnsAsync(chatConfig);
+        chatConfigurationServiceMock.GetConfigurationByChatId(message.Chat.Id)
+            .Returns(chatConfig);
 
         // Act
         await command.Handle(message);
 
         // Assert
-        telegramBotClientMock.Verify(v => v.SendTextMessageAsync(message.Chat.Id, It.Is<string>(s => s.Contains(replyMessage)), default, default, default, default, default, default, default, default, default));
+        telegramBotClientMock.Received().SendTextMessageAsync(message.Chat.Id, Arg.Is<string>(s => s.Contains(replyMessage)), default, default, default, default, default, default, default, default, default);
     }
 
     [Theory]
@@ -83,17 +84,17 @@ public class AddWhiteListCommandTests
             }
         };
 
-        telegramBotClientMock.Setup(v => v.GetChatAdministratorsAsync(message.Chat.Id, default))
-            .ReturnsAsync(new[] { new ChatMemberMember { User = new() { Id = message.From.Id } } });
+        telegramBotClientMock.GetChatAdministratorsAsync(message.Chat.Id, default)
+            .Returns(new[] { new ChatMemberMember { User = new() { Id = message.From.Id } } });
 
-        chatConfigurationServiceMock.Setup(v => v.GetConfigurationByChatId(message.Chat.Id))
-            .ReturnsAsync(chatConfig);
+        chatConfigurationServiceMock.GetConfigurationByChatId(message.Chat.Id)
+            .Returns(chatConfig);
 
         // Act
         await command.Handle(message);
 
         // Assert
-        telegramBotClientMock.Verify(v => v.SendTextMessageAsync(message.Chat.Id, It.Is<string>(s => s.Contains(replyMessage)), default, default, default, default, default, default, default, default, default));
+        await telegramBotClientMock.Received().SendTextMessageAsync(message.Chat.Id, Arg.Is<string>(s => s.Contains(replyMessage)), default, default, default, default, default, default, default, default, default);
     }
 
     [Fact]
@@ -128,20 +129,20 @@ public class AddWhiteListCommandTests
             }
         };
 
-        telegramBotClientMock.Setup(v => v.GetChatAdministratorsAsync(message.Chat.Id, default))
-            .ReturnsAsync(new[] { new ChatMemberMember { User = new() { Id = message.From.Id } } });
+        telegramBotClientMock.GetChatAdministratorsAsync(message.Chat.Id, default)
+            .Returns(new[] { new ChatMemberMember { User = new() { Id = message.From.Id } } });
 
-        telegramBotClientMock.Setup(v => v.GetMeAsync(default))
-            .ReturnsAsync(new User { Id = 123456 });
+        telegramBotClientMock.GetMeAsync(default)
+            .Returns(new User { Id = 123456 });
 
-        chatConfigurationServiceMock.Setup(v => v.GetConfigurationByChatId(message.Chat.Id))
-            .ReturnsAsync(chatConfig);
+        chatConfigurationServiceMock.GetConfigurationByChatId(message.Chat.Id)
+            .Returns(chatConfig);
 
         // Act
         await command.Handle(message);
 
         // Assert
         Assert.Equal(2, chatConfig.WhiteListWords.Count);
-        telegramBotClientMock.Verify(v => v.SendTextMessageAsync(message.Chat.Id, It.Is<string>(s => s.Contains(replyMessage)), default, default, default, default, default, default, default, default, default));
+        await telegramBotClientMock.Received().SendTextMessageAsync(message.Chat.Id, Arg.Is<string>(s => s.Contains(replyMessage)), default, default, default, default, default, default, default, default, default);
     }
 }

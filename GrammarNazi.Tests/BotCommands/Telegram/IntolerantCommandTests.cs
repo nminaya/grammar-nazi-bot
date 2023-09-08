@@ -4,7 +4,7 @@ using GrammarNazi.Domain.Entities;
 using GrammarNazi.Domain.Enums;
 using GrammarNazi.Domain.Services;
 using GrammarNazi.Domain.Utilities;
-using Moq;
+using NSubstitute;
 using System.Threading.Tasks;
 using Telegram.Bot.Types;
 using Telegram.Bot.Types.Enums;
@@ -39,22 +39,22 @@ public class IntolerantCommandTests
             }
         };
 
-        telegramBotClientMock.Setup(v => v.GetChatAdministratorsAsync(message.Chat.Id, default))
-            .ReturnsAsync(new[] { new ChatMemberMember { User = new() { Id = message.From.Id } } });
+        telegramBotClientMock.GetChatAdministratorsAsync(message.Chat.Id, default)
+            .Returns(new[] { new ChatMemberMember { User = new() { Id = message.From.Id } } });
 
-        chatConfigurationServiceMock.Setup(v => v.GetConfigurationByChatId(message.Chat.Id))
-            .ReturnsAsync(chatConfig);
+        chatConfigurationServiceMock.GetConfigurationByChatId(message.Chat.Id)
+            .Returns(chatConfig);
 
-        telegramBotClientMock.Setup(v => v.GetMeAsync(default))
-            .ReturnsAsync(new User { Id = 123456 });
+        telegramBotClientMock.GetMeAsync(default)
+            .Returns(new User { Id = 123456 });
 
         // Act
         await command.Handle(message);
 
         // Assert
         Assert.Equal(CorrectionStrictnessLevels.Intolerant, chatConfig.CorrectionStrictnessLevel);
-        chatConfigurationServiceMock.Verify(v => v.Update(chatConfig));
-        telegramBotClientMock.Verify(v => v.SendTextMessageAsync(message.Chat.Id, It.Is<string>(s => s.Contains(replyMessage)), default, default, default, default, default, default, default, default, default));
+        await chatConfigurationServiceMock.Received().Update(chatConfig);
+        await telegramBotClientMock.Received().SendTextMessageAsync(message.Chat.Id, Arg.Is<string>(s => s.Contains(replyMessage)), default, default, default, default, default, default, default, default, default);
     }
 
     [Fact]

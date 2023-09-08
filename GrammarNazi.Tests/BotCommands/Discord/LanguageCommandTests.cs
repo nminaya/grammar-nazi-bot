@@ -4,7 +4,7 @@ using GrammarNazi.Domain.Constants;
 using GrammarNazi.Domain.Entities;
 using GrammarNazi.Domain.Enums;
 using GrammarNazi.Domain.Services;
-using Moq;
+using NSubstitute;
 using System.Threading.Tasks;
 using Xunit;
 
@@ -29,14 +29,14 @@ public class LanguageCommandTests
 
         var channelMock = Substitute.For<IMessageChannel>();
         var user = Substitute.For<IGuildUser>();
-        user.Setup(v => v.GuildPermissions).Returns(GuildPermissions.All);
+        user.GuildPermissions.Returns(GuildPermissions.All);
         var message = Substitute.For<IMessage>();
-        message.Setup(v => v.Content).Returns($"{DiscordBotCommands.Language} {parameter}");
-        message.Setup(v => v.Author).Returns(user);
-        message.Setup(v => v.Channel).Returns(channelMock);
+        message.Content.Returns($"{DiscordBotCommands.Language} {parameter}");
+        message.Author.Returns(user);
+        message.Channel.Returns(channelMock);
 
-        channelConfigurationServiceMock.Setup(v => v.GetConfigurationByChannelId(message.Channel.Id))
-            .ReturnsAsync(chatConfig);
+        channelConfigurationServiceMock.GetConfigurationByChannelId(message.Channel.Id)
+            .Returns(chatConfig);
 
         // Act
         await command.Handle(message);
@@ -44,7 +44,7 @@ public class LanguageCommandTests
         // Assert
 
         // Verify SendMessageAsync was called with the reply message "Invalid parameter"
-        channelMock.Verify(v => v.SendMessageAsync(null, false, It.Is<Embed>(e => e.Description.Contains(replyMessage)), null, null, null, null, null, null, MessageFlags.None));
+        await channelMock.Received().SendMessageAsync(null, false, Arg.Is<Embed>(e => e.Description.Contains(replyMessage)), null, null, null, null, null, null, MessageFlags.None);
         Assert.Equal(SupportedLanguages.Auto, chatConfig.SelectedLanguage); // Make sure SelectedLanguage is still Auto
     }
 
@@ -65,14 +65,14 @@ public class LanguageCommandTests
 
         var channelMock = Substitute.For<IMessageChannel>();
         var user = Substitute.For<IGuildUser>();
-        user.Setup(v => v.GuildPermissions).Returns(GuildPermissions.All);
+        user.GuildPermissions.Returns(GuildPermissions.All);
         var message = Substitute.For<IMessage>();
-        message.Setup(v => v.Content).Returns($"{DiscordBotCommands.Language} {parameter}");
-        message.Setup(v => v.Author).Returns(user);
-        message.Setup(v => v.Channel).Returns(channelMock);
+        message.Content.Returns($"{DiscordBotCommands.Language} {parameter}");
+        message.Author.Returns(user);
+        message.Channel.Returns(channelMock);
 
-        channelConfigurationServiceMock.Setup(v => v.GetConfigurationByChannelId(message.Channel.Id))
-            .ReturnsAsync(chatConfig);
+        channelConfigurationServiceMock.GetConfigurationByChannelId(message.Channel.Id)
+            .Returns(chatConfig);
 
         // Act
         await command.Handle(message);
@@ -80,7 +80,7 @@ public class LanguageCommandTests
         // Assert
 
         // Verify SendMessageAsync was called with the reply message "Invalid parameter"
-        channelMock.Verify(v => v.SendMessageAsync(null, false, It.Is<Embed>(e => e.Description.Contains(replyMessage)), null, null, null, null, null, null, MessageFlags.None));
+        await channelMock.Received().SendMessageAsync(null, false, Arg.Is<Embed>(e => e.Description.Contains(replyMessage)), null, null, null, null, null, null, MessageFlags.None);
         Assert.Equal(SupportedLanguages.Auto, chatConfig.SelectedLanguage); // Make sure SelectedLanguage is still Auto
     }
 
@@ -99,14 +99,14 @@ public class LanguageCommandTests
 
         var channelMock = Substitute.For<IMessageChannel>();
         var user = Substitute.For<IGuildUser>();
-        user.Setup(v => v.GuildPermissions).Returns(GuildPermissions.All);
+        user.GuildPermissions.Returns(GuildPermissions.All);
         var message = Substitute.For<IMessage>();
-        message.Setup(v => v.Content).Returns(DiscordBotCommands.Language);
-        message.Setup(v => v.Author).Returns(user);
-        message.Setup(v => v.Channel).Returns(channelMock);
+        message.Content.Returns(DiscordBotCommands.Language);
+        message.Author.Returns(user);
+        message.Channel.Returns(channelMock);
 
-        channelConfigurationServiceMock.Setup(v => v.GetConfigurationByChannelId(message.Channel.Id))
-            .ReturnsAsync(chatConfig);
+        channelConfigurationServiceMock.GetConfigurationByChannelId(message.Channel.Id)
+            .Returns(chatConfig);
 
         // Act
         await command.Handle(message);
@@ -114,7 +114,7 @@ public class LanguageCommandTests
         // Assert
 
         // Verify SendMessageAsync was called with the reply message "Parameter not received"
-        channelMock.Verify(v => v.SendMessageAsync(null, false, It.Is<Embed>(e => e.Description.Contains(replyMessage)), null, null, null, null, null, null, MessageFlags.None));
+        await channelMock.Received().SendMessageAsync(null, false, Arg.Is<Embed>(e => e.Description.Contains(replyMessage)), null, null, null, null, null, null, MessageFlags.None);
         Assert.Equal(SupportedLanguages.Auto, chatConfig.SelectedLanguage); // Make sure SelectedLanguage is still Auto
     }
 
@@ -136,14 +136,14 @@ public class LanguageCommandTests
 
         var channelMock = Substitute.For<IMessageChannel>();
         var user = Substitute.For<IGuildUser>();
-        user.Setup(v => v.GuildPermissions).Returns(GuildPermissions.All);
+        user.GuildPermissions.Returns(GuildPermissions.All);
         var message = Substitute.For<IMessage>();
-        message.Setup(v => v.Content).Returns($"{DiscordBotCommands.Language} {(int)languageParameter}");
-        message.Setup(v => v.Author).Returns(user);
-        message.Setup(v => v.Channel).Returns(channelMock);
+        message.Content.Returns($"{DiscordBotCommands.Language} {(int)languageParameter}");
+        message.Author.Returns(user);
+        message.Channel.Returns(channelMock);
 
-        channelConfigurationServiceMock.Setup(v => v.GetConfigurationByChannelId(message.Channel.Id))
-            .ReturnsAsync(chatConfig);
+        channelConfigurationServiceMock.GetConfigurationByChannelId(message.Channel.Id)
+            .Returns(chatConfig);
 
         // Act
         await command.Handle(message);
@@ -151,7 +151,7 @@ public class LanguageCommandTests
         // Assert
 
         // Verify SendMessageAsync was called with the reply message "Language updated"
-        channelMock.Verify(v => v.SendMessageAsync(null, false, It.Is<Embed>(e => e.Description.Contains(replyMessage)), null, null, null, null, null, null, MessageFlags.None));
+        await channelMock.Received().SendMessageAsync(null, false, Arg.Is<Embed>(e => e.Description.Contains(replyMessage)), null, null, null, null, null, null, MessageFlags.None);
         Assert.Equal(languageParameter, chatConfig.SelectedLanguage);
     }
 }
