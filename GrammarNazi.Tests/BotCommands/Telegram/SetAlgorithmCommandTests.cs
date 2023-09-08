@@ -20,9 +20,9 @@ public class SetAlgorithmCommandTests
     public async Task ParameterIsNotNumber_Should_ReplyMessage(string parameter)
     {
         // Arrange
-        var chatConfigurationServiceMock = new Mock<IChatConfigurationService>();
-        var telegramBotClientMock = new Mock<ITelegramBotClientWrapper>();
-        var command = new SetAlgorithmCommand(chatConfigurationServiceMock.Object, telegramBotClientMock.Object);
+        var chatConfigurationServiceMock = Substitute.For<IChatConfigurationService>();
+        var telegramBotClientMock = Substitute.For<ITelegramBotClientWrapper>();
+        var command = new SetAlgorithmCommand(chatConfigurationServiceMock, telegramBotClientMock);
         const string replyMessage = "Invalid parameter";
 
         var chatConfig = new ChatConfiguration
@@ -63,9 +63,9 @@ public class SetAlgorithmCommandTests
     public async Task InvalidParameter_Should_ReplyMessage(string parameter)
     {
         // Arrange
-        var chatConfigurationServiceMock = new Mock<IChatConfigurationService>();
-        var telegramBotClientMock = new Mock<ITelegramBotClientWrapper>();
-        var command = new SetAlgorithmCommand(chatConfigurationServiceMock.Object, telegramBotClientMock.Object);
+        var chatConfigurationServiceMock = Substitute.For<IChatConfigurationService>();
+        var telegramBotClientMock = Substitute.For<ITelegramBotClientWrapper>();
+        var command = new SetAlgorithmCommand(chatConfigurationServiceMock, telegramBotClientMock);
         const string replyMessage = "Invalid parameter";
 
         var chatConfig = new ChatConfiguration
@@ -103,8 +103,8 @@ public class SetAlgorithmCommandTests
     [Fact]
     public async Task UserNotAdmin_Should_ReplyNotAdminMessage()
     {
-        var telegramBotClientMock = new Mock<ITelegramBotClientWrapper>();
-        await TestUtilities.TestTelegramNotAdminUser(new SetAlgorithmCommand(null, telegramBotClientMock.Object), telegramBotClientMock);
+        var telegramBotClientMock = Substitute.For<ITelegramBotClientWrapper>();
+        await TestUtilities.TestTelegramNotAdminUser(new SetAlgorithmCommand(null, telegramBotClientMock), telegramBotClientMock);
     }
 
     [Theory]
@@ -113,9 +113,9 @@ public class SetAlgorithmCommandTests
     public async Task ValidParameter_Should_ChangeChatConfig_And_ReplyMessage(GrammarAlgorithms algorithmParameter)
     {
         // Arrange
-        var chatConfigurationServiceMock = new Mock<IChatConfigurationService>();
-        var telegramBotClientMock = new Mock<ITelegramBotClientWrapper>();
-        var command = new SetAlgorithmCommand(chatConfigurationServiceMock.Object, telegramBotClientMock.Object);
+        var chatConfigurationServiceMock = Substitute.For<IChatConfigurationService>();
+        var telegramBotClientMock = Substitute.For<ITelegramBotClientWrapper>();
+        var command = new SetAlgorithmCommand(chatConfigurationServiceMock, telegramBotClientMock);
         const string replyMessage = "Algorithm updated";
 
         var chatConfig = new ChatConfiguration

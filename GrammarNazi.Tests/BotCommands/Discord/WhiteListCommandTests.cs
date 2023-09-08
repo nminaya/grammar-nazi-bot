@@ -14,8 +14,8 @@ public class WhiteListCommandTests
     public async Task NoWhiteListsConfigured_Should_ReplyMessage()
     {
         // Arrange
-        var channelConfigurationServiceMock = new Mock<IDiscordChannelConfigService>();
-        var command = new WhiteListCommand(channelConfigurationServiceMock.Object);
+        var channelConfigurationServiceMock = Substitute.For<IDiscordChannelConfigService>();
+        var command = new WhiteListCommand(channelConfigurationServiceMock);
         const string replyMessage = "You don't have Whitelist words configured";
 
         var chatConfig = new DiscordChannelConfig
@@ -23,19 +23,19 @@ public class WhiteListCommandTests
             WhiteListWords = null
         };
 
-        var channelMock = new Mock<IMessageChannel>();
-        var user = new Mock<IGuildUser>();
+        var channelMock = Substitute.For<IMessageChannel>();
+        var user = Substitute.For<IGuildUser>();
         user.Setup(v => v.GuildPermissions).Returns(GuildPermissions.All);
-        var message = new Mock<IMessage>();
+        var message = Substitute.For<IMessage>();
 
-        message.Setup(v => v.Author).Returns(user.Object);
-        message.Setup(v => v.Channel).Returns(channelMock.Object);
+        message.Setup(v => v.Author).Returns(user);
+        message.Setup(v => v.Channel).Returns(channelMock);
 
-        channelConfigurationServiceMock.Setup(v => v.GetConfigurationByChannelId(message.Object.Channel.Id))
+        channelConfigurationServiceMock.Setup(v => v.GetConfigurationByChannelId(message.Channel.Id))
             .ReturnsAsync(chatConfig);
 
         // Act
-        await command.Handle(message.Object);
+        await command.Handle(message);
 
         // Assert
 
@@ -47,8 +47,8 @@ public class WhiteListCommandTests
     public async Task WhiteListsConfigured_Should_ReplyMessageWithWhiteList()
     {
         // Arrange
-        var channelConfigurationServiceMock = new Mock<IDiscordChannelConfigService>();
-        var command = new WhiteListCommand(channelConfigurationServiceMock.Object);
+        var channelConfigurationServiceMock = Substitute.For<IDiscordChannelConfigService>();
+        var command = new WhiteListCommand(channelConfigurationServiceMock);
         const string replyMessage = "Whitelist Words";
 
         var chatConfig = new DiscordChannelConfig
@@ -56,19 +56,19 @@ public class WhiteListCommandTests
             WhiteListWords = new() { "Word" }
         };
 
-        var channelMock = new Mock<IMessageChannel>();
-        var user = new Mock<IGuildUser>();
+        var channelMock = Substitute.For<IMessageChannel>();
+        var user = Substitute.For<IGuildUser>();
         user.Setup(v => v.GuildPermissions).Returns(GuildPermissions.All);
-        var message = new Mock<IMessage>();
+        var message = Substitute.For<IMessage>();
 
-        message.Setup(v => v.Author).Returns(user.Object);
-        message.Setup(v => v.Channel).Returns(channelMock.Object);
+        message.Setup(v => v.Author).Returns(user);
+        message.Setup(v => v.Channel).Returns(channelMock);
 
-        channelConfigurationServiceMock.Setup(v => v.GetConfigurationByChannelId(message.Object.Channel.Id))
+        channelConfigurationServiceMock.Setup(v => v.GetConfigurationByChannelId(message.Channel.Id))
             .ReturnsAsync(chatConfig);
 
         // Act
-        await command.Handle(message.Object);
+        await command.Handle(message);
 
         // Assert
 

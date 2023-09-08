@@ -17,9 +17,9 @@ public class RemoveWhiteListCommandTests
     public async Task NoParameter_Should_ReplyMessage()
     {
         // Arrange
-        var chatConfigurationServiceMock = new Mock<IChatConfigurationService>();
-        var telegramBotClientMock = new Mock<ITelegramBotClientWrapper>();
-        var command = new RemoveWhiteListCommand(chatConfigurationServiceMock.Object, telegramBotClientMock.Object);
+        var chatConfigurationServiceMock = Substitute.For<IChatConfigurationService>();
+        var telegramBotClientMock = Substitute.For<ITelegramBotClientWrapper>();
+        var command = new RemoveWhiteListCommand(chatConfigurationServiceMock, telegramBotClientMock);
         const string replyMessage = "Parameter not received";
 
         var chatConfig = new ChatConfiguration
@@ -58,9 +58,9 @@ public class RemoveWhiteListCommandTests
     public async Task NoWordExist_Should_ReplyMessage()
     {
         // Arrange
-        var chatConfigurationServiceMock = new Mock<IChatConfigurationService>();
-        var telegramBotClientMock = new Mock<ITelegramBotClientWrapper>();
-        var command = new RemoveWhiteListCommand(chatConfigurationServiceMock.Object, telegramBotClientMock.Object);
+        var chatConfigurationServiceMock = Substitute.For<IChatConfigurationService>();
+        var telegramBotClientMock = Substitute.For<ITelegramBotClientWrapper>();
+        var command = new RemoveWhiteListCommand(chatConfigurationServiceMock, telegramBotClientMock);
         const string replyMessage = "is not in the WhiteList";
 
         var chatConfig = new ChatConfiguration
@@ -95,8 +95,8 @@ public class RemoveWhiteListCommandTests
     [Fact]
     public async Task UserNotAdmin_Should_ReplyNotAdminMessage()
     {
-        var telegramBotClientMock = new Mock<ITelegramBotClientWrapper>();
-        await TestUtilities.TestTelegramNotAdminUser(new RemoveWhiteListCommand(null, telegramBotClientMock.Object), telegramBotClientMock);
+        var telegramBotClientMock = Substitute.For<ITelegramBotClientWrapper>();
+        await TestUtilities.TestTelegramNotAdminUser(new RemoveWhiteListCommand(null, telegramBotClientMock), telegramBotClientMock);
     }
 
     [Theory]
@@ -107,9 +107,9 @@ public class RemoveWhiteListCommandTests
     public async Task WordExist_Should_RemoveWordFromWhiteList_And_ReplyMessage(string existingWord, string wordToRemove)
     {
         // Arrange
-        var chatConfigurationServiceMock = new Mock<IChatConfigurationService>();
-        var telegramBotClientMock = new Mock<ITelegramBotClientWrapper>();
-        var command = new RemoveWhiteListCommand(chatConfigurationServiceMock.Object, telegramBotClientMock.Object);
+        var chatConfigurationServiceMock = Substitute.For<IChatConfigurationService>();
+        var telegramBotClientMock = Substitute.For<ITelegramBotClientWrapper>();
+        var command = new RemoveWhiteListCommand(chatConfigurationServiceMock, telegramBotClientMock);
         const string replyMessage = "removed from the WhiteList";
 
         var chatConfig = new ChatConfiguration

@@ -21,9 +21,9 @@ public class LanguageCommandTests
     public async Task ParameterIsNotNumber_Should_ReplyMessage(string parameter)
     {
         // Arrange
-        var chatConfigurationServiceMock = new Mock<IChatConfigurationService>();
-        var telegramBotClientMock = new Mock<ITelegramBotClientWrapper>();
-        var command = new LanguageCommand(chatConfigurationServiceMock.Object, telegramBotClientMock.Object);
+        var chatConfigurationServiceMock = Substitute.For<IChatConfigurationService>();
+        var telegramBotClientMock = Substitute.For<ITelegramBotClientWrapper>();
+        var command = new LanguageCommand(chatConfigurationServiceMock, telegramBotClientMock);
         const string replyMessage = "Invalid parameter";
 
         var chatConfig = new ChatConfiguration
@@ -64,9 +64,9 @@ public class LanguageCommandTests
     public async Task InvalidParameter_Should_ReplyMessage(string parameter)
     {
         // Arrange
-        var chatConfigurationServiceMock = new Mock<IChatConfigurationService>();
-        var telegramBotClientMock = new Mock<ITelegramBotClientWrapper>();
-        var command = new LanguageCommand(chatConfigurationServiceMock.Object, telegramBotClientMock.Object);
+        var chatConfigurationServiceMock = Substitute.For<IChatConfigurationService>();
+        var telegramBotClientMock = Substitute.For<ITelegramBotClientWrapper>();
+        var command = new LanguageCommand(chatConfigurationServiceMock, telegramBotClientMock);
         const string replyMessage = "Invalid parameter";
 
         var chatConfig = new ChatConfiguration
@@ -108,9 +108,9 @@ public class LanguageCommandTests
     public async Task ValidParameter_Should_ChangeChatConfig_And_ReplyMessage(SupportedLanguages languageParameter)
     {
         // Arrange
-        var chatConfigurationServiceMock = new Mock<IChatConfigurationService>();
-        var telegramBotClientMock = new Mock<ITelegramBotClientWrapper>();
-        var command = new LanguageCommand(chatConfigurationServiceMock.Object, telegramBotClientMock.Object);
+        var chatConfigurationServiceMock = Substitute.For<IChatConfigurationService>();
+        var telegramBotClientMock = Substitute.For<ITelegramBotClientWrapper>();
+        var command = new LanguageCommand(chatConfigurationServiceMock, telegramBotClientMock);
         const string replyMessage = "Language updated";
 
         var chatConfig = new ChatConfiguration
@@ -150,9 +150,9 @@ public class LanguageCommandTests
     public async Task LanguageNotSupportedByCurrentAlgorithm_Should_SendWarningMessage()
     {
         // Arrange
-        var chatConfigurationServiceMock = new Mock<IChatConfigurationService>();
-        var telegramBotClientMock = new Mock<ITelegramBotClientWrapper>();
-        var command = new LanguageCommand(chatConfigurationServiceMock.Object, telegramBotClientMock.Object);
+        var chatConfigurationServiceMock = Substitute.For<IChatConfigurationService>();
+        var telegramBotClientMock = Substitute.For<ITelegramBotClientWrapper>();
+        var command = new LanguageCommand(chatConfigurationServiceMock, telegramBotClientMock);
 
         var chatConfig = new ChatConfiguration
         {
@@ -195,7 +195,7 @@ public class LanguageCommandTests
     [Fact]
     public async Task UserNotAdmin_Should_ReplyNotAdminMessage()
     {
-        var telegramBotClientMock = new Mock<ITelegramBotClientWrapper>();
-        await TestUtilities.TestTelegramNotAdminUser(new LanguageCommand(null, telegramBotClientMock.Object), telegramBotClientMock);
+        var telegramBotClientMock = Substitute.For<ITelegramBotClientWrapper>();
+        await TestUtilities.TestTelegramNotAdminUser(new LanguageCommand(null, telegramBotClientMock), telegramBotClientMock);
     }
 }

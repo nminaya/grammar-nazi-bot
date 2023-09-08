@@ -17,9 +17,9 @@ public class ShowDetailsCommandTests
     public async Task UserIsAdmin_Should_ChangeChatConfig_And_ReplyMessage()
     {
         // Arrange
-        var chatConfigurationServiceMock = new Mock<IChatConfigurationService>();
-        var telegramBotClientMock = new Mock<ITelegramBotClientWrapper>();
-        var command = new ShowDetailsCommand(chatConfigurationServiceMock.Object, telegramBotClientMock.Object);
+        var chatConfigurationServiceMock = Substitute.For<IChatConfigurationService>();
+        var telegramBotClientMock = Substitute.For<ITelegramBotClientWrapper>();
+        var command = new ShowDetailsCommand(chatConfigurationServiceMock, telegramBotClientMock);
         const string replyMessage = "Show correction details";
 
         var chatConfig = new ChatConfiguration
@@ -59,7 +59,7 @@ public class ShowDetailsCommandTests
     [Fact]
     public async Task UserNotAdmin_Should_ReplyNotAdminMessage()
     {
-        var telegramBotClientMock = new Mock<ITelegramBotClientWrapper>();
-        await TestUtilities.TestTelegramNotAdminUser(new ShowDetailsCommand(null, telegramBotClientMock.Object), telegramBotClientMock);
+        var telegramBotClientMock = Substitute.For<ITelegramBotClientWrapper>();
+        await TestUtilities.TestTelegramNotAdminUser(new ShowDetailsCommand(null, telegramBotClientMock), telegramBotClientMock);
     }
 }

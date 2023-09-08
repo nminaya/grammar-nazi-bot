@@ -25,10 +25,10 @@ public class TelegramCommandHandlerServiceTests
     public async Task HandleCallBackQuery_LanguageChange_Should_ChangeSelectedLanguage(string callBackQueryData, SupportedLanguages expectedLanguage)
     {
         // Arrange
-        var chatConfigurationServiceMock = new Mock<IChatConfigurationService>();
-        var telegramBotClientMock = new Mock<ITelegramBotClientWrapper>();
-        var botCommandsMock = new Mock<IEnumerable<ITelegramBotCommand>>();
-        var service = new TelegramCommandHandlerService(chatConfigurationServiceMock.Object, telegramBotClientMock.Object, botCommandsMock.Object);
+        var chatConfigurationServiceMock = Substitute.For<IChatConfigurationService>();
+        var telegramBotClientMock = Substitute.For<ITelegramBotClientWrapper>();
+        var botCommandsMock = Substitute.For<IEnumerable<ITelegramBotCommand>>();
+        var service = new TelegramCommandHandlerService(chatConfigurationServiceMock, telegramBotClientMock, botCommandsMock);
 
         var chatConfig = new ChatConfiguration
         {
@@ -71,10 +71,10 @@ public class TelegramCommandHandlerServiceTests
     public async Task HandleCallBackQuery_AlgorithmChange_Should_ChangeSelectedAlgorithm(string callBackQueryData, GrammarAlgorithms grammarAlgorithm)
     {
         // Arrange
-        var chatConfigurationServiceMock = new Mock<IChatConfigurationService>();
-        var telegramBotClientMock = new Mock<ITelegramBotClientWrapper>();
-        var botCommandsMock = new Mock<IEnumerable<ITelegramBotCommand>>();
-        var service = new TelegramCommandHandlerService(chatConfigurationServiceMock.Object, telegramBotClientMock.Object, botCommandsMock.Object);
+        var chatConfigurationServiceMock = Substitute.For<IChatConfigurationService>();
+        var telegramBotClientMock = Substitute.For<ITelegramBotClientWrapper>();
+        var botCommandsMock = Substitute.For<IEnumerable<ITelegramBotCommand>>();
+        var service = new TelegramCommandHandlerService(chatConfigurationServiceMock, telegramBotClientMock, botCommandsMock);
 
         var chatConfig = new ChatConfiguration
         {
@@ -113,10 +113,10 @@ public class TelegramCommandHandlerServiceTests
     public async Task HandleCallBackQuery_UserNotAdmin_Should_ReplyMessage()
     {
         // Arrange
-        var chatConfigurationServiceMock = new Mock<IChatConfigurationService>();
-        var telegramBotClientMock = new Mock<ITelegramBotClientWrapper>();
-        var botCommandsMock = new Mock<IEnumerable<ITelegramBotCommand>>();
-        var service = new TelegramCommandHandlerService(chatConfigurationServiceMock.Object, telegramBotClientMock.Object, botCommandsMock.Object);
+        var chatConfigurationServiceMock = Substitute.For<IChatConfigurationService>();
+        var telegramBotClientMock = Substitute.For<ITelegramBotClientWrapper>();
+        var botCommandsMock = Substitute.For<IEnumerable<ITelegramBotCommand>>();
+        var service = new TelegramCommandHandlerService(chatConfigurationServiceMock, telegramBotClientMock, botCommandsMock);
         const string replyMessage = "Only admins can use this command.";
 
         var chatConfig = new ChatConfiguration
@@ -159,8 +159,8 @@ public class TelegramCommandHandlerServiceTests
     public async Task CommandForAnotherBot_Should_Not_DoAnything(string command)
     {
         // Arrange
-        var telegramBotClientMock = new Mock<ITelegramBotClientWrapper>();
-        var service = new TelegramCommandHandlerService(null, telegramBotClientMock.Object, GetAllCommands());
+        var telegramBotClientMock = Substitute.For<ITelegramBotClientWrapper>();
+        var service = new TelegramCommandHandlerService(null, telegramBotClientMock, GetAllCommands());
 
         var message = new Message
         {
@@ -193,8 +193,8 @@ public class TelegramCommandHandlerServiceTests
     public async Task UnknownCommand_Should_Not_DoAnything(string command)
     {
         // Arrange
-        var telegramBotClientMock = new Mock<ITelegramBotClientWrapper>();
-        var service = new TelegramCommandHandlerService(null, telegramBotClientMock.Object, GetAllCommands());
+        var telegramBotClientMock = Substitute.For<ITelegramBotClientWrapper>();
+        var service = new TelegramCommandHandlerService(null, telegramBotClientMock, GetAllCommands());
 
         var message = new Message
         {

@@ -17,9 +17,9 @@ public class StartCommandTests
     public async Task BotNotStopped_Should_ReplyBotStartedMessage()
     {
         // Arrange
-        var chatConfigurationServiceMock = new Mock<IChatConfigurationService>();
-        var telegramBotClientMock = new Mock<ITelegramBotClientWrapper>();
-        var command = new StartCommand(chatConfigurationServiceMock.Object, telegramBotClientMock.Object);
+        var chatConfigurationServiceMock = Substitute.For<IChatConfigurationService>();
+        var telegramBotClientMock = Substitute.For<ITelegramBotClientWrapper>();
+        var command = new StartCommand(chatConfigurationServiceMock, telegramBotClientMock);
         const string replyMessage = "Bot is already started";
 
         var chatConfig = new ChatConfiguration
@@ -50,9 +50,9 @@ public class StartCommandTests
     public async Task BotNotStopped_BotNotAdmin_Should_ReplyBotNotAdminMessage()
     {
         // Arrange
-        var chatConfigurationServiceMock = new Mock<IChatConfigurationService>();
-        var telegramBotClientMock = new Mock<ITelegramBotClientWrapper>();
-        var command = new StartCommand(chatConfigurationServiceMock.Object, telegramBotClientMock.Object);
+        var chatConfigurationServiceMock = Substitute.For<IChatConfigurationService>();
+        var telegramBotClientMock = Substitute.For<ITelegramBotClientWrapper>();
+        var command = new StartCommand(chatConfigurationServiceMock, telegramBotClientMock);
         const string replyMessage = "The bot needs admin rights";
 
         var chatConfig = new ChatConfiguration
@@ -84,9 +84,9 @@ public class StartCommandTests
     public async Task BotStoppedAndUserNotAdmin_Should_ReplyNotAdminMessage()
     {
         // Arrange
-        var chatConfigurationServiceMock = new Mock<IChatConfigurationService>();
-        var telegramBotClientMock = new Mock<ITelegramBotClientWrapper>();
-        var command = new StartCommand(chatConfigurationServiceMock.Object, telegramBotClientMock.Object);
+        var chatConfigurationServiceMock = Substitute.For<IChatConfigurationService>();
+        var telegramBotClientMock = Substitute.For<ITelegramBotClientWrapper>();
+        var command = new StartCommand(chatConfigurationServiceMock, telegramBotClientMock);
         const string replyMessage = "Only admins can use this command";
 
         var chatConfig = new ChatConfiguration
@@ -122,9 +122,9 @@ public class StartCommandTests
     public async Task BotStoppedAndUserAdmin_Should_ChangeChatConfig_And_ReplyMessage()
     {
         // Arrange
-        var chatConfigurationServiceMock = new Mock<IChatConfigurationService>();
-        var telegramBotClientMock = new Mock<ITelegramBotClientWrapper>();
-        var command = new StartCommand(chatConfigurationServiceMock.Object, telegramBotClientMock.Object);
+        var chatConfigurationServiceMock = Substitute.For<IChatConfigurationService>();
+        var telegramBotClientMock = Substitute.For<ITelegramBotClientWrapper>();
+        var command = new StartCommand(chatConfigurationServiceMock, telegramBotClientMock);
         const string replyMessage = "Bot started";
 
         var chatConfig = new ChatConfiguration

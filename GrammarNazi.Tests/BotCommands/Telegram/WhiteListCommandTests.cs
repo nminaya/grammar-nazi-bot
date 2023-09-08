@@ -17,9 +17,9 @@ public class WhiteListCommandTests
     public async Task NoWhiteListsConfigured_Should_ReplyMessage()
     {
         // Arrange
-        var chatConfigurationServiceMock = new Mock<IChatConfigurationService>();
-        var telegramBotClientMock = new Mock<ITelegramBotClientWrapper>();
-        var command = new WhiteListCommand(chatConfigurationServiceMock.Object, telegramBotClientMock.Object);
+        var chatConfigurationServiceMock = Substitute.For<IChatConfigurationService>();
+        var telegramBotClientMock = Substitute.For<ITelegramBotClientWrapper>();
+        var command = new WhiteListCommand(chatConfigurationServiceMock, telegramBotClientMock);
         const string replyMessage = "You don't have Whitelist words configured";
 
         var chatConfig = new ChatConfiguration
@@ -58,9 +58,9 @@ public class WhiteListCommandTests
     public async Task WhiteListsConfigured_Should_ReplyMessageWithWhiteList()
     {
         // Arrange
-        var chatConfigurationServiceMock = new Mock<IChatConfigurationService>();
-        var telegramBotClientMock = new Mock<ITelegramBotClientWrapper>();
-        var command = new WhiteListCommand(chatConfigurationServiceMock.Object, telegramBotClientMock.Object);
+        var chatConfigurationServiceMock = Substitute.For<IChatConfigurationService>();
+        var telegramBotClientMock = Substitute.For<ITelegramBotClientWrapper>();
+        var command = new WhiteListCommand(chatConfigurationServiceMock, telegramBotClientMock);
         const string replyMessage = "Whitelist Words";
 
         var chatConfig = new ChatConfiguration

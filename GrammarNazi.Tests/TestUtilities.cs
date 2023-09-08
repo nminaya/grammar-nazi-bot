@@ -15,21 +15,21 @@ public static class TestUtilities
         // Arrange
         const string replyMessage = "Only admins can use this command.";
 
-        var channelMock = new Mock<IMessageChannel>();
-        var user = new Mock<IGuildUser>();
+        var channelMock = Substitute.For<IMessageChannel>();
+        var user = Substitute.For<IGuildUser>();
         user.Setup(v => v.GuildPermissions).Returns(GuildPermissions.None);
-        var message = new Mock<IMessage>();
+        var message = Substitute.For<IMessage>();
 
-        message.Setup(v => v.Author).Returns(user.Object);
-        message.Setup(v => v.Channel).Returns(channelMock.Object);
+        message.Setup(v => v.Author).Returns(user);
+        message.Setup(v => v.Channel).Returns(channelMock);
 
         // Act
-        await command.Handle(message.Object);
+        await command.Handle(message);
 
         // Assert
 
         // Verify SendMessageAsync was called with the reply message "Only admins can use this command"
-        channelMock.Verify(v => v.SendMessageAsync(It.Is<string>(s => s.Contains(replyMessage)), false, null, null, null, It.Is<MessageReference>(m => m.MessageId.Value == message.Object.Id), null, null, null, MessageFlags.None));
+        channelMock.Verify(v => v.SendMessageAsync(It.Is<string>(s => s.Contains(replyMessage)), false, null, null, null, It.Is<MessageReference>(m => m.MessageId.Value == message.Id), null, null, null, MessageFlags.None));
     }
 
     public static async Task TestTelegramNotAdminUser(ITelegramBotCommand command, Mock<ITelegramBotClientWrapper> telegramBotClientMock)

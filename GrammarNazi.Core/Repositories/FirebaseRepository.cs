@@ -48,7 +48,7 @@ public class FirebaseRepository<T> : IRepository<T> where T : class
     {
         var results = await _firebaseClient.Child(TypeName).OnceAsync<T>();
 
-        var firebaseObject = results.FirstOrDefault(v => v.Object.Equals(entity));
+        var firebaseObject = results.FirstOrDefault(v => v.Equals(entity));
 
         if (firebaseObject != default)
         {
@@ -74,7 +74,7 @@ public class FirebaseRepository<T> : IRepository<T> where T : class
     {
         var results = await ExecuteFirebaseQuery(() => _firebaseClient.Child(TypeName).OnceAsync<T>());
 
-        var firebaseObject = results.FirstOrDefault(v => v.Object.Equals(entity));
+        var firebaseObject = results.FirstOrDefault(v => v.Equals(entity));
 
         if (firebaseObject == default)
         {
@@ -88,7 +88,7 @@ public class FirebaseRepository<T> : IRepository<T> where T : class
     {
         var allItems = await ExecuteFirebaseQuery(() => _firebaseClient.Child(TypeName).OnceAsync<T>());
 
-        return allItems.Select(v => v.Object);
+        return allItems.Select(v => v);
     }
 
     public async Task<IEnumerable<T>> GetAll(Expression<Func<T, bool>> filter)

@@ -22,17 +22,17 @@ public class TwitterBotHostedServiceTests
     public async Task CancelledToken_Should_DoNothing()
     {
         // Assert
-        var grammarServiceMock = new Mock<IGrammarService>();
+        var grammarServiceMock = Substitute.For<IGrammarService>();
         var cancellationTokenSource = new CancellationTokenSource();
-        var loggerMock = new Mock<ILogger<TwitterBotHostedService>>();
-        var twitterSettingsOptionsMock = new Mock<IOptions<TwitterBotSettings>>();
+        var loggerMock = Substitute.For<ILogger<TwitterBotHostedService>>();
+        var twitterSettingsOptionsMock = Substitute.For<IOptions<TwitterBotSettings>>();
         var twitterSettings = new TwitterBotSettings { BotUsername = "botUser", TimelineFirstLoadPageSize = 15 };
-        var sentimetAnalysisMock = new Mock<ISentimentAnalysisService>();
+        var sentimetAnalysisMock = Substitute.For<ISentimentAnalysisService>();
 
         twitterSettingsOptionsMock.Setup(v => v.Value).Returns(twitterSettings);
         grammarServiceMock.Setup(v => v.GrammarAlgorith).Returns(GrammarAlgorithms.LanguageToolApi);
 
-        var hostedService = new TwitterBotHostedService(loggerMock.Object, new[] { grammarServiceMock.Object }, null, null, twitterSettingsOptionsMock.Object, null, null, sentimetAnalysisMock.Object);
+        var hostedService = new TwitterBotHostedService(loggerMock, new[] { grammarServiceMock }, null, null, twitterSettingsOptionsMock, null, null, sentimetAnalysisMock);
 
         // Act
         cancellationTokenSource.Cancel();
@@ -46,19 +46,19 @@ public class TwitterBotHostedServiceTests
     public async Task NoLastTweetId_Should_UsePageSize()
     {
         // Assert
-        var twitterClientMock = new Mock<ITwitterClient>();
-        var twitterLogServiceMock = new Mock<ITwitterLogService>();
-        var scheduleTweetServiceMock = new Mock<IScheduledTweetService>();
-        var twitterSettingsOptionsMock = new Mock<IOptions<TwitterBotSettings>>();
-        var grammarServiceMock = new Mock<IGrammarService>();
-        var userMock = new Mock<IUser>();
+        var twitterClientMock = Substitute.For<ITwitterClient>();
+        var twitterLogServiceMock = Substitute.For<ITwitterLogService>();
+        var scheduleTweetServiceMock = Substitute.For<IScheduledTweetService>();
+        var twitterSettingsOptionsMock = Substitute.For<IOptions<TwitterBotSettings>>();
+        var grammarServiceMock = Substitute.For<IGrammarService>();
+        var userMock = Substitute.For<IUser>();
         var cancellationTokenSource = new CancellationTokenSource();
         var twitterSettings = new TwitterBotSettings { BotUsername = "botUser", TimelineFirstLoadPageSize = 15, HostedServiceIntervalMilliseconds = 150 };
 
         twitterSettingsOptionsMock.Setup(v => v.Value).Returns(twitterSettings);
         twitterLogServiceMock.Setup(v => v.GetLastTweetId()).ReturnsAsync(0);
         twitterClientMock.Setup(v => v.Users.GetFollowersAsync(twitterSettings.BotUsername))
-            .ReturnsAsync(new IUser[] { userMock.Object });
+            .ReturnsAsync(new IUser[] { userMock });
         twitterClientMock.Setup(v => v.Timelines.GetUserTimelineAsync(It.IsAny<GetUserTimelineParameters>()))
             .ReturnsAsync(new ITweet[0]);
         twitterClientMock.Setup(v => v.Users.GetFriendIdsAsync(twitterSettings.BotUsername))
@@ -67,7 +67,7 @@ public class TwitterBotHostedServiceTests
             .ReturnsAsync(Enumerable.Empty<ScheduledTweet>());
         grammarServiceMock.Setup(v => v.GrammarAlgorith).Returns(GrammarAlgorithms.LanguageToolApi);
 
-        var hostedService = new TwitterBotHostedService(Mock.Of<ILogger<TwitterBotHostedService>>(), new[] { grammarServiceMock.Object }, twitterLogServiceMock.Object, twitterClientMock.Object, twitterSettingsOptionsMock.Object, null, scheduleTweetServiceMock.Object, null);
+        var hostedService = new TwitterBotHostedService(Mock.Of<ILogger<TwitterBotHostedService>>(), new[] { grammarServiceMock }, twitterLogServiceMock, twitterClientMock, twitterSettingsOptionsMock, null, scheduleTweetServiceMock, null);
 
         // Act
         var startTask = hostedService.StartAsync(cancellationTokenSource.Token);
@@ -82,12 +82,12 @@ public class TwitterBotHostedServiceTests
     public async Task ExistingLastTweetId_Should_UseSinceId()
     {
         // Assert
-        var twitterClientMock = new Mock<ITwitterClient>();
-        var twitterLogServiceMock = new Mock<ITwitterLogService>();
-        var scheduleTweetServiceMock = new Mock<IScheduledTweetService>();
-        var twitterSettingsOptionsMock = new Mock<IOptions<TwitterBotSettings>>();
-        var grammarServiceMock = new Mock<IGrammarService>();
-        var userMock = new Mock<IUser>();
+        var twitterClientMock = Substitute.For<ITwitterClient>();
+        var twitterLogServiceMock = Substitute.For<ITwitterLogService>();
+        var scheduleTweetServiceMock = Substitute.For<IScheduledTweetService>();
+        var twitterSettingsOptionsMock = Substitute.For<IOptions<TwitterBotSettings>>();
+        var grammarServiceMock = Substitute.For<IGrammarService>();
+        var userMock = Substitute.For<IUser>();
         var cancellationTokenSource = new CancellationTokenSource();
         var twitterSettings = new TwitterBotSettings { BotUsername = "botUser", TimelineFirstLoadPageSize = 15, HostedServiceIntervalMilliseconds = 150 };
         const long lastTweetId = 123456;
@@ -95,7 +95,7 @@ public class TwitterBotHostedServiceTests
         twitterSettingsOptionsMock.Setup(v => v.Value).Returns(twitterSettings);
         twitterLogServiceMock.Setup(v => v.GetLastTweetId()).ReturnsAsync(lastTweetId);
         twitterClientMock.Setup(v => v.Users.GetFollowersAsync(twitterSettings.BotUsername))
-            .ReturnsAsync(new IUser[] { userMock.Object });
+            .ReturnsAsync(new IUser[] { userMock });
         twitterClientMock.Setup(v => v.Timelines.GetUserTimelineAsync(It.IsAny<GetUserTimelineParameters>()))
             .ReturnsAsync(new ITweet[0]);
         twitterClientMock.Setup(v => v.Users.GetFriendIdsAsync(twitterSettings.BotUsername))
@@ -104,7 +104,7 @@ public class TwitterBotHostedServiceTests
             .ReturnsAsync(Enumerable.Empty<ScheduledTweet>());
         grammarServiceMock.Setup(v => v.GrammarAlgorith).Returns(GrammarAlgorithms.LanguageToolApi);
 
-        var hostedService = new TwitterBotHostedService(Mock.Of<ILogger<TwitterBotHostedService>>(), new[] { grammarServiceMock.Object }, twitterLogServiceMock.Object, twitterClientMock.Object, twitterSettingsOptionsMock.Object, null, scheduleTweetServiceMock.Object, null);
+        var hostedService = new TwitterBotHostedService(Mock.Of<ILogger<TwitterBotHostedService>>(), new[] { grammarServiceMock }, twitterLogServiceMock, twitterClientMock, twitterSettingsOptionsMock, null, scheduleTweetServiceMock, null);
 
         // Act
         var startTask = hostedService.StartAsync(cancellationTokenSource.Token);
@@ -119,12 +119,12 @@ public class TwitterBotHostedServiceTests
     public async Task TweetsWithRtPrefix_Should_Not_AnalyzeTweet()
     {
         // Assert
-        var twitterClientMock = new Mock<ITwitterClient>();
-        var twitterLogServiceMock = new Mock<ITwitterLogService>();
-        var scheduleTweetServiceMock = new Mock<IScheduledTweetService>();
-        var twitterSettingsOptionsMock = new Mock<IOptions<TwitterBotSettings>>();
-        var grammarServiceMock = new Mock<IGrammarService>();
-        var tweetMock = new Mock<ITweet>();
+        var twitterClientMock = Substitute.For<ITwitterClient>();
+        var twitterLogServiceMock = Substitute.For<ITwitterLogService>();
+        var scheduleTweetServiceMock = Substitute.For<IScheduledTweetService>();
+        var twitterSettingsOptionsMock = Substitute.For<IOptions<TwitterBotSettings>>();
+        var grammarServiceMock = Substitute.For<IGrammarService>();
+        var tweetMock = Substitute.For<ITweet>();
         var cancellationTokenSource = new CancellationTokenSource();
         var twitterSettings = new TwitterBotSettings { BotUsername = "botUser", TimelineFirstLoadPageSize = 15, HostedServiceIntervalMilliseconds = 150 };
         const long lastTweetId = 123456;
@@ -136,14 +136,14 @@ public class TwitterBotHostedServiceTests
         twitterClientMock.Setup(v => v.Users.GetFollowerIdsAsync(twitterSettings.BotUsername))
             .ReturnsAsync(new long[] { 1 });
         twitterClientMock.Setup(v => v.Timelines.GetUserTimelineAsync(It.IsAny<GetUserTimelineParameters>()))
-            .ReturnsAsync(new[] { tweetMock.Object });
+            .ReturnsAsync(new[] { tweetMock });
         twitterClientMock.Setup(v => v.Users.GetFriendIdsAsync(twitterSettings.BotUsername))
             .ReturnsAsync(new long[0]);
         scheduleTweetServiceMock.Setup(v => v.GetPendingScheduledTweets())
             .ReturnsAsync(Enumerable.Empty<ScheduledTweet>());
         grammarServiceMock.Setup(v => v.GrammarAlgorith).Returns(GrammarAlgorithms.LanguageToolApi);
 
-        var hostedService = new TwitterBotHostedService(Mock.Of<ILogger<TwitterBotHostedService>>(), new[] { grammarServiceMock.Object }, twitterLogServiceMock.Object, twitterClientMock.Object, twitterSettingsOptionsMock.Object, null, scheduleTweetServiceMock.Object, null);
+        var hostedService = new TwitterBotHostedService(Mock.Of<ILogger<TwitterBotHostedService>>(), new[] { grammarServiceMock }, twitterLogServiceMock, twitterClientMock, twitterSettingsOptionsMock, null, scheduleTweetServiceMock, null);
 
         // Act
         var startTask = hostedService.StartAsync(cancellationTokenSource.Token);
@@ -159,13 +159,13 @@ public class TwitterBotHostedServiceTests
     public async Task CorrectTweets_Should_Not_SendReply()
     {
         // Assert
-        var twitterClientMock = new Mock<ITwitterClient>();
-        var twitterLogServiceMock = new Mock<ITwitterLogService>();
-        var scheduleTweetServiceMock = new Mock<IScheduledTweetService>();
-        var twitterSettingsOptionsMock = new Mock<IOptions<TwitterBotSettings>>();
-        var grammarServiceMock = new Mock<IGrammarService>();
-        var tweetMock = new Mock<ITweet>();
-        var userMock = new Mock<IUser>();
+        var twitterClientMock = Substitute.For<ITwitterClient>();
+        var twitterLogServiceMock = Substitute.For<ITwitterLogService>();
+        var scheduleTweetServiceMock = Substitute.For<IScheduledTweetService>();
+        var twitterSettingsOptionsMock = Substitute.For<IOptions<TwitterBotSettings>>();
+        var grammarServiceMock = Substitute.For<IGrammarService>();
+        var tweetMock = Substitute.For<ITweet>();
+        var userMock = Substitute.For<IUser>();
         var cancellationTokenSource = new CancellationTokenSource();
         var twitterSettings = new TwitterBotSettings { BotUsername = "botUser", TimelineFirstLoadPageSize = 15, HostedServiceIntervalMilliseconds = 150 };
         const long lastTweetId = 123456;
@@ -175,19 +175,19 @@ public class TwitterBotHostedServiceTests
         twitterSettingsOptionsMock.Setup(v => v.Value).Returns(twitterSettings);
         twitterLogServiceMock.Setup(v => v.GetLastTweetId()).ReturnsAsync(lastTweetId);
         twitterClientMock.Setup(v => v.Users.GetFollowersAsync(twitterSettings.BotUsername))
-            .ReturnsAsync(new IUser[] { userMock.Object });
+            .ReturnsAsync(new IUser[] { userMock });
         twitterClientMock.Setup(v => v.Timelines.GetUserTimelineAsync(It.IsAny<GetUserTimelineParameters>()))
-            .ReturnsAsync(new[] { tweetMock.Object });
+            .ReturnsAsync(new[] { tweetMock });
         twitterClientMock.Setup(v => v.Users.GetFriendIdsAsync(twitterSettings.BotUsername))
             .ReturnsAsync(new long[0]);
         scheduleTweetServiceMock.Setup(v => v.GetPendingScheduledTweets())
             .ReturnsAsync(Enumerable.Empty<ScheduledTweet>());
         grammarServiceMock.Setup(v => v.GrammarAlgorith).Returns(GrammarAlgorithms.LanguageToolApi);
 
-        grammarServiceMock.Setup(v => v.GetCorrections(tweetMock.Object.Text))
+        grammarServiceMock.Setup(v => v.GetCorrections(tweetMock.Text))
             .ReturnsAsync(new GrammarCheckResult(default));
 
-        var hostedService = new TwitterBotHostedService(Mock.Of<ILogger<TwitterBotHostedService>>(), new[] { grammarServiceMock.Object }, twitterLogServiceMock.Object, twitterClientMock.Object, twitterSettingsOptionsMock.Object, null, scheduleTweetServiceMock.Object, null);
+        var hostedService = new TwitterBotHostedService(Mock.Of<ILogger<TwitterBotHostedService>>(), new[] { grammarServiceMock }, twitterLogServiceMock, twitterClientMock, twitterSettingsOptionsMock, null, scheduleTweetServiceMock, null);
 
         // Act
         var startTask = hostedService.StartAsync(cancellationTokenSource.Token);
@@ -195,7 +195,7 @@ public class TwitterBotHostedServiceTests
         await startTask;
 
         // Assert
-        grammarServiceMock.Verify(v => v.GetCorrections(tweetMock.Object.Text)); // Verify GetCorrections was called
+        grammarServiceMock.Verify(v => v.GetCorrections(tweetMock.Text)); // Verify GetCorrections was called
 
         // Verify PublishTweetAsync was never called
         twitterClientMock.Verify(v => v.Tweets.PublishTweetAsync(It.IsAny<IPublishTweetParameters>()), Times.Never);

@@ -18,10 +18,10 @@ namespace GrammarNazi.Tests.Services
         public void HandleException_ApiRequestException_Should_LogWarning(string exceptionMessage)
         {
             // Arrange
-            var loggerMock = new Mock<ILogger<CatchExceptionService>>();
-            var githubServiceMock = new Mock<IGithubService>();
+            var loggerMock = Substitute.For<ILogger<CatchExceptionService>>();
+            var githubServiceMock = Substitute.For<IGithubService>();
 
-            var service = new CatchExceptionService(githubServiceMock.Object, loggerMock.Object);
+            var service = new CatchExceptionService(githubServiceMock, loggerMock);
 
             var exception = new ApiRequestException(exceptionMessage);
 
@@ -46,10 +46,10 @@ namespace GrammarNazi.Tests.Services
         public void HandleError_ExceptionCaptured_Should_LogErrorAndCreateBugIssue()
         {
             // Arrange
-            var loggerMock = new Mock<ILogger<CatchExceptionService>>();
-            var githubServiceMock = new Mock<IGithubService>();
+            var loggerMock = Substitute.For<ILogger<CatchExceptionService>>();
+            var githubServiceMock = Substitute.For<IGithubService>();
 
-            var service = new CatchExceptionService(githubServiceMock.Object, loggerMock.Object);
+            var service = new CatchExceptionService(githubServiceMock, loggerMock);
 
             var exception = new Exception("Fatal test exception");
 

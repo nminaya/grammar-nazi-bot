@@ -22,18 +22,18 @@ public class TelegramUpdateHandlerTests
     public async Task HandleUpdate_NonSupportedUpdateTypeReceived_Should_DoNothing()
     {
         // Arrange
-        var telegramBotMock = new Mock<ITelegramBotClient>();
-        var loggerMock = new Mock<ILogger<TelegramUpdateHandler>>();
+        var telegramBotMock = Substitute.For<ITelegramBotClient>();
+        var loggerMock = Substitute.For<ILogger<TelegramUpdateHandler>>();
 
         var update = new Update
         {
             ChatMember = new ChatMemberUpdated()
         };
 
-        var handler = new TelegramUpdateHandler(null, null, loggerMock.Object);
+        var handler = new TelegramUpdateHandler(null, null, loggerMock);
 
         // Act
-        await handler.HandleUpdateAsync(telegramBotMock.Object, update, default);
+        await handler.HandleUpdateAsync(telegramBotMock, update, default);
 
         // Assert
 
@@ -50,11 +50,11 @@ public class TelegramUpdateHandlerTests
     public async Task HandleUpdate_MessageReceivedNotTextType_Should_DoNothing()
     {
         // Arrange
-        var telegramBotMock = new Mock<ITelegramBotClient>();
-        var chatConfigServiceMock = new Mock<IChatConfigurationService>();
-        var serviceScopeFactory = new Mock<IServiceScopeFactory>();
-        var serviceScope = new Mock<IServiceScope>();
-        var serviceProvider = new Mock<IServiceProvider>();
+        var telegramBotMock = Substitute.For<ITelegramBotClient>();
+        var chatConfigServiceMock = Substitute.For<IChatConfigurationService>();
+        var serviceScopeFactory = Substitute.For<IServiceScopeFactory>();
+        var serviceScope = Substitute.For<IServiceScope>();
+        var serviceProvider = Substitute.For<IServiceProvider>();
 
         var update = new Update
         {
@@ -65,14 +65,14 @@ public class TelegramUpdateHandlerTests
             }
         };
 
-        serviceScopeFactory.Setup(x => x.CreateScope()).Returns(serviceScope.Object);
-        serviceScope.Setup(x => x.ServiceProvider).Returns(serviceProvider.Object);
-        serviceProvider.Setup(x => x.GetService(typeof(IChatConfigurationService))).Returns(chatConfigServiceMock.Object);
+        serviceScopeFactory.Setup(x => x.CreateScope()).Returns(serviceScope);
+        serviceScope.Setup(x => x.ServiceProvider).Returns(serviceProvider);
+        serviceProvider.Setup(x => x.GetService(typeof(IChatConfigurationService))).Returns(chatConfigServiceMock);
 
-        var handler = new TelegramUpdateHandler(serviceScopeFactory.Object, null, null);
+        var handler = new TelegramUpdateHandler(serviceScopeFactory, null, null);
 
         // Act
-        await handler.HandleUpdateAsync(telegramBotMock.Object, update, default);
+        await handler.HandleUpdateAsync(telegramBotMock, update, default);
 
         // Assert
         chatConfigServiceMock.Verify(x => x.GetConfigurationByChatId(update.Message.Chat.Id), Times.Never);
@@ -82,13 +82,13 @@ public class TelegramUpdateHandlerTests
     public async Task HandleUpdate_MessageReceived_Should_GetCorrections()
     {
         // Arrange
-        var telegramBotMock = new Mock<ITelegramBotClient>();
-        var chatConfigServiceMock = new Mock<IChatConfigurationService>();
-        var serviceScopeFactory = new Mock<IServiceScopeFactory>();
-        var serviceScope = new Mock<IServiceScope>();
-        var serviceProvider = new Mock<IServiceProvider>();
-        var loggerMock = new Mock<ILogger<TelegramUpdateHandler>>();
-        var grammarService = new Mock<IGrammarService>();
+        var telegramBotMock = Substitute.For<ITelegramBotClient>();
+        var chatConfigServiceMock = Substitute.For<IChatConfigurationService>();
+        var serviceScopeFactory = Substitute.For<IServiceScopeFactory>();
+        var serviceScope = Substitute.For<IServiceScope>();
+        var serviceProvider = Substitute.For<IServiceProvider>();
+        var loggerMock = Substitute.For<ILogger<TelegramUpdateHandler>>();
+        var grammarService = Substitute.For<IGrammarService>();
 
         var update = new Update
         {
@@ -105,15 +105,15 @@ public class TelegramUpdateHandlerTests
         grammarService.Setup(x => x.GetCorrections("My Text"))
             .ReturnsAsync(new GrammarCheckResult(null));
 
-        serviceScopeFactory.Setup(x => x.CreateScope()).Returns(serviceScope.Object);
-        serviceScope.Setup(x => x.ServiceProvider).Returns(serviceProvider.Object);
-        serviceProvider.Setup(x => x.GetService(typeof(IChatConfigurationService))).Returns(chatConfigServiceMock.Object);
-        serviceProvider.Setup(x => x.GetService(typeof(IEnumerable<IGrammarService>))).Returns(new[] { grammarService.Object });
+        serviceScopeFactory.Setup(x => x.CreateScope()).Returns(serviceScope);
+        serviceScope.Setup(x => x.ServiceProvider).Returns(serviceProvider);
+        serviceProvider.Setup(x => x.GetService(typeof(IChatConfigurationService))).Returns(chatConfigServiceMock);
+        serviceProvider.Setup(x => x.GetService(typeof(IEnumerable<IGrammarService>))).Returns(new[] { grammarService });
 
-        var handler = new TelegramUpdateHandler(serviceScopeFactory.Object, null, loggerMock.Object);
+        var handler = new TelegramUpdateHandler(serviceScopeFactory, null, loggerMock);
 
         // Act
-        await handler.HandleUpdateAsync(telegramBotMock.Object, update, default);
+        await handler.HandleUpdateAsync(telegramBotMock, update, default);
 
         // Assert
         chatConfigServiceMock.Verify(x => x.GetConfigurationByChatId(update.Message.Chat.Id));
