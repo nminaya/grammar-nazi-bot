@@ -2,7 +2,7 @@
 using GrammarNazi.Core.BotCommands.Discord;
 using GrammarNazi.Domain.Entities;
 using GrammarNazi.Domain.Services;
-using Moq;
+using NSubstitute;
 using System.Threading.Tasks;
 using Xunit;
 
@@ -14,8 +14,8 @@ public class WhiteListCommandTests
     public async Task NoWhiteListsConfigured_Should_ReplyMessage()
     {
         // Arrange
-        var channelConfigurationServiceMock = new Mock<IDiscordChannelConfigService>();
-        var command = new WhiteListCommand(channelConfigurationServiceMock.Object);
+        var channelConfigurationServiceMock = Substitute.For<IDiscordChannelConfigService>();
+        var command = new WhiteListCommand(channelConfigurationServiceMock);
         const string replyMessage = "You don't have Whitelist words configured";
 
         var chatConfig = new DiscordChannelConfig
@@ -23,32 +23,32 @@ public class WhiteListCommandTests
             WhiteListWords = null
         };
 
-        var channelMock = new Mock<IMessageChannel>();
-        var user = new Mock<IGuildUser>();
-        user.Setup(v => v.GuildPermissions).Returns(GuildPermissions.All);
-        var message = new Mock<IMessage>();
+        var channelMock = Substitute.For<IMessageChannel>();
+        var user = Substitute.For<IGuildUser>();
+        user.GuildPermissions.Returns(GuildPermissions.All);
+        var message = Substitute.For<IMessage>();
 
-        message.Setup(v => v.Author).Returns(user.Object);
-        message.Setup(v => v.Channel).Returns(channelMock.Object);
+        message.Author.Returns(user);
+        message.Channel.Returns(channelMock);
 
-        channelConfigurationServiceMock.Setup(v => v.GetConfigurationByChannelId(message.Object.Channel.Id))
-            .ReturnsAsync(chatConfig);
+        channelConfigurationServiceMock.GetConfigurationByChannelId(message.Channel.Id)
+            .Returns(chatConfig);
 
         // Act
-        await command.Handle(message.Object);
+        await command.Handle(message);
 
         // Assert
 
         // Verify SendMessageAsync was called with the reply message "You don't have Whitelist words configured"
-        channelMock.Verify(v => v.SendMessageAsync(null, false, It.Is<Embed>(e => e.Description.Contains(replyMessage)), null, null, null, null, null, null, MessageFlags.None));
+        await channelMock.Received().SendMessageAsync(null, false, Arg.Is<Embed>(e => e.Description.Contains(replyMessage)), null, null, null, null, null, null, MessageFlags.None);
     }
 
     [Fact]
     public async Task WhiteListsConfigured_Should_ReplyMessageWithWhiteList()
     {
         // Arrange
-        var channelConfigurationServiceMock = new Mock<IDiscordChannelConfigService>();
-        var command = new WhiteListCommand(channelConfigurationServiceMock.Object);
+        var channelConfigurationServiceMock = Substitute.For<IDiscordChannelConfigService>();
+        var command = new WhiteListCommand(channelConfigurationServiceMock);
         const string replyMessage = "Whitelist Words";
 
         var chatConfig = new DiscordChannelConfig
@@ -56,23 +56,23 @@ public class WhiteListCommandTests
             WhiteListWords = new() { "Word" }
         };
 
-        var channelMock = new Mock<IMessageChannel>();
-        var user = new Mock<IGuildUser>();
-        user.Setup(v => v.GuildPermissions).Returns(GuildPermissions.All);
-        var message = new Mock<IMessage>();
+        var channelMock = Substitute.For<IMessageChannel>();
+        var user = Substitute.For<IGuildUser>();
+        user.GuildPermissions.Returns(GuildPermissions.All);
+        var message = Substitute.For<IMessage>();
 
-        message.Setup(v => v.Author).Returns(user.Object);
-        message.Setup(v => v.Channel).Returns(channelMock.Object);
+        message.Author.Returns(user);
+        message.Channel.Returns(channelMock);
 
-        channelConfigurationServiceMock.Setup(v => v.GetConfigurationByChannelId(message.Object.Channel.Id))
-            .ReturnsAsync(chatConfig);
+        channelConfigurationServiceMock.GetConfigurationByChannelId(message.Channel.Id)
+            .Returns(chatConfig);
 
         // Act
-        await command.Handle(message.Object);
+        await command.Handle(message);
 
         // Assert
 
         // Verify SendMessageAsync was called with the reply message "Whitelist Words"
-        channelMock.Verify(v => v.SendMessageAsync(null, false, It.Is<Embed>(e => e.Description.Contains(replyMessage)), null, null, null, null, null, null, MessageFlags.None));
+        await channelMock.Received().SendMessageAsync(null, false, Arg.Is<Embed>(e => e.Description.Contains(replyMessage)), null, null, null, null, null, null, MessageFlags.None);
     }
 }

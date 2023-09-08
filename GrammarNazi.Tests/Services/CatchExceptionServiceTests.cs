@@ -1,9 +1,12 @@
 ﻿using GrammarNazi.Core.Services;
 using GrammarNazi.Domain.Enums;
 using GrammarNazi.Domain.Services;
+using LiteDB;
 using Microsoft.Extensions.Logging;
-using Moq;
+using NSubstitute;
 using System;
+using System.Collections.Generic;
+using System.Linq;
 using Telegram.Bot.Exceptions;
 using Xunit;
 
@@ -18,10 +21,10 @@ namespace GrammarNazi.Tests.Services
         public void HandleException_ApiRequestException_Should_LogWarning(string exceptionMessage)
         {
             // Arrange
-            var loggerMock = new Mock<ILogger<CatchExceptionService>>();
-            var githubServiceMock = new Mock<IGithubService>();
+            var loggerMock = Substitute.For<ILogger<CatchExceptionService>>();
+            var githubServiceMock = Substitute.For<IGithubService>();
 
-            var service = new CatchExceptionService(githubServiceMock.Object, loggerMock.Object);
+            var service = new CatchExceptionService(githubServiceMock, loggerMock);
 
             var exception = new ApiRequestException(exceptionMessage);
 
@@ -31,25 +34,24 @@ namespace GrammarNazi.Tests.Services
             // Assert
 
             // Verify LogWarning was called
-            loggerMock.Verify(x => x.Log(
-                            LogLevel.Warning,
-                            It.IsAny<EventId>(),
-                            It.IsAny<It.IsAnyType>(),
-                            It.IsAny<Exception>(),
-                            (Func<It.IsAnyType, Exception, string>)It.IsAny<object>()));
+            var numberOfCalls = loggerMock.ReceivedCalls()
+                .Select(call => call.GetArguments())
+                .Count(callArguments => ((LogLevel)callArguments[0]).Equals(LogLevel.Warning));
+
+            Assert.Equal(1, numberOfCalls);
 
             // Verify CreateBugIssue was never called
-            githubServiceMock.Verify(x => x.CreateBugIssue(It.IsAny<string>(), It.IsAny<Exception>(), It.IsAny<GithubIssueLabels>()), Times.Never);
+            githubServiceMock.DidNotReceive().CreateBugIssue(Arg.Any<string>(), Arg.Any<Exception>(), Arg.Any<GithubIssueLabels>());
         }
 
         [Fact]
         public void HandleError_ExceptionCaptured_Should_LogErrorAndCreateBugIssue()
         {
             // Arrange
-            var loggerMock = new Mock<ILogger<CatchExceptionService>>();
-            var githubServiceMock = new Mock<IGithubService>();
+            var loggerMock = Substitute.For<ILogger<CatchExceptionService>>();
+            var githubServiceMock = Substitute.For<IGithubService>();
 
-            var service = new CatchExceptionService(githubServiceMock.Object, loggerMock.Object);
+            var service = new CatchExceptionService(githubServiceMock, loggerMock);
 
             var exception = new Exception("Fatal test exception");
 
@@ -58,16 +60,14 @@ namespace GrammarNazi.Tests.Services
 
             // Assert
 
-            // Verify LogError was called
-            loggerMock.Verify(x => x.Log(
-                            LogLevel.Error,
-                            It.IsAny<EventId>(),
-                            It.IsAny<It.IsAnyType>(),
-                            exception,
-                            (Func<It.IsAnyType, Exception, string>)It.IsAny<object>()));
+            var numberOfCalls = loggerMock.ReceivedCalls()
+                .Select(call => call.GetArguments())
+                .Count(callArguments => ((LogLevel)callArguments[0]).Equals(LogLevel.Error));
+
+            Assert.Equal(1, numberOfCalls);
 
             // Verify CreateBugIssue was called
-            githubServiceMock.Verify(x => x.CreateBugIssue("Application Exception: Fatal test exception", exception, GithubIssueLabels.Telegram));
+            githubServiceMock.Received().CreateBugIssue("Application Exception: Fatal test exception", exception, GithubIssueLabels.Telegram);
         }
     }
 }

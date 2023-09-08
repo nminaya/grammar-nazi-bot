@@ -2,7 +2,7 @@
 using GrammarNazi.Core.BotCommands.Discord;
 using GrammarNazi.Domain.Entities;
 using GrammarNazi.Domain.Services;
-using Moq;
+using NSubstitute;
 using System.Threading.Tasks;
 using Xunit;
 
@@ -14,8 +14,8 @@ public class HideDetailsCommandTests
     public async Task UserIsAdmin_Should_ChangeChatConfig_And_ReplyMessage()
     {
         // Arrange
-        var channelConfigurationServiceMock = new Mock<IDiscordChannelConfigService>();
-        var command = new HideDetailsCommand(channelConfigurationServiceMock.Object);
+        var channelConfigurationServiceMock = Substitute.For<IDiscordChannelConfigService>();
+        var command = new HideDetailsCommand(channelConfigurationServiceMock);
         const string replyMessage = "Correction details hidden ✅";
 
         var chatConfig = new DiscordChannelConfig
@@ -23,25 +23,25 @@ public class HideDetailsCommandTests
             HideCorrectionDetails = false
         };
 
-        var channelMock = new Mock<IMessageChannel>();
-        var user = new Mock<IGuildUser>();
-        user.Setup(v => v.GuildPermissions).Returns(GuildPermissions.All);
-        var message = new Mock<IMessage>();
+        var channelMock = Substitute.For<IMessageChannel>();
+        var user = Substitute.For<IGuildUser>();
+        user.GuildPermissions.Returns(GuildPermissions.All);
+        var message = Substitute.For<IMessage>();
 
-        message.Setup(v => v.Author).Returns(user.Object);
-        message.Setup(v => v.Channel).Returns(channelMock.Object);
+        message.Author.Returns(user);
+        message.Channel.Returns(channelMock);
 
-        channelConfigurationServiceMock.Setup(v => v.GetConfigurationByChannelId(message.Object.Channel.Id))
-            .ReturnsAsync(chatConfig);
+        channelConfigurationServiceMock.GetConfigurationByChannelId(message.Channel.Id)
+            .Returns(chatConfig);
 
         // Act
-        await command.Handle(message.Object);
+        await command.Handle(message);
 
         // Assert
 
         // Verify SendMessageAsync was called with the reply message "Correction details hidden ✅"
-        channelMock.Verify(v => v.SendMessageAsync(null, false, It.Is<Embed>(e => e.Description.Contains(replyMessage)), null, null, null, null, null, null, MessageFlags.None));
-        channelConfigurationServiceMock.Verify(v => v.Update(chatConfig));
+        await channelMock.Received().SendMessageAsync(null, false, Arg.Is<Embed>(e => e.Description.Contains(replyMessage)), null, null, null, null, null, null, MessageFlags.None);
+        await channelConfigurationServiceMock.Received().Update(chatConfig);
         Assert.True(chatConfig.HideCorrectionDetails);
     }
 
