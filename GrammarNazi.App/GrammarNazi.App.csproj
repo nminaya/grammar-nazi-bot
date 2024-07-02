@@ -10,7 +10,7 @@
     <PackageReference Include="FirebaseAuthentication.net" Version="4.1.0" />
     <PackageReference Include="FirebaseDatabase.net" Version="4.2.0" />
     <PackageReference Include="Microsoft.VisualStudio.Azure.Containers.Tools.Targets" Version="1.21.0" />
-    <PackageReference Include="Octokit" Version="12.0.0" />
+    <PackageReference Include="Octokit" Version="13.0.0" />
     <PackageReference Include="Polly" Version="8.4.1" />
     <PackageReference Include="Telegram.Bot" Version="19.0.0" />
     <PackageReference Include="TweetinviAPI" Version="5.0.4" />
