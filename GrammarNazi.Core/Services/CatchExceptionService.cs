@@ -9,6 +9,7 @@ using System;
 using System.Linq;
 using System.Net;
 using System.Net.Http;
+using System.Net.Mail;
 using System.Net.Sockets;
 using Telegram.Bot.Exceptions;
 using Tweetinvi.Exceptions;
@@ -55,10 +56,25 @@ namespace GrammarNazi.Core.Services
                     HandleTwitterException(twitterException, githubIssueSection);
                     break;
 
+                case RequestException requestException:
+                    HandleRequestException(requestException, githubIssueSection);
+                    break;
+
                 default:
                     HandleGeneralException(exception, githubIssueSection);
                     break;
             }
+        }
+
+        private void HandleRequestException(RequestException requestException, GithubIssueLabels githubIssueSection)
+        {
+            if (requestException.GetInnerExceptions().Any(x => x.Message?.ContainsAny("Operation canceled", "response ended prematurely") == true))
+            {
+                _logger.LogWarning(requestException, requestException.Message);
+                return;
+            }
+
+            HandleGeneralException(requestException, githubIssueSection);
         }
 
         private void HandleTwitterException(TwitterException twitterException, GithubIssueLabels githubIssueSection)
