@@ -19,7 +19,7 @@
     <PackageReference Include="System.ServiceModel.Http" Version="8.0.0" />
     <PackageReference Include="System.ServiceModel.NetTcp" Version="8.0.0" />
     <PackageReference Include="System.ServiceModel.Security" Version="6.0.0" />
-    <PackageReference Include="Telegram.Bot" Version="19.0.0" />
+    <PackageReference Include="Telegram.Bot" Version="22.0.0" />
     <PackageReference Include="TweetinviAPI" Version="5.0.4" />
   </ItemGroup>
 
