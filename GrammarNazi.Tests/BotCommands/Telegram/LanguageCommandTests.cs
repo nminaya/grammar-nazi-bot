@@ -55,7 +55,7 @@ public class LanguageCommandTests
         await command.Handle(message);
 
         // Assert
-        await telegramBotClientMock.Received().SendTextMessageAsync(message.Chat.Id, Arg.Is<string>(s => s.Contains(replyMessage)), default, default, default, default, default, default, default, default, default);
+        await telegramBotClientMock.Received().SendTextMessageAsync(message.Chat.Id, Arg.Is<string>(s => s.Contains(replyMessage)), default, default, default, default, default, default, default, default);
     }
 
     [Theory]
@@ -98,7 +98,7 @@ public class LanguageCommandTests
         await command.Handle(message);
 
         // Assert
-        await telegramBotClientMock.Received().SendTextMessageAsync(message.Chat.Id, Arg.Is<string>(s => s.Contains(replyMessage)), default, default, default, default, default, default, default, default, default);
+        await telegramBotClientMock.Received().SendTextMessageAsync(message.Chat.Id, Arg.Is<string>(s => s.Contains(replyMessage)), default, default, default, default, default, default, default, default);
     }
 
     [Theory]
@@ -143,7 +143,7 @@ public class LanguageCommandTests
 
         // Assert
         Assert.Equal(languageParameter, chatConfig.SelectedLanguage);
-        await telegramBotClientMock.Received().SendTextMessageAsync(message.Chat.Id, Arg.Is<string>(s => s.Contains(replyMessage)), default, default, default, default, default, default, default, default, default);
+        await telegramBotClientMock.Received().SendTextMessageAsync(message.Chat.Id, Arg.Is<string>(s => s.Contains(replyMessage)), default, default, default, default, default, default, default, default);
     }
 
     [Fact]
@@ -185,11 +185,11 @@ public class LanguageCommandTests
 
         // Assert
         Assert.Equal(SupportedLanguages.French, chatConfig.SelectedLanguage);
-        await telegramBotClientMock.Received().SendTextMessageAsync(message.Chat.Id, Arg.Is<string>(s => s.Contains("Language updated")), default, default, default, default, default, default, default, default, default);
+        await telegramBotClientMock.Received().SendTextMessageAsync(message.Chat.Id, Arg.Is<string>(s => s.Contains("Language updated")), default, default, default, default, default, default, default, default);
 
         var warningMessage = $"WARNING: The selected language ({SupportedLanguages.French.GetDescription()}) is not supported by the selected algorithm ({GrammarAlgorithms.YandexSpellerApi.GetDescription()}).";
 
-        await telegramBotClientMock.Received().SendTextMessageAsync(message.Chat.Id, Arg.Is<string>(s => s.Contains(warningMessage)), default, default, default, default, default, default, default, default, default);
+        await telegramBotClientMock.Received().SendTextMessageAsync(message.Chat.Id, Arg.Is<string>(s => s.Contains(warningMessage)), default, default, default, default, default, default, default, default);
     }
 
     [Fact]
