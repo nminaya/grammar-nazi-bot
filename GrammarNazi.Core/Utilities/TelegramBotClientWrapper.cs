@@ -38,17 +38,16 @@ public class TelegramBotClientWrapper : ITelegramBotClientWrapper
         return _client.SendChatActionAsync(chatId,chatAction, cancellationToken: cancellationToken);
     }
 
-    public Task<Message> SendTextMessageAsync(ChatId chatId, string text, ParseMode? parseMode = null, IEnumerable<MessageEntity> entities = null, bool? disableWebPagePreview = null, bool? disableNotification = null, bool? protectContent = null, int? replyToMessageId = null, bool? allowSendingWithoutReply = null, IReplyMarkup replyMarkup = null, CancellationToken cancellationToken = default)
+    public Task<Message> SendTextMessageAsync(ChatId chatId, string text, ParseMode parseMode = default, IEnumerable<MessageEntity> entities = null, bool? linkPreviewOptions = null, bool disableNotification = false, bool protectContent = false, int? replyParameters = null, IReplyMarkup replyMarkup = null, CancellationToken cancellationToken = default)
     {
         return _client.SendTextMessageAsync(chatId,
                                             text,
                                             parseMode: parseMode,
                                             entities: entities,
-                                            disableWebPagePreview: disableWebPagePreview,
+                                            linkPreviewOptions: linkPreviewOptions,
                                             disableNotification: disableNotification,
                                             protectContent: protectContent,
-                                            replyToMessageId: replyToMessageId,
-                                            allowSendingWithoutReply: allowSendingWithoutReply,
+                                            replyParameters: replyParameters,
                                             replyMarkup: replyMarkup,
                                             cancellationToken: cancellationToken);
     }

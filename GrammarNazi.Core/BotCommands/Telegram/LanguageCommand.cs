@@ -32,7 +32,7 @@ public class LanguageCommand : BaseTelegramCommand, ITelegramBotCommand
         if (!await IsUserAdmin(message))
         {
             messageBuilder.AppendLine("Only admins can use this command.");
-            await Client.SendTextMessageAsync(message.Chat.Id, messageBuilder.ToString(), replyToMessageId: message.MessageId);
+            await Client.SendTextMessageAsync(message.Chat.Id, messageBuilder.ToString(), replyParameters: message.MessageId);
             return;
         }
 
