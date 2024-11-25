@@ -55,6 +55,6 @@ public static class TestUtilities
         await command.Handle(message);
 
         // Assert
-        await telegramBotClientMock.Received().SendTextMessageAsync(message.Chat.Id, Arg.Is<string>(s => s.Contains(replyMessage)), default, default, default, default, default, message.MessageId, default, default, default);  
+        await telegramBotClientMock.Received().SendTextMessageAsync(message.Chat.Id, Arg.Is<string>(s => s.Contains(replyMessage)), default, default, default, default, default, message.MessageId, default, default);  
     }
 }

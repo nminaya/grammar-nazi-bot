@@ -149,7 +149,7 @@ public class TelegramCommandHandlerServiceTests
         await service.HandleCallBackQuery(callbackQuery);
 
         // Assert
-        await telegramBotClientMock.Received().SendTextMessageAsync(message.Chat.Id, Arg.Is<string>(s => s.Contains(replyMessage)), ParseMode.Markdown, default, default, default, default, default, default, default, default);
+        await telegramBotClientMock.Received().SendTextMessageAsync(message.Chat.Id, Arg.Is<string>(s => s.Contains(replyMessage)), ParseMode.Markdown, default, default, default, default, default, default, default);
     }
 
     [Theory]
@@ -182,7 +182,7 @@ public class TelegramCommandHandlerServiceTests
         // Assert
 
         // Make sure SendTextMessageAsync method was never called
-        telegramBotClientMock.DidNotReceive().SendTextMessageAsync(message.Chat.Id, Arg.Any<string>(), default, default, default, default, default, default, default, default, default);
+        telegramBotClientMock.DidNotReceive().SendTextMessageAsync(message.Chat.Id, Arg.Any<string>(), default, default, default, default, default, default, default, default);
     }
 
     [Theory]
@@ -216,7 +216,7 @@ public class TelegramCommandHandlerServiceTests
         // Assert
 
         // Make sure SendTextMessageAsync method was never called
-        telegramBotClientMock.DidNotReceive().SendTextMessageAsync(message.Chat.Id, Arg.Any<string>(), default, default, default, default, default, default, default, default, default);
+        telegramBotClientMock.DidNotReceive().SendTextMessageAsync(message.Chat.Id, Arg.Any<string>(), default, default, default, default, default, default, default, default);
     }
 
     private IEnumerable<ITelegramBotCommand> GetAllCommands()

@@ -29,7 +29,7 @@ public class TelegramBotHostedService : BackgroundService
 
         _client.StartReceiving(
             updateHandler: _updateHandler.HandleUpdateAsync,
-            pollingErrorHandler: _updateHandler.HandlePollingErrorAsync,
+            errorHandler: _updateHandler.HandleErrorAsync,
             receiverOptions: new() { AllowedUpdates = new[] { UpdateType.Message, UpdateType.CallbackQuery } },
             cancellationToken: stoppingToken);
 

@@ -28,7 +28,7 @@ public class AddWhiteListCommand : BaseTelegramCommand, ITelegramBotCommand
 
         if (!await IsUserAdmin(message))
         {
-            await Client.SendTextMessageAsync(message.Chat.Id, "Only admins can use this command.", replyToMessageId: message.MessageId);
+            await Client.SendTextMessageAsync(message.Chat.Id, "Only admins can use this command.", replyParameters: message.MessageId);
             return;
         }
 

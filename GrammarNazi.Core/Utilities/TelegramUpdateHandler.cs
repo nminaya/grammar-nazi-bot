@@ -31,7 +31,7 @@ public class TelegramUpdateHandler : IUpdateHandler
         _logger = logger;
     }
 
-    public Task HandlePollingErrorAsync(ITelegramBotClient botClient, Exception exception, CancellationToken cancellationToken)
+    public Task HandleErrorAsync(ITelegramBotClient botClient, Exception exception, HandleErrorSource source, CancellationToken cancellationToken)
     {
         _catchExceptionService.HandleException(exception, GithubIssueLabels.Telegram);
 
@@ -53,7 +53,7 @@ public class TelegramUpdateHandler : IUpdateHandler
         }
         catch (Exception exception)
         {
-            await HandlePollingErrorAsync(botClient, exception, cancellationToken);
+            await HandleErrorAsync(botClient, exception, HandleErrorSource.HandleUpdateError, cancellationToken);
         }
     }
 
@@ -111,7 +111,7 @@ public class TelegramUpdateHandler : IUpdateHandler
             messageBuilder.AppendLine($"*{correction.PossibleReplacements.First()} {correctionDetailMessage}");
         }
 
-        await client.SendTextMessageAsync(message.Chat.Id, messageBuilder.ToString(), replyToMessageId: message.MessageId);
+        await client.SendTextMessageAsync(message.Chat.Id, messageBuilder.ToString(), replyParameters: message.MessageId);
     }
 
     private async Task BotOnCallbackQueryReceived(CallbackQuery callbackQuery)
