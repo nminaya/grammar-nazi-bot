@@ -1,4 +1,7 @@
-﻿using GrammarNazi.Domain.Entities.GeminiAPI;
+﻿using GrammarNazi.Domain.Clients;
+using GrammarNazi.Domain.Entities.GeminiAPI;
+using GrammarNazi.Domain.Entities.Settings;
+using Microsoft.Extensions.Options;
 using Newtonsoft.Json;
 using System;
 using System.Net;
@@ -8,16 +11,15 @@ using System.Threading.Tasks;
 
 namespace GrammarNazi.Core.Clients;
 
-public class GeminiApiClient(IHttpClientFactory httpClientFactory)
+public class GeminiApiClient(IHttpClientFactory httpClientFactory, IOptions<GeminiApiSettings> options) : IGeminiApiClient
 {
+    private readonly string _apiKey = options.Value.ApiKey;
+
     public async Task<GenerateContentResponse> GenerateContent(string promt)
     {
-        // TODO: Get API from config
-        var gemeniApiKey = "";
-
         var httpClient = httpClientFactory.CreateClient("geminiApi");
 
-        var request = new HttpRequestMessage(HttpMethod.Post, $"v1beta/models/gemini-1.5-flash:generateContent?key={gemeniApiKey}")
+        var request = new HttpRequestMessage(HttpMethod.Post, $"v1beta/models/gemini-1.5-flash:generateContent?key={_apiKey}")
         {
             Content = JsonContent.Create(GenerateContentRequest.CreateRequestObject(promt))
         };

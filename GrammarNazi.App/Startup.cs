@@ -5,6 +5,7 @@ using GrammarNazi.Core.Clients;
 using GrammarNazi.Core.Extensions;
 using GrammarNazi.Core.Repositories;
 using GrammarNazi.Core.Services;
+using GrammarNazi.Core.Services.GrammarServices;
 using GrammarNazi.Core.Utilities;
 using GrammarNazi.Domain.Clients;
 using GrammarNazi.Domain.Entities.Configs;
@@ -60,6 +61,7 @@ public class Startup
         services.Configure<TwitterBotSettings>(Configuration.GetSection("AppSettings:TwitterBotSettings"));
         services.Configure<GithubSettings>(Configuration.GetSection("AppSettings:GithubSettings"));
         services.Configure<DiscordSettings>(d => d.Token = Environment.GetEnvironmentVariable("DISCORD_API_KEY"));
+        services.Configure<GeminiApiSettings>(d => d.ApiKey = Environment.GetEnvironmentVariable("GEMINI_API_KEY"));
         services.Configure<MeaningCloudSettings>(m =>
         {
             m.MeaningCloudLanguageHostUrl = Configuration.GetSection("AppSettings:MeaningCloudSettings:MeaningCloudLanguageHostUrl").Value;
@@ -81,6 +83,7 @@ public class Startup
         services.AddTransient<IYandexSpellerApiClient, YandexSpellerApiClient>();
         services.AddTransient<IDatamuseApiClient, DatamuseApiClient>();
         services.AddTransient<ISentimApiClient, SentimApiClient>();
+        services.AddTransient<IGeminiApiClient, GeminiApiClient>();
         services.AddTransient<IChatConfigurationService, ChatConfigurationService>();
         services.AddTransient<IScheduledTweetService, ScheduledTweetService>();
         services.AddTransient<ITwitterMentionLogService, TwitterMentionLogService>();
@@ -89,6 +92,7 @@ public class Startup
         services.AddTransient<IGrammarService, InternalFileGrammarService>();
         services.AddTransient<IGrammarService, YandexSpellerApiService>();
         services.AddTransient<IGrammarService, DatamuseApiService>();
+        services.AddTransient<IGrammarService, GeminiApiService>();
         services.AddTransient<ITwitterLogService, TwitterLogService>();
         services.AddTransient<IGithubService, GithubService>();
         services.AddTransient<ITelegramCommandHandlerService, TelegramCommandHandlerService>();
