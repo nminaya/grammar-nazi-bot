@@ -22,7 +22,7 @@ public class GeminiApiService(IGeminiApiClient geminiApiClient) : BaseGrammarSer
 
         if (result.Candidates.Count == 0)
         {
-            // TODO: Log empty result received
+            // Empty result received
             return new(default);
         }
 
@@ -30,7 +30,7 @@ public class GeminiApiService(IGeminiApiClient geminiApiClient) : BaseGrammarSer
 
         if (string.IsNullOrEmpty(resultJsonString))
         {
-            // TODO: Log empty result received
+            // Empty result received
             return new(default);
         }
 
