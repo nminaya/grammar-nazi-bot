@@ -44,7 +44,7 @@ public class GeminiApiService(IGeminiApiClient geminiApiClient) : BaseGrammarSer
             return new(default);
         }
 
-        return new(grammarCorrections);
+        return new(grammarCorrections.Where(x => x.PossibleReplacements.Any()));
     }
 
     private string GetCorrectionPrompt(string text)
@@ -53,8 +53,8 @@ public class GeminiApiService(IGeminiApiClient geminiApiClient) : BaseGrammarSer
             ? "Auto detect the language"
             : $"The language is {SelectedLanguage.GetDescription()}";
 
-        return @$"Give me grammar or orthographic corrections of the text below and reply using the below json format. {languageSection}. 
-                Give me the message in that same language. If the word doesn't have possibleReplacements, don't add it to the results.
+        return @$"Analyze the following text for any grammar, spelling, or orthographic errors. For each mistake, provide the result in the JSON format below. {languageSection}.
+                Build the results in that same language. If the word doesn't have possibleReplacements, don't add it to the results. 
 
         [{{    
 
@@ -66,6 +66,8 @@ public class GeminiApiService(IGeminiApiClient geminiApiClient) : BaseGrammarSer
 
         }}]    
 
-        Text: {text}";
+        Here is the text for analysis: 
+
+        {text}";
     }
 }
