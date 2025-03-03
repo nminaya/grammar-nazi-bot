@@ -14,5 +14,8 @@ public enum GrammarAlgorithms
     YandexSpellerApi = 3,
 
     [Description("Datamuse API")]
-    DatamuseApi = 4
+    DatamuseApi = 4,
+
+    [Description("Gemini")]
+    Gemini = 5
 }

@@ -23,6 +23,7 @@ public static class ServiceCollectionExtensions
         serviceCollection.AddHttpClient("languageToolApi", c => c.BaseAddress = new Uri("https://languagetool.org/"));
         serviceCollection.AddHttpClient("yandexSpellerApi", c => c.BaseAddress = new Uri("https://speller.yandex.net/"));
         serviceCollection.AddHttpClient("sentimApi", c => c.BaseAddress = new Uri("https://sentim-api.herokuapp.com/"));
+        serviceCollection.AddHttpClient("geminiApi", c => c.BaseAddress = new Uri("https://generativelanguage.googleapis.com/"));
 
         var meaningCloudSettings = serviceCollection.BuildServiceProvider().GetService<IOptions<MeaningCloudSettings>>().Value;
 
