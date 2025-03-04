@@ -4,7 +4,6 @@ using GrammarNazi.Domain.Entities;
 using GrammarNazi.Domain.Services;
 using GrammarNazi.Domain.Utilities;
 using NSubstitute;
-using NSubstitute;
 using System.Threading.Tasks;
 using Telegram.Bot.Types;
 using Telegram.Bot.Types.Enums;
@@ -52,7 +51,7 @@ public class AddWhiteListCommandTests
         await command.Handle(message);
 
         // Assert
-        telegramBotClientMock.Received().SendTextMessageAsync(message.Chat.Id, Arg.Is<string>(s => s.Contains(replyMessage)), default, default, default, default, default, default, default, default);
+        await telegramBotClientMock.Received().SendTextMessageAsync(message.Chat.Id, Arg.Is<string>(s => s.Contains(replyMessage)), default, default, default, default, default, default, default);
     }
 
     [Theory]
@@ -94,7 +93,7 @@ public class AddWhiteListCommandTests
         await command.Handle(message);
 
         // Assert
-        await telegramBotClientMock.Received().SendTextMessageAsync(message.Chat.Id, Arg.Is<string>(s => s.Contains(replyMessage)), default, default, default, default, default, default, default, default);
+        await telegramBotClientMock.Received().SendTextMessageAsync(message.Chat.Id, Arg.Is<string>(s => s.Contains(replyMessage)), default, default, default, default, default, default, default);
     }
 
     [Fact]
@@ -143,6 +142,6 @@ public class AddWhiteListCommandTests
 
         // Assert
         Assert.Equal(2, chatConfig.WhiteListWords.Count);
-        await telegramBotClientMock.Received().SendTextMessageAsync(message.Chat.Id, Arg.Is<string>(s => s.Contains(replyMessage)), default, default, default, default, default, default, default, default);
+        await telegramBotClientMock.Received().SendTextMessageAsync(message.Chat.Id, Arg.Is<string>(s => s.Contains(replyMessage)), default, default, default, default, default, default, default);
     }
 }

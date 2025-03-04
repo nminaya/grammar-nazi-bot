@@ -112,7 +112,7 @@ public abstract class BaseTwitterHostedService : BackgroundService
 
             if (replyTweet == null)
             {
-                Logger.LogWarning("Not able to tweet Reply", text);
+                Logger.LogWarning($"Not able to tweet Reply {text}");
                 return;
             }
 

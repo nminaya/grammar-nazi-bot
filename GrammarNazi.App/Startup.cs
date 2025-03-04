@@ -70,7 +70,7 @@ public class Startup
         services.AddSqlServerDbContext(Environment.GetEnvironmentVariable("SQL_SERVER_CONNECTION_STRING"));
 
         // Repository
-        services.AddTransient(typeof(IRepository<>), typeof(EFRepository<>));
+        services.AddTransient(typeof(IRepository<>), typeof(InMemoryRepository<>));
 
         // Services
         services.AddSingleton<IFileService, FileService>();

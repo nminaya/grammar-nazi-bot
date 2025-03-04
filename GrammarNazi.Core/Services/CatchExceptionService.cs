@@ -115,7 +115,7 @@ namespace GrammarNazi.Core.Services
         {
             if (requestException.StatusCode == HttpStatusCode.BadGateway)
             {
-                _logger.LogWarning("Bad Gateway", requestException);
+                _logger.LogWarning(requestException, "Bad Gateway");
                 return;
             }
 
