@@ -151,8 +151,8 @@ public class TwitterBotHostedServiceTests
         await startTask;
 
         // Assert
-        grammarServiceMock.DidNotReceive().GetCorrections(Arg.Any<string>());
-        twitterLogServiceMock.DidNotReceive().LogTweet(Arg.Any<long>());
+        await grammarServiceMock.DidNotReceive().GetCorrections(Arg.Any<string>());
+        await twitterLogServiceMock.DidNotReceive().LogTweet(Arg.Any<long>());
     }
 
     [Fact]

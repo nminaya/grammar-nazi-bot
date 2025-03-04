@@ -71,7 +71,7 @@ public class TwitterLogServiceTests
         await service.LogTweet(123456);
 
         // Assert
-        repositoryMock.DidNotReceive().Add(Arg.Any<TwitterLog>());
+        await repositoryMock.DidNotReceive().Add(Arg.Any<TwitterLog>());
     }
 
     [Fact]
@@ -90,6 +90,6 @@ public class TwitterLogServiceTests
         await service.LogTweet(123456);
 
         // Assert
-        repositoryMock.Received().Add(Arg.Any<TwitterLog>());
+        await repositoryMock.Received().Add(Arg.Any<TwitterLog>());
     }
 }

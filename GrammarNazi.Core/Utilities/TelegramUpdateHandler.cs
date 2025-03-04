@@ -98,7 +98,7 @@ public class TelegramUpdateHandler : IUpdateHandler
         }
 
         // Send "Typing..." notification
-        await client.SendChatActionAsync(message.Chat.Id, ChatAction.Typing);
+        await client.SendChatAction(message.Chat.Id, ChatAction.Typing);
 
         var messageBuilder = new StringBuilder();
 
@@ -111,7 +111,7 @@ public class TelegramUpdateHandler : IUpdateHandler
             messageBuilder.AppendLine($"*{correction.PossibleReplacements.First()} {correctionDetailMessage}");
         }
 
-        await client.SendTextMessageAsync(message.Chat.Id, messageBuilder.ToString(), replyParameters: message.MessageId);
+        await client.SendMessage(message.Chat.Id, messageBuilder.ToString(), replyParameters: message.MessageId);
     }
 
     private async Task BotOnCallbackQueryReceived(CallbackQuery callbackQuery)
@@ -153,7 +153,7 @@ public class TelegramUpdateHandler : IUpdateHandler
         };
 
         await chatConfigurationService.AddConfiguration(chatConfiguration);
-        await client.SendTextMessageAsync(chatId, messageBuilder.ToString());
+        await client.SendMessage(chatId, messageBuilder.ToString());
 
         return chatConfiguration;
     }

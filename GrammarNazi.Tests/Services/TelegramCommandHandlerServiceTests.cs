@@ -183,7 +183,7 @@ public class TelegramCommandHandlerServiceTests
         // Assert
 
         // Make sure SendTextMessageAsync method was never called
-        telegramBotClientMock.DidNotReceive().SendTextMessageAsync(message.Chat.Id, Arg.Any<string>(), default, default, default, default, default, default, default, default);
+        await telegramBotClientMock.DidNotReceive().SendTextMessageAsync(message.Chat.Id, Arg.Any<string>(), default, default, default, default, default, default, default, default);
     }
 
     [Theory]
@@ -217,7 +217,7 @@ public class TelegramCommandHandlerServiceTests
         // Assert
 
         // Make sure SendTextMessageAsync method was never called
-        telegramBotClientMock.DidNotReceive().SendTextMessageAsync(message.Chat.Id, Arg.Any<string>(), default, default, default, default, default, default, default, default);
+        await telegramBotClientMock.DidNotReceive().SendTextMessageAsync(message.Chat.Id, Arg.Any<string>(), default, default, default, default, default, default, default, default);
     }
 
     private IEnumerable<ITelegramBotCommand> GetAllCommands()
