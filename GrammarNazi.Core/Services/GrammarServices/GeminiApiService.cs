@@ -54,7 +54,7 @@ public class GeminiApiService(IGeminiApiClient geminiApiClient) : BaseGrammarSer
             : $"The language is {SelectedLanguage.GetDescription()}";
 
         return @$"Analyze the following text for any grammar, spelling, or orthographic errors. For each mistake, provide the result in the JSON format below. {languageSection}.
-                Build the results in that same language. If the word doesn't have possibleReplacements, don't add it to the results. 
+                Build the results in that same language. Only provide a RFC8259 compliant JSON response without deviation.
 
         [{{    
 
