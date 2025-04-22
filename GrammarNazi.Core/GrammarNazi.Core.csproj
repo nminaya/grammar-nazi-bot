@@ -1,4 +1,4 @@
-﻿<Project Sdk="Microsoft.NET.Sdk">
+<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
     <TargetFramework>net9.0</TargetFramework>
@@ -19,7 +19,7 @@
     <PackageReference Include="System.ServiceModel.Http" Version="8.1.1" />
     <PackageReference Include="System.ServiceModel.NetTcp" Version="8.1.1" />
     <PackageReference Include="System.ServiceModel.Security" Version="6.0.0" />
-    <PackageReference Include="Telegram.Bot" Version="22.4.4" />
+    <PackageReference Include="Telegram.Bot" Version="22.5.1" />
     <PackageReference Include="TweetinviAPI" Version="5.0.4" />
   </ItemGroup>
 
