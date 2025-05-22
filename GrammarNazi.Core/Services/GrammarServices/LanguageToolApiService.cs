@@ -19,6 +19,21 @@ public class LanguageToolApiService : BaseGrammarService, IGrammarService
 
     public GrammarAlgorithms GrammarAlgorith => GrammarAlgorithms.LanguageToolApi;
 
+    private static readonly List<string> DefaultDisabledRules = new()
+    {
+        "UPPERCASE_SENTENCE_START",
+        "PROFANITY",
+        "MORFOLOGIK_RULE_ES",
+        "MORFOLOGIK_RULE_EN_US",
+        "EN_QUOTES",
+        "SPANISH_WORD_REPEAT_RULE",
+        "ES_QUESTION_MARK",
+        "GONNA",
+        "DECIMAL_COMMA",
+        "ONOMATOPEYAS",
+        "INCORRECT_SPACES"
+    };
+
     public LanguageToolApiService(ILanguageToolApiClient apiClient, ILanguageService languageService)
     {
         _apiClient = apiClient;
@@ -40,7 +55,7 @@ public class LanguageToolApiService : BaseGrammarService, IGrammarService
         }
         else
         {
-            var languageInfo = _languageService.IdentifyLanguage(text);
+            var languageInfo = await _languageService.IdentifyLanguage(text);
 
             if (languageInfo == default)
             {
@@ -52,7 +67,13 @@ public class LanguageToolApiService : BaseGrammarService, IGrammarService
             languageCode = "auto";
         }
 
-        var result = await _apiClient.Check(text, languageCode);
+        string rulesToDisable = null;
+        if (SelectedStrictnessLevel != CorrectionStrictnessLevels.Intolerant)
+        {
+            rulesToDisable = string.Join(",", DefaultDisabledRules);
+        }
+
+        var result = await _apiClient.Check(text, languageCode, rulesToDisable);
 
         // validate if LanguageTool has detected a valid language
         if (!IsValidLanguageDetected(result?.Language?.Code))
@@ -62,9 +83,10 @@ public class LanguageToolApiService : BaseGrammarService, IGrammarService
 
         var corrections = new List<GrammarCorrection>();
 
+        // Server-side filtering is now used, so we only filter out matches with no replacements.
+        // The RulesFilter method is removed.
         var matches = result
-                        .Matches.Where(RulesFilter)
-                        .Where(v => v.Replacements.Count > 0);
+                        .Matches.Where(v => v.Replacements.Count > 0);
 
         foreach (var match in matches)
         {
@@ -86,32 +108,6 @@ public class LanguageToolApiService : BaseGrammarService, IGrammarService
         }
 
         return new(corrections);
-    }
-
-    private bool RulesFilter(Match match)
-    {
-        if (SelectedStrictnessLevel == CorrectionStrictnessLevels.Intolerant)
-        {
-            return true;
-        }
-
-        // TODO: Create a list of default or disabled rules
-        // TODO: Use the API endpoint parameter "disabledRules"
-
-        // Do not get the following matching rules
-        return !match.Rule.Id.Contains("PUNCTUATION")
-            && !match.Rule.Id.Contains("WHITESPACE")
-            && match.Rule.Id != "UPPERCASE_SENTENCE_START"
-            && match.Rule.Id != "PROFANITY"
-            && match.Rule.Id != "MORFOLOGIK_RULE_ES"
-            && match.Rule.Id != "MORFOLOGIK_RULE_EN_US"
-            && match.Rule.Id != "EN_QUOTES"
-            && match.Rule.Id != "SPANISH_WORD_REPEAT_RULE"
-            && match.Rule.Id != "ES_QUESTION_MARK"
-            && match.Rule.Id != "GONNA"
-            && match.Rule.Id != "DECIMAL_COMMA"
-            && match.Rule.Id != "ONOMATOPEYAS"
-            && match.Rule.Id != "INCORRECT_SPACES";
     }
 
     private bool IsValidLanguageDetected(string languageCode)

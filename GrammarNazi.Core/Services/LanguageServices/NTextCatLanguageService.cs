@@ -16,22 +16,23 @@ public class NTextCatLanguageService : ILanguageService
         _rankedLanguageIdentifierFactory = basicProfileFactory;
     }
 
-    public LanguageInformation IdentifyLanguage(string text)
+    public Task<LanguageInformation> IdentifyLanguage(string text)
     {
         var identifier = _rankedLanguageIdentifierFactory.Load("Library/Core14.profile.xml");
         var languages = identifier.Identify(text).Where(v => LanguageUtils.GetSupportedLanguages().Contains(v.Item1.Iso639_3));
 
         if (!languages.Any())
         {
-            return default;
+            return Task.FromResult(default(LanguageInformation));
         }
 
         var (languageInfo, _) = languages.First();
 
-        return new()
+        var result = new LanguageInformation
         {
             ThreeLetterISOLanguageName = languageInfo.Iso639_3,
             TwoLetterISOLanguageName = LanguageUtils.GetLanguageCode(languageInfo.Iso639_3)
         };
+        return Task.FromResult(result);
     }
 }

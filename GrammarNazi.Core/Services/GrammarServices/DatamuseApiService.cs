@@ -30,7 +30,7 @@ public class DatamuseApiService : BaseGrammarService, IGrammarService
 
         if (SelectedLanguage == SupportedLanguages.Auto)
         {
-            var languageInfo = _languageService.IdentifyLanguage(text);
+            var languageInfo = await _languageService.IdentifyLanguage(text);
 
             // Language not supported
             if (languageInfo == default)

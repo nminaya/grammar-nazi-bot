@@ -37,7 +37,7 @@ public class YandexSpellerApiService : BaseGrammarService, IGrammarService
         }
         else
         {
-            var languageInfo = _languageService.IdentifyLanguage(text);
+            var languageInfo = await _languageService.IdentifyLanguage(text);
 
             if (languageInfo == default) // Language not supported
                 return new(default);

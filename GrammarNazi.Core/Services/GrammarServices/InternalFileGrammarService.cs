@@ -28,18 +28,18 @@ public class InternalFileGrammarService : BaseGrammarService, IGrammarService
         _languageService = languageService;
     }
 
-    public Task<GrammarCheckResult> GetCorrections(string text)
+    public async Task<GrammarCheckResult> GetCorrections(string text)
     {
         string language;
 
         if (SelectedLanguage == SupportedLanguages.Auto)
         {
-            var languageInfo = _languageService.IdentifyLanguage(text);
+            var languageInfo = await _languageService.IdentifyLanguage(text);
 
             // Language not supported
             if (languageInfo == default)
             {
-                return Task.FromResult(new GrammarCheckResult(default));
+                return new GrammarCheckResult(default);
             }
 
             language = languageInfo.TwoLetterISOLanguageName;

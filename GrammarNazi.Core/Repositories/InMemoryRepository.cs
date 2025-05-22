@@ -53,10 +53,19 @@ public class InMemoryRepository<T> : IRepository<T> where T : class
 
         if (obj != default)
         {
-            _list.Remove(obj);
+            // Found the existing object, update its properties
+            var properties = typeof(T).GetProperties().Where(p => p.CanRead && p.CanWrite);
+            foreach (var prop in properties)
+            {
+                var value = prop.GetValue(entity);
+                prop.SetValue(obj, value);
+            }
         }
-
-        _list.Add(entity);
+        else
+        {
+            // If not found, add the new entity (maintains previous behavior)
+            _list.Add(entity);
+        }
 
         return Task.CompletedTask;
     }

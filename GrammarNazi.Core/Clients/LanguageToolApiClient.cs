@@ -21,13 +21,20 @@ public class LanguageToolApiClient : ILanguageToolApiClient
         _logger = logger;
     }
 
-    public async Task<LanguageToolCheckResult> Check(string text, string languageCode)
+    public async Task<LanguageToolCheckResult> Check(string text, string languageCode, string disabledRules = null)
     {
         try
         {
             var httpClient = _httpClientFactory.CreateClient("languageToolApi");
 
-            var request = new HttpRequestMessage(HttpMethod.Post, $"api/v2/check?text={HttpUtility.UrlEncode(text)}&language={languageCode}");
+            var url = $"api/v2/check?text={HttpUtility.UrlEncode(text)}&language={languageCode}";
+
+            if (!string.IsNullOrWhiteSpace(disabledRules))
+            {
+                url += $"&disabledRules={disabledRules}";
+            }
+
+            var request = new HttpRequestMessage(HttpMethod.Post, url);
 
             var response = await httpClient.SendAsync(request);
 

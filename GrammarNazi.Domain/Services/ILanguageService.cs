@@ -4,5 +4,5 @@ namespace GrammarNazi.Domain.Services;
 
 public interface ILanguageService
 {
-    LanguageInformation IdentifyLanguage(string text);
+    Task<LanguageInformation> IdentifyLanguage(string text);
 }

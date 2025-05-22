@@ -15,10 +15,10 @@ public class MeaningCloudLanguageApiService : ILanguageService
         _meganingLanguageIdentificationApi = meganingLanguageIdentificationApi;
     }
 
-    public LanguageInformation IdentifyLanguage(string text)
+    public async Task<LanguageInformation> IdentifyLanguage(string text)
     {
         //TODO: Make ILanguageService.IdentifyLanguage async
-        var languageResult = _meganingLanguageIdentificationApi.GetLanguage(text).GetAwaiter().GetResult();
+        var languageResult = await _meganingLanguageIdentificationApi.GetLanguage(text);
 
         if (languageResult.Status.RemainingCredits == 0 || !languageResult.LanguageList.Any())
         {

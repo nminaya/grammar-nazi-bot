@@ -21,7 +21,7 @@ public class MeaningCloudSentimentAnalysisService : ISentimentAnalysisService
 
     public async Task<SentimentAnalysisResult> GetSentimentAnalysis(string text)
     {
-        var language = _languageService.IdentifyLanguage(text);
+        var language = await _languageService.IdentifyLanguage(text);
 
         var sentimentAnalysisResult = await _meaningCloudSentimentAnalysisApiClient.GetSentimentResult(text, language.TwoLetterISOLanguageName);
 
