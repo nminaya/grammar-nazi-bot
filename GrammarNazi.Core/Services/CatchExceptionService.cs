@@ -59,6 +59,9 @@ namespace GrammarNazi.Core.Services
                 case RequestException requestException:
                     HandleRequestException(requestException, githubIssueSection);
                     break;
+                case GeminiServiceUnavailableException:
+                    _logger.LogWarning(exception, exception.Message);
+                    break;
 
                 default:
                     HandleGeneralException(exception, githubIssueSection);
