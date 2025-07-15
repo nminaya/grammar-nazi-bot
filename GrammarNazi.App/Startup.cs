@@ -61,7 +61,11 @@ public class Startup
         services.Configure<TwitterBotSettings>(Configuration.GetSection("AppSettings:TwitterBotSettings"));
         services.Configure<GithubSettings>(Configuration.GetSection("AppSettings:GithubSettings"));
         services.Configure<DiscordSettings>(d => d.Token = Environment.GetEnvironmentVariable("DISCORD_API_KEY"));
-        services.Configure<GeminiApiSettings>(d => d.ApiKey = Environment.GetEnvironmentVariable("GEMINI_API_KEY"));
+        services.Configure<GeminiApiSettings>(d =>
+        {
+            d.ApiKey = Environment.GetEnvironmentVariable("GEMINI_API_KEY");
+            d.ModelVersion = Environment.GetEnvironmentVariable("GEMINI_MODEL_VERSION");
+        });
         services.Configure<MeaningCloudSettings>(m =>
         {
             m.MeaningCloudLanguageHostUrl = Configuration.GetSection("AppSettings:MeaningCloudSettings:MeaningCloudLanguageHostUrl").Value;

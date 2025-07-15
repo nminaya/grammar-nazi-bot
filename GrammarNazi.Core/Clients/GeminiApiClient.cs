@@ -13,13 +13,13 @@ namespace GrammarNazi.Core.Clients;
 
 public class GeminiApiClient(IHttpClientFactory httpClientFactory, IOptions<GeminiApiSettings> options) : IGeminiApiClient
 {
-    private readonly string _apiKey = options.Value.ApiKey;
+    private readonly GeminiApiSettings _geminiApiSettings = options.Value;
 
     public async Task<GenerateContentResponse> GenerateContent(string promt)
     {
         var httpClient = httpClientFactory.CreateClient("geminiApi");
 
-        var request = new HttpRequestMessage(HttpMethod.Post, $"v1beta/models/gemini-1.5-flash:generateContent?key={_apiKey}")
+        var request = new HttpRequestMessage(HttpMethod.Post, $"v1beta/models/{_geminiApiSettings.ModelVersion}:generateContent?key={_geminiApiSettings.ApiKey}")
         {
             Content = JsonContent.Create(GenerateContentRequest.CreateRequestObject(promt))
         };
