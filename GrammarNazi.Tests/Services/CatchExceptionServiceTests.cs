@@ -9,6 +9,7 @@ using System.Collections.Generic;
 using System.Linq;
 using Telegram.Bot.Exceptions;
 using Xunit;
+using GrammarNazi.Domain.Exceptions;
 
 namespace GrammarNazi.Tests.Services
 {
@@ -41,6 +42,27 @@ namespace GrammarNazi.Tests.Services
             Assert.Equal(1, numberOfCalls);
 
             // Verify CreateBugIssue was never called
+            githubServiceMock.DidNotReceive().CreateBugIssue(Arg.Any<string>(), Arg.Any<Exception>(), Arg.Any<GithubIssueLabels>());
+        }
+
+        [Fact]
+        public void HandleException_GeminiServiceUnavailableException_Should_LogWarning()
+        {
+            // Arrange
+            var loggerMock = Substitute.For<ILogger<CatchExceptionService>>();
+            var githubServiceMock = Substitute.For<IGithubService>();
+            var service = new CatchExceptionService(githubServiceMock, loggerMock);
+            var exception = new GeminiServiceUnavailableException("Gemini service unavailable");
+
+            // Act
+            service.HandleException(exception, GithubIssueLabels.ProductionBug);
+
+            // Assert
+            var numberOfCalls = loggerMock.ReceivedCalls()
+                .Select(call => call.GetArguments())
+                .Count(callArguments => ((LogLevel)callArguments[0]).Equals(LogLevel.Warning));
+
+            Assert.Equal(1, numberOfCalls);
             githubServiceMock.DidNotReceive().CreateBugIssue(Arg.Any<string>(), Arg.Any<Exception>(), Arg.Any<GithubIssueLabels>());
         }
 

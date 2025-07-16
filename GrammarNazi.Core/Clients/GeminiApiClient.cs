@@ -1,6 +1,7 @@
 ﻿using GrammarNazi.Domain.Clients;
 using GrammarNazi.Domain.Entities.GeminiAPI;
 using GrammarNazi.Domain.Entities.Settings;
+using GrammarNazi.Domain.Exceptions;
 using Microsoft.Extensions.Options;
 using Newtonsoft.Json;
 using System;
@@ -28,6 +29,11 @@ public class GeminiApiClient(IHttpClientFactory httpClientFactory, IOptions<Gemi
 
         if (response.StatusCode != HttpStatusCode.OK)
         {
+            if (response.StatusCode == HttpStatusCode.ServiceUnavailable)
+            {
+                throw new GeminiServiceUnavailableException("Gemini API is currently unavailable.");
+            }
+
             throw new InvalidOperationException($"Unsuccessful Gemini API response {response.StatusCode}", new(await response.Content.ReadAsStringAsync()));
         }
 
