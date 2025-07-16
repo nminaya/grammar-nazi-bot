@@ -17,6 +17,11 @@ public class GeminiApiClient(IHttpClientFactory httpClientFactory, IOptions<Gemi
 
     public async Task<GenerateContentResponse> GenerateContent(string promt)
     {
+        if (string.IsNullOrEmpty(_geminiApiSettings.ModelVersion))
+        {
+            throw new InvalidOperationException("ModelVersion is not configured");
+        }
+
         var httpClient = httpClientFactory.CreateClient("geminiApi");
 
         var request = new HttpRequestMessage(HttpMethod.Post, $"v1beta/models/{_geminiApiSettings.ModelVersion}:generateContent?key={_geminiApiSettings.ApiKey}")

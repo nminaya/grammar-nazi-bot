@@ -63,8 +63,15 @@ public class Startup
         services.Configure<DiscordSettings>(d => d.Token = Environment.GetEnvironmentVariable("DISCORD_API_KEY"));
         services.Configure<GeminiApiSettings>(d =>
         {
+            var modelVersion = Environment.GetEnvironmentVariable("GEMINI_MODEL_VERSION");
+
+            if (string.IsNullOrEmpty(modelVersion))
+            {
+                throw new InvalidOperationException("Empty GEMINI_MODEL_VERSION");
+            }
+
             d.ApiKey = Environment.GetEnvironmentVariable("GEMINI_API_KEY");
-            d.ModelVersion = Environment.GetEnvironmentVariable("GEMINI_MODEL_VERSION");
+            d.ModelVersion = modelVersion;
         });
         services.Configure<MeaningCloudSettings>(m =>
         {
