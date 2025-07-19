@@ -1,10 +1,13 @@
 name: .NET Core
 
+permissions:
+  contents: read
+
 on:
   push:
     branches: [ master ]
   pull_request:
-    branches: [ master ]
+   branches: [ master ]
 
 jobs:
   build:
