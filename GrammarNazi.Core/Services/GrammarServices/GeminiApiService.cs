@@ -44,7 +44,7 @@ public class GeminiApiService(IGeminiApiClient geminiApiClient) : BaseGrammarSer
             return new(default);
         }
 
-        return new(grammarCorrections.Where(x => !IsWhiteListWord(x.WrongWord) && x.PossibleReplacements.Any()));
+        return new(grammarCorrections.Where(x => !IsWhiteListWord(x.WrongWord) && x.PossibleReplacements?.Any() == true));
     }
 
     private string GetCorrectionPrompt(string text)
