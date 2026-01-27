@@ -25,8 +25,7 @@ public abstract class BaseTelegramCommand
     {
         var enumType = typeof(T);
 
-        var options = Enum.GetValues(enumType)
-                        .Cast<T>()
+        var options = EnumUtils.GetEnabledValues<T>()
                         .Select(v => new[] { InlineKeyboardButton.WithCallbackData($"{Convert.ToInt32(v)} - {v.GetDescription()}", $"{enumType.Name}.{v}") });
 
         var inlineOptions = new InlineKeyboardMarkup(options);
@@ -82,7 +81,7 @@ public abstract class BaseTelegramCommand
 
     protected static string GetAvailableOptions<T>(T selectedOption) where T : Enum
     {
-        var options = Enum.GetValues(typeof(T)).Cast<T>();
+        var options = EnumUtils.GetEnabledValues<T>();
 
         var messageBuilder = new StringBuilder();
 

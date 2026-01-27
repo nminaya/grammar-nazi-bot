@@ -13,13 +13,24 @@ public static class EnumExtensions
         where T : Enum
     {
         var attributes = @enum
-                           .GetType()
-                           .GetField(@enum.ToString())
-                           .GetCustomAttributes(typeof(DescriptionAttribute), false)
-                           .Cast<DescriptionAttribute>()
-                           .ToArray();
+            .GetType()
+            .GetField(@enum.ToString())
+            .GetCustomAttributes(typeof(DescriptionAttribute), false)
+            .Cast<DescriptionAttribute>()
+            .ToArray();
 
         return attributes.Length > 0 ? attributes[0].Description : string.Empty;
+    }
+
+    public static bool IsDisabled<T>(this T @enum)
+        where T : Enum
+    {
+        var attributes = @enum
+            .GetType()
+            .GetField(@enum.ToString())
+            .GetCustomAttributes(typeof(DisabledAttribute), false);
+
+        return attributes.Length > 0;
     }
 
     public static LanguageInformation GetLanguageInformation(this SupportedLanguages language)
@@ -38,7 +49,8 @@ public static class EnumExtensions
 
         if (langInfo == default)
         {
-            throw new InvalidOperationException($"SupportedLanguages.{language} does not have LanguageInformation attribute");
+            throw new InvalidOperationException(
+                $"SupportedLanguages.{language} does not have LanguageInformation attribute");
         }
 
         return new()

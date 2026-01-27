@@ -39,7 +39,7 @@ public class TwitterBotHostedService : BaseTwitterHostedService
     {
         _githubService = githubService;
 
-        _grammarService = grammarServices.First(v => v.GrammarAlgorith == Defaults.DefaultAlgorithm);
+        _grammarService = grammarServices.First(v => v.GrammarAlgorithm == Defaults.DefaultAlgorithm);
         _grammarService.SetStrictnessLevel(CorrectionStrictnessLevels.Tolerant);
     }
 

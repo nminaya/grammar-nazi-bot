@@ -45,7 +45,7 @@ public class SetAlgorithmCommand : BaseTelegramCommand, ITelegramBotCommand
         {
             bool parsedOk = int.TryParse(parameters[1], out int algorithm);
 
-            if (parsedOk && algorithm.IsAssignableToEnum<GrammarAlgorithms>())
+            if (parsedOk && algorithm.IsAssignableToEnum<GrammarAlgorithms>() && !((GrammarAlgorithms)algorithm).IsDisabled())
             {
                 var chatConfig = await _chatConfigurationService.GetConfigurationByChatId(message.Chat.Id);
                 chatConfig.GrammarAlgorithm = (GrammarAlgorithms)algorithm;

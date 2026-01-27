@@ -73,6 +73,13 @@ public class Startup
             d.ApiKey = Environment.GetEnvironmentVariable("GEMINI_API_KEY");
             d.ModelVersion = modelVersion;
         });
+
+        services.Configure<GroqApiSettings>(d =>
+        {
+            d.ApiKey = Environment.GetEnvironmentVariable("GROQ_API_KEY");
+            d.Model = Environment.GetEnvironmentVariable("GROQ_MODEL") ?? "llama-3.3-70b-versatile";
+        });
+
         services.Configure<MeaningCloudSettings>(m =>
         {
             m.MeaningCloudLanguageHostUrl = Configuration.GetSection("AppSettings:MeaningCloudSettings:MeaningCloudLanguageHostUrl").Value;
@@ -95,6 +102,7 @@ public class Startup
         services.AddTransient<IDatamuseApiClient, DatamuseApiClient>();
         services.AddTransient<ISentimApiClient, SentimApiClient>();
         services.AddTransient<IGeminiApiClient, GeminiApiClient>();
+        services.AddTransient<IGroqApiClient, GroqApiClient>();
         services.AddTransient<IChatConfigurationService, ChatConfigurationService>();
         services.AddTransient<IScheduledTweetService, ScheduledTweetService>();
         services.AddTransient<ITwitterMentionLogService, TwitterMentionLogService>();
@@ -104,6 +112,7 @@ public class Startup
         services.AddTransient<IGrammarService, YandexSpellerApiService>();
         services.AddTransient<IGrammarService, DatamuseApiService>();
         services.AddTransient<IGrammarService, GeminiApiService>();
+        services.AddTransient<IGrammarService, GroqApiService>();
         services.AddTransient<ITwitterLogService, TwitterLogService>();
         services.AddTransient<IGithubService, GithubService>();
         services.AddTransient<ITelegramCommandHandlerService, TelegramCommandHandlerService>();

@@ -1,8 +1,8 @@
 ﻿using Discord;
 using GrammarNazi.Core.Extensions;
+using GrammarNazi.Core.Utilities;
 using GrammarNazi.Domain.Enums;
 using System;
-using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
@@ -35,7 +35,7 @@ public abstract class BaseDiscordCommand
 
     protected string GetAvailableOptions<T>(T selectedOption) where T : Enum
     {
-        var options = Enum.GetValues(typeof(T)).Cast<T>();
+        var options = EnumUtils.GetEnabledValues<T>();
 
         var messageBuilder = new StringBuilder();
 

@@ -37,7 +37,7 @@ public class TwitterBotMentionHostedService : BaseTwitterHostedService
         : base(logger, twitterLogService, twitterClient, options.Value, scheduledTweetService, sentimentAnalysisService)
     {
         _twitterMentionLogService = twitterMentionLogService;
-        _grammarService = grammarServices.First(v => v.GrammarAlgorith == Defaults.DefaultAlgorithm);
+        _grammarService = grammarServices.First(v => v.GrammarAlgorithm == Defaults.DefaultAlgorithm);
         _grammarService.SetStrictnessLevel(CorrectionStrictnessLevels.Intolerant);
         _catchExceptionService = catchExceptionService;
     }

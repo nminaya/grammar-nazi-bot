@@ -1,4 +1,5 @@
-﻿using System.ComponentModel;
+﻿using GrammarNazi.Domain.Attributes;
+using System.ComponentModel;
 
 namespace GrammarNazi.Domain.Enums;
 
@@ -8,6 +9,7 @@ public enum GrammarAlgorithms
     InternalAlgorithm = 1,
 
     [Description("LanguageTool API")]
+    [Disabled]
     LanguageToolApi = 2,
 
     [Description("YandexSpeller API")]
@@ -17,5 +19,9 @@ public enum GrammarAlgorithms
     DatamuseApi = 4,
 
     [Description("Gemini")]
-    Gemini = 5
+    [Disabled]
+    Gemini = 5,
+
+    [Description("Groq API")]
+    GroqApi = 6
 }

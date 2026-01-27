@@ -12,7 +12,7 @@ namespace GrammarNazi.Core.Services;
 
 public class DatamuseApiService : BaseGrammarService, IGrammarService
 {
-    public GrammarAlgorithms GrammarAlgorith => GrammarAlgorithms.DatamuseApi;
+    public GrammarAlgorithms GrammarAlgorithm => GrammarAlgorithms.DatamuseApi;
 
     private readonly IDatamuseApiClient _datamuseApiClient;
     private readonly ILanguageService _languageService;

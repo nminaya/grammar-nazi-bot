@@ -162,7 +162,7 @@ public class TelegramUpdateHandler : IUpdateHandler
     {
         var grammarServices = serviceProvider.GetService<IEnumerable<IGrammarService>>();
 
-        var grammarService = grammarServices.First(v => v.GrammarAlgorith == chatConfig.GrammarAlgorithm);
+        var grammarService = grammarServices.First(v => v.GrammarAlgorithm == chatConfig.GrammarAlgorithm);
         grammarService.SetSelectedLanguage(chatConfig.SelectedLanguage);
         grammarService.SetStrictnessLevel(chatConfig.CorrectionStrictnessLevel);
         grammarService.SetWhiteListWords(chatConfig.WhiteListWords);

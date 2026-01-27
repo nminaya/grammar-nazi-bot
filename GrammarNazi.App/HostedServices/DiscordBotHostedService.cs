@@ -149,7 +149,7 @@ public class DiscordBotHostedService : BackgroundService
     {
         var grammarServices = serviceProvider.GetService<IEnumerable<IGrammarService>>();
 
-        var grammarService = grammarServices.First(v => v.GrammarAlgorith == channelConfig.GrammarAlgorithm);
+        var grammarService = grammarServices.First(v => v.GrammarAlgorithm == channelConfig.GrammarAlgorithm);
         grammarService.SetSelectedLanguage(channelConfig.SelectedLanguage);
         grammarService.SetStrictnessLevel(channelConfig.CorrectionStrictnessLevel);
         grammarService.SetWhiteListWords(channelConfig.WhiteListWords);
