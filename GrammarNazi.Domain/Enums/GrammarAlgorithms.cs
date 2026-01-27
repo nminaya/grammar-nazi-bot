@@ -17,5 +17,8 @@ public enum GrammarAlgorithms
     DatamuseApi = 4,
 
     [Description("Gemini")]
-    Gemini = 5
+    Gemini = 5,
+
+    [Description("Groq API")]
+    GroqApi = 6
 }
