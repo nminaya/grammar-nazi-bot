@@ -12,7 +12,7 @@ namespace GrammarNazi.Core.Services.GrammarServices;
 
 public class GroqApiService(IGroqApiClient groqApiClient) : BaseGrammarService, IGrammarService
 {
-    public GrammarAlgorithms GrammarAlgorith => GrammarAlgorithms.GroqApi;
+    public GrammarAlgorithms GrammarAlgorithm => GrammarAlgorithms.GroqApi;
 
     public async Task<GrammarCheckResult> GetCorrections(string text)
     {

@@ -17,7 +17,7 @@ public class InternalFileGrammarService : BaseGrammarService, IGrammarService
     private readonly IStringDiffService _stringDiffService;
     private readonly ILanguageService _languageService;
 
-    public GrammarAlgorithms GrammarAlgorith => GrammarAlgorithms.InternalAlgorithm;
+    public GrammarAlgorithms GrammarAlgorithm => GrammarAlgorithms.InternalAlgorithm;
 
     public InternalFileGrammarService(IFileService fileService,
         IStringDiffService stringDiffService,

@@ -17,7 +17,7 @@ public class LanguageToolApiService : BaseGrammarService, IGrammarService
     private readonly ILanguageToolApiClient _apiClient;
     private readonly ILanguageService _languageService;
 
-    public GrammarAlgorithms GrammarAlgorith => GrammarAlgorithms.LanguageToolApi;
+    public GrammarAlgorithms GrammarAlgorithm => GrammarAlgorithms.LanguageToolApi;
 
     public LanguageToolApiService(ILanguageToolApiClient apiClient, ILanguageService languageService)
     {

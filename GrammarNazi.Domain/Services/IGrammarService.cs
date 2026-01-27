@@ -7,7 +7,7 @@ namespace GrammarNazi.Domain.Services;
 
 public interface IGrammarService
 {
-    public GrammarAlgorithms GrammarAlgorith { get; }
+    public GrammarAlgorithms GrammarAlgorithm { get; }
 
     void SetSelectedLanguage(SupportedLanguages supportedLanguage);
 

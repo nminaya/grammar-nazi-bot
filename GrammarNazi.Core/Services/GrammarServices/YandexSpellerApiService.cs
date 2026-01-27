@@ -15,7 +15,7 @@ public class YandexSpellerApiService : BaseGrammarService, IGrammarService
     private readonly IYandexSpellerApiClient _yandexSpellerApiClient;
     private readonly ILanguageService _languageService;
 
-    public GrammarAlgorithms GrammarAlgorith => GrammarAlgorithms.YandexSpellerApi;
+    public GrammarAlgorithms GrammarAlgorithm => GrammarAlgorithms.YandexSpellerApi;
 
     public YandexSpellerApiService(IYandexSpellerApiClient yandexSpellerApiClient, ILanguageService languageService)
     {

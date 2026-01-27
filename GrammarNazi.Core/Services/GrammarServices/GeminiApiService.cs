@@ -12,7 +12,7 @@ namespace GrammarNazi.Core.Services.GrammarServices;
 
 public class GeminiApiService(IGeminiApiClient geminiApiClient) : BaseGrammarService, IGrammarService
 {
-    public GrammarAlgorithms GrammarAlgorith => GrammarAlgorithms.Gemini;
+    public GrammarAlgorithms GrammarAlgorithm => GrammarAlgorithms.Gemini;
 
     public async Task<GrammarCheckResult> GetCorrections(string text)
     {

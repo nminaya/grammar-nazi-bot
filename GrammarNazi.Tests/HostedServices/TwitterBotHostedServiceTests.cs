@@ -30,7 +30,7 @@ public class TwitterBotHostedServiceTests
         var sentimetAnalysisMock = Substitute.For<ISentimentAnalysisService>();
 
         twitterSettingsOptionsMock.Value.Returns(twitterSettings);
-        grammarServiceMock.GrammarAlgorith.Returns(GrammarAlgorithms.LanguageToolApi);
+        grammarServiceMock.GrammarAlgorithm.Returns(GrammarAlgorithms.LanguageToolApi);
 
         var hostedService = new TwitterBotHostedService(loggerMock, new[] { grammarServiceMock }, null, null, twitterSettingsOptionsMock, null, null, sentimetAnalysisMock);
 
@@ -65,7 +65,7 @@ public class TwitterBotHostedServiceTests
             .Returns(new long[0]);
         scheduleTweetServiceMock.GetPendingScheduledTweets()
             .Returns(Enumerable.Empty<ScheduledTweet>());
-        grammarServiceMock.GrammarAlgorith.Returns(GrammarAlgorithms.LanguageToolApi);
+        grammarServiceMock.GrammarAlgorithm.Returns(GrammarAlgorithms.LanguageToolApi);
 
         var hostedService = new TwitterBotHostedService(Substitute.For<ILogger<TwitterBotHostedService>>(), new[] { grammarServiceMock }, twitterLogServiceMock, twitterClientMock, twitterSettingsOptionsMock, null, scheduleTweetServiceMock, null);
 
@@ -102,7 +102,7 @@ public class TwitterBotHostedServiceTests
             .Returns(new long[0]);
         scheduleTweetServiceMock.GetPendingScheduledTweets()
             .Returns(Enumerable.Empty<ScheduledTweet>());
-        grammarServiceMock.GrammarAlgorith.Returns(GrammarAlgorithms.LanguageToolApi);
+        grammarServiceMock.GrammarAlgorithm.Returns(GrammarAlgorithms.LanguageToolApi);
 
         var hostedService = new TwitterBotHostedService(Substitute.For<ILogger<TwitterBotHostedService>>(), new[] { grammarServiceMock }, twitterLogServiceMock, twitterClientMock, twitterSettingsOptionsMock, null, scheduleTweetServiceMock, null);
 
@@ -141,7 +141,7 @@ public class TwitterBotHostedServiceTests
             .Returns(new long[0]);
         scheduleTweetServiceMock.GetPendingScheduledTweets()
             .Returns(Enumerable.Empty<ScheduledTweet>());
-        grammarServiceMock.GrammarAlgorith.Returns(GrammarAlgorithms.LanguageToolApi);
+        grammarServiceMock.GrammarAlgorithm.Returns(GrammarAlgorithms.LanguageToolApi);
 
         var hostedService = new TwitterBotHostedService(Substitute.For<ILogger<TwitterBotHostedService>>(), new[] { grammarServiceMock }, twitterLogServiceMock, twitterClientMock, twitterSettingsOptionsMock, null, scheduleTweetServiceMock, null);
 
@@ -182,7 +182,7 @@ public class TwitterBotHostedServiceTests
             .Returns(new long[0]);
         scheduleTweetServiceMock.GetPendingScheduledTweets()
             .Returns(Enumerable.Empty<ScheduledTweet>());
-        grammarServiceMock.GrammarAlgorith.Returns(GrammarAlgorithms.LanguageToolApi);
+        grammarServiceMock.GrammarAlgorithm.Returns(GrammarAlgorithms.LanguageToolApi);
 
         grammarServiceMock.GetCorrections(tweetMock.Text)
             .Returns(new GrammarCheckResult(default));
