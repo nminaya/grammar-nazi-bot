@@ -45,7 +45,7 @@ public class SetAlgorithmCommand : BaseDiscordCommand, IDiscordBotCommand
 
         bool parsedOk = int.TryParse(parameters[1], out int algorithm);
 
-        if (parsedOk && algorithm.IsAssignableToEnum<GrammarAlgorithms>())
+        if (parsedOk && algorithm.IsAssignableToEnum<GrammarAlgorithms>() && !((GrammarAlgorithms)algorithm).IsDisabled())
         {
             var channelConfig = await _channelConfigService.GetConfigurationByChannelId(message.Channel.Id);
             channelConfig.GrammarAlgorithm = (GrammarAlgorithms)algorithm;

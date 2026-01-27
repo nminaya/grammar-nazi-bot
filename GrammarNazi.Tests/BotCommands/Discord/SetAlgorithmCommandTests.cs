@@ -127,7 +127,7 @@ public class SetAlgorithmCommandTests
     [Theory]
     [InlineData(GrammarAlgorithms.InternalAlgorithm)]
     [InlineData(GrammarAlgorithms.DatamuseApi)]
-    [InlineData(GrammarAlgorithms.LanguageToolApi)]
+    [InlineData(GrammarAlgorithms.GroqApi)]
     public async Task ValidParameter_Should_ChangeChatConfig_And_ReplyMessage(GrammarAlgorithms algorithmParameter)
     {
         // Arrange
@@ -159,5 +159,39 @@ public class SetAlgorithmCommandTests
         // Verify SendMessageAsync was called with the reply message "Algorithm updated"
         await channelMock.Received().SendMessageAsync(null, false, Arg.Is<Embed>(e => e.Description.Contains(replyMessage)), null, null, null, null, null, null, MessageFlags.None);
         Assert.Equal(algorithmParameter, chatConfig.GrammarAlgorithm);
+    }
+
+    [Theory]
+    [InlineData(GrammarAlgorithms.LanguageToolApi)]
+    [InlineData(GrammarAlgorithms.Gemini)]
+    public async Task DisabledAlgorithm_Should_ReplyInvalidParameter(GrammarAlgorithms disabledAlgorithm)
+    {
+        // Arrange
+        var channelConfigurationServiceMock = Substitute.For<IDiscordChannelConfigService>();
+        var command = new SetAlgorithmCommand(channelConfigurationServiceMock);
+        const string replyMessage = "Invalid parameter";
+
+        var chatConfig = new DiscordChannelConfig
+        {
+            GrammarAlgorithm = GrammarAlgorithms.InternalAlgorithm
+        };
+
+        var channelMock = Substitute.For<IMessageChannel>();
+        var user = Substitute.For<IGuildUser>();
+        user.GuildPermissions.Returns(GuildPermissions.All);
+        var message = Substitute.For<IMessage>();
+        message.Content.Returns($"{DiscordBotCommands.SetAlgorithm} {(int)disabledAlgorithm}");
+        message.Author.Returns(user);
+        message.Channel.Returns(channelMock);
+
+        channelConfigurationServiceMock.GetConfigurationByChannelId(message.Channel.Id)
+            .Returns(chatConfig);
+
+        // Act
+        await command.Handle(message);
+
+        // Assert
+        await channelMock.Received().SendMessageAsync(null, false, Arg.Is<Embed>(e => e.Description.Contains(replyMessage)), null, null, null, null, null, null, MessageFlags.None);
+        Assert.Equal(GrammarAlgorithms.InternalAlgorithm, chatConfig.GrammarAlgorithm); // Should not change
     }
 }
