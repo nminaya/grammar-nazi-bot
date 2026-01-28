@@ -61,4 +61,9 @@ public static class BuiltInTypesExtensions
     {
         return values.Any(x => str.Contains(x));
     }
+
+    public static bool ContainsAny(this string str, StringComparison comparisonType, params string[] values)
+    {
+        return values.Any(x => str.Contains(x, comparisonType));
+    }
 }

@@ -7,6 +7,7 @@ using NSubstitute;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Threading.Tasks;
 using Telegram.Bot.Exceptions;
 using Xunit;
 using GrammarNazi.Domain.Exceptions;
@@ -63,6 +64,56 @@ namespace GrammarNazi.Tests.Services
                 .Count(callArguments => ((LogLevel)callArguments[0]).Equals(LogLevel.Warning));
 
             Assert.Equal(1, numberOfCalls);
+            githubServiceMock.DidNotReceive().CreateBugIssue(Arg.Any<string>(), Arg.Any<Exception>(), Arg.Any<GithubIssueLabels>());
+        }
+
+        [Theory]
+        [InlineData("Bot API Request timed out")]
+        public void HandleException_RequestException_Timeout_Should_LogWarning(string exceptionMessage)
+        {
+            // Arrange
+            var loggerMock = Substitute.For<ILogger<CatchExceptionService>>();
+            var githubServiceMock = Substitute.For<IGithubService>();
+
+            var service = new CatchExceptionService(githubServiceMock, loggerMock);
+
+            var exception = new RequestException(exceptionMessage);
+
+            // Act
+            service.HandleException(exception, GithubIssueLabels.Telegram);
+
+            // Assert
+            var numberOfCalls = loggerMock.ReceivedCalls()
+                .Select(call => call.GetArguments())
+                .Count(callArguments => ((LogLevel)callArguments[0]).Equals(LogLevel.Warning));
+
+            Assert.Equal(1, numberOfCalls);
+
+            githubServiceMock.DidNotReceive().CreateBugIssue(Arg.Any<string>(), Arg.Any<Exception>(), Arg.Any<GithubIssueLabels>());
+        }
+
+        [Fact]
+        public void HandleException_RequestException_TaskCanceled_Should_LogWarning()
+        {
+            // Arrange
+            var loggerMock = Substitute.For<ILogger<CatchExceptionService>>();
+            var githubServiceMock = Substitute.For<IGithubService>();
+
+            var service = new CatchExceptionService(githubServiceMock, loggerMock);
+
+            var innerException = new TaskCanceledException("A task was canceled.");
+            var exception = new RequestException("Request canceled", innerException);
+
+            // Act
+            service.HandleException(exception, GithubIssueLabels.Telegram);
+
+            // Assert
+            var numberOfCalls = loggerMock.ReceivedCalls()
+                .Select(call => call.GetArguments())
+                .Count(callArguments => ((LogLevel)callArguments[0]).Equals(LogLevel.Warning));
+
+            Assert.Equal(1, numberOfCalls);
+
             githubServiceMock.DidNotReceive().CreateBugIssue(Arg.Any<string>(), Arg.Any<Exception>(), Arg.Any<GithubIssueLabels>());
         }
 
