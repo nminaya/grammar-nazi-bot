@@ -71,7 +71,10 @@ namespace GrammarNazi.Core.Services
 
         private void HandleRequestException(RequestException requestException, GithubIssueLabels githubIssueSection)
         {
-            if (requestException.GetInnerExceptions().Any(x => x.Message?.ContainsAny("Operation canceled", "response ended prematurely") == true))
+            var isTransient = requestException.Message.Contains("timed out", StringComparison.OrdinalIgnoreCase)
+                || requestException.GetInnerExceptions().Any(x => x.Message?.ContainsAny(StringComparison.OrdinalIgnoreCase, "Operation canceled", "task was canceled", "response ended prematurely") == true);
+
+            if (isTransient)
             {
                 _logger.LogWarning(requestException, requestException.Message);
                 return;
@@ -147,7 +150,7 @@ namespace GrammarNazi.Core.Services
             if (innerExceptions.Any(x => x.GetType() == typeof(SocketException) && x.Message.Contains("Connection reset by peer")))
             {
                 // The server has reset the connection.
-                _logger.LogWarning(exception, "Socket reseted.");
+                _logger.LogWarning(exception, "Socket reset.");
 
                 return;
             }
