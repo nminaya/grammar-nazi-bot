@@ -25,7 +25,7 @@ Bot that corrects spelling mistakes.
 Take a look at the [Telegram Bot](https://github.com/nminaya/grammar-nazi-bot/wiki/GrammarNazi-Telegram-Bot) and [Discord Bot](https://github.com/nminaya/grammar-nazi-bot/wiki/GrammarNazi-Discord-Bot) documentation.
 
 ## Solution Design
-The solution design focuses on a basic Domain Driven Design techniques and implementation, while keeping the things as simple as possible but can be extended as needed. Multiple assemblies are used for separation of concerns to keep logic isolated from the other components. **.NET 9 C#** is the default framework and language for this application.
+The solution design focuses on a basic Domain Driven Design techniques and implementation, while keeping the things as simple as possible but can be extended as needed. Multiple assemblies are used for separation of concerns to keep logic isolated from the other components. **.NET 10 C#** is the default framework and language for this application.
 
 ### Assembly Layers
 -   **GrammarNazi.Domain**  - This assembly contains constants, entities and interfaces.

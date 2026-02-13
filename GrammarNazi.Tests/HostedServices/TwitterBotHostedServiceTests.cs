@@ -184,13 +184,19 @@ public class TwitterBotHostedServiceTests
             .Returns(Enumerable.Empty<ScheduledTweet>());
         grammarServiceMock.GrammarAlgorithm.Returns(GrammarAlgorithms.GroqApi);
 
+        var tcs = new TaskCompletionSource<bool>();
         grammarServiceMock.GetCorrections(tweetMock.Text)
-            .Returns(new GrammarCheckResult(default));
+            .Returns(x =>
+            {
+                tcs.SetResult(true);
+                return new GrammarCheckResult(default);
+            });
 
         var hostedService = new TwitterBotHostedService(Substitute.For<ILogger<TwitterBotHostedService>>(), new[] { grammarServiceMock }, twitterLogServiceMock, twitterClientMock, twitterSettingsOptionsMock, null, scheduleTweetServiceMock, null);
 
         // Act
         var startTask = hostedService.StartAsync(cancellationTokenSource.Token);
+        await tcs.Task;
         cancellationTokenSource.Cancel();
         await startTask;
 
