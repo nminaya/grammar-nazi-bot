@@ -132,30 +132,45 @@ public class TelegramUpdateHandler : IUpdateHandler
     {
         var chatConfigurationService = serviceProvider.GetService<IChatConfigurationService>();
 
-        var chatConfig = await chatConfigurationService.GetConfigurationByChatId(chatId);
-
-        if (chatConfig != null)
+        try
         {
-            return chatConfig;
+            var chatConfig = await chatConfigurationService.GetConfigurationByChatId(chatId);
+
+            if (chatConfig != null)
+            {
+                return chatConfig;
+            }
+
+            var messageBuilder = new StringBuilder();
+
+            messageBuilder.AppendLine("Hi, I'm GrammarNazi.");
+            messageBuilder.AppendLine("I'm currently working and correcting all spelling errors in this chat.");
+            messageBuilder.AppendLine($"Type {TelegramBotCommands.Help} to get useful commands.");
+
+            var chatConfiguration = new ChatConfiguration
+            {
+                ChatId = chatId,
+                GrammarAlgorithm = Defaults.DefaultAlgorithm,
+                SelectedLanguage = SupportedLanguages.Auto
+            };
+
+            await chatConfigurationService.AddConfiguration(chatConfiguration);
+            await client.SendMessage(chatId, messageBuilder.ToString());
+
+            return chatConfiguration;
         }
-
-        var messageBuilder = new StringBuilder();
-
-        messageBuilder.AppendLine("Hi, I'm GrammarNazi.");
-        messageBuilder.AppendLine("I'm currently working and correcting all spelling errors in this chat.");
-        messageBuilder.AppendLine($"Type {TelegramBotCommands.Help} to get useful commands.");
-
-        var chatConfiguration = new ChatConfiguration
+        catch (SqlException ex) when (SqlExceptionHelper.IsTransient(ex))
         {
-            ChatId = chatId,
-            GrammarAlgorithm = Defaults.DefaultAlgorithm,
-            SelectedLanguage = SupportedLanguages.Auto
-        };
+            _logger.LogWarning(ex, $"Database unreachable for chatId {chatId}; using default configuration.");
+            _catchExceptionService.HandleException(ex, GithubIssueLabels.Telegram);
 
-        await chatConfigurationService.AddConfiguration(chatConfiguration);
-        await client.SendMessage(chatId, messageBuilder.ToString());
-
-        return chatConfiguration;
+            return new ChatConfiguration
+            {
+                ChatId = chatId,
+                GrammarAlgorithm = Defaults.DefaultAlgorithm,
+                SelectedLanguage = SupportedLanguages.Auto
+            };
+        }
     }
 
     private static IGrammarService GetConfiguredGrammarService(ChatConfiguration chatConfig, IServiceProvider serviceProvider)
