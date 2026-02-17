@@ -40,12 +40,13 @@ public class Startup
     public void ConfigureServices(IServiceCollection services)
     {
         services.AddControllers();
+        services.AddMemoryCache();
 
         // Hosted services
         services.AddHostedService<TelegramBotHostedService>();
 
         // Disabled because of performancee issue (https://github.com/nminaya/grammar-nazi-bot/issues/344)
-        //services.AddHostedService<DiscordBotHostedService>();
+        services.AddHostedService<DiscordBotHostedService>();
 
         // Disabled because of new Twitter API pricing (https://twitter.com/GrammarNBot/status/1670853991511539714)
         //services.AddHostedService<TwitterBotMentionHostedService>();

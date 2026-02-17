@@ -19,6 +19,7 @@ using System.Linq;
 using System.Net;
 using System.Text;
 using System.Threading;
+using System.Threading.Channels;
 using System.Threading.Tasks;
 
 namespace GrammarNazi.App.HostedServices;
@@ -30,6 +31,9 @@ public class DiscordBotHostedService : BackgroundService
     private readonly ILogger<DiscordBotHostedService> _logger;
     private readonly IServiceScopeFactory _serviceScopeFactory;
     private readonly ICatchExceptionService _catchExceptionService;
+    private readonly Channel<SocketMessage> _messageChannel;
+
+    private const int MaxWorkers = 5;
 
     public DiscordBotHostedService(BaseSocketClient baseSocketClient,
         IOptions<DiscordSettings> options,
@@ -42,6 +46,7 @@ public class DiscordBotHostedService : BackgroundService
         _logger = logger;
         _serviceScopeFactory = serviceScopeFactory;
         _catchExceptionService = catchExceptionService;
+        _messageChannel = Channel.CreateUnbounded<SocketMessage>();
     }
 
     protected override async Task ExecuteAsync(CancellationToken stoppingToken)
@@ -52,26 +57,44 @@ public class DiscordBotHostedService : BackgroundService
 
         await _client.StartAsync();
 
-        _client.MessageReceived += (eventArgs) =>
+        Task OnMessageReceivedEvent(SocketMessage eventArgs)
         {
-            // fire and forget
-            _ = Task.Run(async () =>
+            _messageChannel.Writer.TryWrite(eventArgs);
+            return Task.CompletedTask;
+        }
+
+        _client.MessageReceived += OnMessageReceivedEvent;
+
+        try
+        {
+            var workers = Enumerable.Range(0, MaxWorkers)
+                .Select(_ => Task.Run(() => Worker(stoppingToken), stoppingToken));
+
+            // Keep hosted service alive while receiving messages
+            await Task.WhenAll(workers);
+        }
+        finally
+        {
+            _client.MessageReceived -= OnMessageReceivedEvent;
+        }
+    }
+
+    private async Task Worker(CancellationToken stoppingToken)
+    {
+        while (await _messageChannel.Reader.WaitToReadAsync(stoppingToken))
+        {
+            while (_messageChannel.Reader.TryRead(out var message))
             {
                 try
                 {
-                    await OnMessageReceived(eventArgs);
+                    await OnMessageReceived(message);
                 }
                 catch (Exception ex)
                 {
                     _catchExceptionService.HandleException(ex, GithubIssueLabels.Discord);
                 }
-            });
-
-            return Task.CompletedTask;
-        };
-
-        // Keep hosted service alive while receiving messages
-        await Task.Delay(Timeout.Infinite, stoppingToken);
+            }
+        }
     }
 
     private async Task OnMessageReceived(SocketMessage socketMessage)
