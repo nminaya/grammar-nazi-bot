@@ -40,16 +40,14 @@ public class TelegramUpdateHandler : IUpdateHandler
 
     public async Task HandleUpdateAsync(ITelegramBotClient botClient, Update update, CancellationToken cancellationToken)
     {
-        var handler = update.Type switch
-        {
-            UpdateType.Message => BotOnMessageReceived(botClient, update.Message),
-            UpdateType.CallbackQuery => BotOnCallbackQueryReceived(update.CallbackQuery),
-            _ => UnknownUpdateHandlerAsync(update)
-        };
-
         try
         {
-            await PollyExceptionHandlerHelper.HandleExceptionAndRetry<SqlException>(handler, _logger, cancellationToken);
+            await (update.Type switch
+            {
+                UpdateType.Message => BotOnMessageReceived(botClient, update.Message),
+                UpdateType.CallbackQuery => BotOnCallbackQueryReceived(update.CallbackQuery),
+                _ => UnknownUpdateHandlerAsync(update)
+            });
         }
         catch (Exception exception)
         {

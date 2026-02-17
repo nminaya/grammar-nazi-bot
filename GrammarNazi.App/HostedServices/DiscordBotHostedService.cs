@@ -59,7 +59,7 @@ public class DiscordBotHostedService : BackgroundService
             {
                 try
                 {
-                    await PollyExceptionHandlerHelper.HandleExceptionAndRetry<SqlException>(OnMessageReceived(eventArgs), _logger, stoppingToken);
+                    await OnMessageReceived(eventArgs);
                 }
                 catch (Exception ex)
                 {

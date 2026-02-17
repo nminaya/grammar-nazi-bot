@@ -1,11 +1,13 @@
 ﻿using Discord.Net;
 using GrammarNazi.Core.Extensions;
+using GrammarNazi.Core.Utilities;
 using GrammarNazi.Domain.Enums;
 using GrammarNazi.Domain.Exceptions;
 using GrammarNazi.Domain.Services;
 using Microsoft.Data.SqlClient;
 using Microsoft.Extensions.Logging;
 using System;
+using System.Collections.Concurrent;
 using System.Linq;
 using System.Net;
 using System.Net.Http;
@@ -106,6 +108,8 @@ namespace GrammarNazi.Core.Services
             HandleGeneralException(httpException, githubIssueSection);
         }
 
+        private static readonly ConcurrentDictionary<string, RateLimitState> SqlRateLimitStates = new();
+
         private void HandleSqlException(SqlException sqlException, GithubIssueLabels githubIssueSection)
         {
             if (sqlException.Message.Contains("SHUTDOWN"))
@@ -114,7 +118,51 @@ namespace GrammarNazi.Core.Services
                 return;
             }
 
+            if (SqlExceptionHelper.IsTransient(sqlException))
+            {
+                HandleTransientSqlException(sqlException, githubIssueSection);
+                return;
+            }
+
             HandleGeneralException(sqlException, githubIssueSection);
+        }
+
+        private void HandleTransientSqlException(SqlException sqlException, GithubIssueLabels githubIssueSection)
+        {
+            _logger.LogWarning(sqlException, $"Transient SQL error: {sqlException.Message}");
+
+            var state = SqlRateLimitStates.GetOrAdd("SqlConnectivity", _ => new RateLimitState());
+
+            lock (state)
+            {
+                var now = DateTime.UtcNow;
+                state.RecentOccurrences.Add(now);
+                state.RecentOccurrences.RemoveAll(x => x < now.AddMinutes(-10));
+
+                bool shouldCreateIssue = false;
+
+                if (now - state.LastIssueCreatedUtc >= TimeSpan.FromHours(6))
+                {
+                    shouldCreateIssue = true;
+                }
+                else if (state.RecentOccurrences.Count >= 10)
+                {
+                    shouldCreateIssue = true;
+                    state.RecentOccurrences.Clear(); // Reset burst count after escalating
+                }
+
+                if (shouldCreateIssue)
+                {
+                    state.LastIssueCreatedUtc = now;
+                    _ = _githubService.CreateBugIssue($"Transient SQL Exception: {sqlException.Message}", sqlException, githubIssueSection);
+                }
+            }
+        }
+
+        private class RateLimitState
+        {
+            public DateTime LastIssueCreatedUtc { get; set; }
+            public System.Collections.Generic.List<DateTime> RecentOccurrences { get; } = new();
         }
 
         private void HandleHttpRequestException(HttpRequestException requestException, GithubIssueLabels githubIssueSection)
