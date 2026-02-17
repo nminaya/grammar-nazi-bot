@@ -8,7 +8,7 @@ Bot that corrects spelling mistakes.
 #### Twitter Bot (Disabled, see [https://twitter.com/GrammarNBot/status/1670853991511539714](https://twitter.com/GrammarNBot/status/1670853991511539714))
 [@GrammarNBot](https://twitter.com/GrammarNBot) Analyzes the tweet you're replying to mentioning the bot, and if it finds any spelling or grammar errors, it will tweet a reply with its corrections using the asterisk symbol (*).
 
-#### Discord Bot (Disabled, see [#344](https://github.com/nminaya/grammar-nazi-bot/issues/344))
+#### Discord Bot
 [Add Bot to Server](https://discord.com/oauth2/authorize?client_id=800422872770150431&permissions=523328&scope=bot): This bot analyzes each message that is sent in a Discord channel, and if it finds any spelling or grammar errors, it replies to the message with its corrections using the asterisk symbol (*).
 
 ## Features
