@@ -1,3 +1,4 @@
+using Discord;
 using Discord.WebSocket;
 using Firebase.Database;
 using GrammarNazi.App.HostedServices;
@@ -180,7 +181,13 @@ public class Startup
         });
 
         // Discord Client
-        services.AddSingleton<BaseSocketClient, DiscordSocketClient>();
+        services.AddSingleton<BaseSocketClient>(new DiscordSocketClient(new DiscordSocketConfig
+        {
+            GatewayIntents = GatewayIntents.Guilds
+                             | GatewayIntents.GuildMessages
+                             | GatewayIntents.DirectMessages
+                             | GatewayIntents.MessageContent
+        }));
     }
 
     public void Configure(IApplicationBuilder app, IWebHostEnvironment env)

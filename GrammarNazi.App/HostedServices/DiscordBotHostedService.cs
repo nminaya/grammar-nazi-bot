@@ -1,5 +1,4 @@
 ﻿using Discord;
-using Discord.Net;
 using Discord.WebSocket;
 using GrammarNazi.Core.Extensions;
 using GrammarNazi.Core.Utilities;
@@ -8,7 +7,6 @@ using GrammarNazi.Domain.Entities;
 using GrammarNazi.Domain.Entities.Settings;
 using GrammarNazi.Domain.Enums;
 using GrammarNazi.Domain.Services;
-using Microsoft.Data.SqlClient;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
@@ -16,7 +14,6 @@ using Microsoft.Extensions.Options;
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Net;
 using System.Text;
 using System.Threading;
 using System.Threading.Channels;
@@ -99,7 +96,10 @@ public class DiscordBotHostedService : BackgroundService
 
     private async Task OnMessageReceived(SocketMessage socketMessage)
     {
-        if (socketMessage is not SocketUserMessage message || message.Author.IsBot || message.Author.IsWebhook)
+        if (socketMessage is not SocketUserMessage message 
+            || message.Author.IsBot 
+            || message.Author.IsWebhook
+            || string.IsNullOrWhiteSpace(message.Content))
         {
             return;
         }
@@ -128,9 +128,9 @@ public class DiscordBotHostedService : BackgroundService
 
         var text = GetCleannedText(message.Content);
 
-        var corretionResult = await grammarService.GetCorrections(text);
+        var correctionResult = await grammarService.GetCorrections(text);
 
-        if (!corretionResult.HasCorrections)
+        if (!correctionResult.HasCorrections)
         {
             return;
         }
@@ -139,11 +139,12 @@ public class DiscordBotHostedService : BackgroundService
 
         var messageBuilder = new StringBuilder();
 
-        foreach (var correction in corretionResult.Corrections)
+        foreach (var correction in correctionResult.Corrections)
         {
-            var correctionDetailMessage = !channelConfig.HideCorrectionDetails && !string.IsNullOrEmpty(correction.Message)
-                ? $"[{correction.Message}]"
-                : string.Empty;
+            var correctionDetailMessage =
+                !channelConfig.HideCorrectionDetails && !string.IsNullOrEmpty(correction.Message)
+                    ? $"[{correction.Message}]"
+                    : string.Empty;
 
             messageBuilder.AppendLine($"*{correction.PossibleReplacements.First()} {correctionDetailMessage}");
         }
@@ -158,7 +159,9 @@ public class DiscordBotHostedService : BackgroundService
 
             foreach (var reply in replyMessages)
             {
-                var result = await message.Channel.SendMessageAsync(reply, messageReference: new MessageReference(replyMessageId));
+                var result =
+                    await message.Channel.SendMessageAsync(reply,
+                        messageReference: new MessageReference(replyMessageId));
                 replyMessageId = result.Id;
             }
 
@@ -168,7 +171,8 @@ public class DiscordBotHostedService : BackgroundService
         await message.Channel.SendMessageAsync(replyMessage, messageReference: new MessageReference(message.Id));
     }
 
-    private IGrammarService GetConfiguredGrammarService(DiscordChannelConfig channelConfig, IServiceProvider serviceProvider)
+    private IGrammarService GetConfiguredGrammarService(DiscordChannelConfig channelConfig,
+        IServiceProvider serviceProvider)
     {
         var grammarServices = serviceProvider.GetService<IEnumerable<IGrammarService>>();
 
@@ -185,7 +189,8 @@ public class DiscordBotHostedService : BackgroundService
         return StringUtils.MarkDownToPlainText(StringUtils.RemoveCodeBlocks(text));
     }
 
-    private async Task<DiscordChannelConfig> GetChatConfiguration(SocketUserMessage message, IServiceProvider serviceProvider)
+    private async Task<DiscordChannelConfig> GetChatConfiguration(SocketUserMessage message,
+        IServiceProvider serviceProvider)
     {
         var channelConfigService = serviceProvider.GetService<IDiscordChannelConfigService>();
 
