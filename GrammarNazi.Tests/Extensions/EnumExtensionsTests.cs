@@ -65,6 +65,6 @@ public class EnumExtensionsTests
         var enabledValues = EnumUtils.GetEnabledValues<GrammarAlgorithms>().ToList();
 
         // Assert
-        Assert.Equal(4, enabledValues.Count); // InternalAlgorithm, YandexSpellerApi, DatamuseApi, GroqApi
+        Assert.Equal(5, enabledValues.Count); // InternalAlgorithm, YandexSpellerApi, DatamuseApi, GroqApi, CerebrasApi
     }
 }
