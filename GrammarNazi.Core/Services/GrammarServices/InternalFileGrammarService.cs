@@ -51,7 +51,7 @@ public class InternalFileGrammarService : BaseGrammarService, IGrammarService
 
         var corrections = new List<GrammarCorrection>();
 
-        var words = text.Split(" ").Where(v => !IsWhiteListWord(v));
+        var words = text.Split(" ").Where(v => !IsWhiteListWord(v)).ToArray();
 
         var dictionary = GetDictionaryBasedOnWords(words, language);
 
@@ -70,13 +70,15 @@ public class InternalFileGrammarService : BaseGrammarService, IGrammarService
                 continue;
             }
 
-            var wordFound = dictionary.Contains(word);
-
-            if (!wordFound)
+            if (!dictionary.Contains(word))
             {
-                var possibleCorrections = dictionary.Where(v => _stringDiffService.IsInComparableRange(v, word) && _stringDiffService.ComputeDistance(v, word) < Defaults.StringComparableRange);
+                var possibleCorrections = dictionary
+                    .Where(v => Math.Abs(v.Length - word.Length) < Defaults.StringComparableRange
+                        && _stringDiffService.IsInComparableRange(v, word)
+                        && _stringDiffService.ComputeDistance(v, word) < Defaults.StringComparableRange)
+                    .ToList();
 
-                if (possibleCorrections.Any())
+                if (possibleCorrections.Count > 0)
                 {
                     var correction = new GrammarCorrection
                     {
@@ -92,25 +94,29 @@ public class InternalFileGrammarService : BaseGrammarService, IGrammarService
         return Task.FromResult(new GrammarCheckResult(corrections));
     }
 
-    private IReadOnlyList<string> GetDictionaryBasedOnWords(IEnumerable<string> words, string language)
+    private HashSet<string> GetDictionaryBasedOnWords(IEnumerable<string> words, string language)
     {
         var letters = words
             .Where(v => !string.IsNullOrWhiteSpace(v) && char.IsLetter(v[0]))
-            .Select(v => v.ToLower()[0])
+            .Select(v => char.ToLower(v[0]))
             .Distinct();
 
-        var dictionary = new List<string>();
+        var dictionary = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
 
         foreach (var letter in letters)
         {
             var pathNames = $"Library/Names/{letter}.txt";
             var pathLetterWords = $"Library/Dictionary/{language}/{letter}.txt";
 
-            var names = _fileService.FileExist(pathNames) ? _fileService.GetTextFileByLine(pathNames) : Enumerable.Empty<string>();
-            var letterWords = _fileService.FileExist(pathLetterWords) ? _fileService.GetTextFileByLine(pathLetterWords) : Enumerable.Empty<string>();
+            if (_fileService.FileExist(pathNames))
+            {
+                dictionary.UnionWith(_fileService.GetTextFileByLine(pathNames));
+            }
 
-            dictionary.AddRange(names);
-            dictionary.AddRange(letterWords);
+            if (_fileService.FileExist(pathLetterWords))
+            {
+                dictionary.UnionWith(_fileService.GetTextFileByLine(pathLetterWords));
+            }
         }
 
         return dictionary;
