@@ -5,26 +5,30 @@ namespace GrammarNazi.Core.Utilities;
 
 public static class StringUtils
 {
-    /// <summary>
-    /// It will remove Twitter mentions from the given string
-    /// </summary>
-    /// <param name="tweetText"></param>
-    /// <returns>String without mentions</returns>
-    public static string RemoveMentions(string tweetText) => Regex.Replace(tweetText, @"\B@[\w\S]+", "").Trim();
+    private static readonly Regex MentionsRegex = new(@"\B@[\w\S]+", RegexOptions.Compiled);
+    private static readonly Regex HashtagsRegex = new(@"#[0-9a-zñA-ZÑ](\.?[0-9a-zñA-ZÑ])*", RegexOptions.Compiled);
+    private static readonly Regex SpecialCharsRegex = new("[^0-9a-zñA-ZÑÀ-ÿ]+", RegexOptions.Compiled);
 
     /// <summary>
     /// It will remove Twitter mentions from the given string
     /// </summary>
     /// <param name="tweetText"></param>
     /// <returns>String without mentions</returns>
-    public static string RemoveHashtags(string tweetText) => Regex.Replace(tweetText, @"#[0-9a-zñA-ZÑ](\.?[0-9a-zñA-ZÑ])*", "").Trim();
+    public static string RemoveMentions(string tweetText) => MentionsRegex.Replace(tweetText, "").Trim();
+
+    /// <summary>
+    /// It will remove Twitter mentions from the given string
+    /// </summary>
+    /// <param name="tweetText"></param>
+    /// <returns>String without mentions</returns>
+    public static string RemoveHashtags(string tweetText) => HashtagsRegex.Replace(tweetText, "").Trim();
 
     /// <summary>
     /// It will remove special characters from the given string
     /// </summary>
     /// <param name="str"></param>
     /// <returns>String without special characters</returns>
-    public static string RemoveSpecialCharacters(string str) => Regex.Replace(str, "[^0-9a-zñA-ZÑÀ-ÿ]+", "");
+    public static string RemoveSpecialCharacters(string str) => SpecialCharsRegex.Replace(str, "");
 
     /// <summary>
     /// Remove emojis from a string
