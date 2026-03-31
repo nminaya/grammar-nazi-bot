@@ -104,7 +104,7 @@ public class DatamuseApiClientTests
         Assert.Equal("test", result.SimilarWords.First().Word);
     }
 
-    public class MockHttpMessageHandler : HttpMessageHandler
+    private class MockHttpMessageHandler : HttpMessageHandler
     {
         private readonly Func<HttpRequestMessage, CancellationToken, Task<HttpResponseMessage>> _sendAsync;
 
