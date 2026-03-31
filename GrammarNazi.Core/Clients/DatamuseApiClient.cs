@@ -29,14 +29,34 @@ public class DatamuseApiClient : IDatamuseApiClient
 
         var response = await httpClient.SendAsync(request);
 
+        if (!response.IsSuccessStatusCode)
+        {
+            return new()
+            {
+                Word = word,
+                SimilarWords = []
+            };
+        }
+
         var content = await response.Content.ReadAsStringAsync();
 
-        var result = JsonConvert.DeserializeObject<IEnumerable<WordSimilarity>>(content);
-
-        return new()
+        try
         {
-            Word = word,
-            SimilarWords = result
-        };
+            var result = JsonConvert.DeserializeObject<IEnumerable<WordSimilarity>>(content);
+
+            return new()
+            {
+                Word = word,
+                SimilarWords = result
+            };
+        }
+        catch (JsonReaderException)
+        {
+            return new()
+            {
+                Word = word,
+                SimilarWords = []
+            };
+        }
     }
 }
