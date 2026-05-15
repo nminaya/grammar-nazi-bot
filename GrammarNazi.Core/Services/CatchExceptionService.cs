@@ -9,6 +9,7 @@ using Microsoft.Extensions.Logging;
 using System;
 using System.Collections.Concurrent;
 using System.Linq;
+using System.Threading.Tasks;
 using System.Net;
 using System.Net.Http;
 using System.Net.Mail;
@@ -29,11 +30,15 @@ namespace GrammarNazi.Core.Services
             _logger = logger;
         }
 
-        public void HandleException(Exception exception, GithubIssueLabels githubIssueSection)
+        public async Task HandleException(Exception exception, GithubIssueLabels githubIssueSection)
         {
             if (exception is TaskFailedException taskFailedException)
             {
                 exception = taskFailedException.InnerException;
+            }
+            else if (exception is AggregateException aggregateException)
+            {
+                exception = aggregateException.Flatten().InnerException;
             }
 
             switch (exception)
@@ -43,35 +48,35 @@ namespace GrammarNazi.Core.Services
                     break;
 
                 case HttpRequestException httpRequestException:
-                    HandleHttpRequestException(httpRequestException, githubIssueSection);
+                    await HandleHttpRequestException(httpRequestException, githubIssueSection);
                     break;
 
                 case SqlException sqlException:
-                    HandleSqlException(sqlException, githubIssueSection);
+                    await HandleSqlException(sqlException, githubIssueSection);
                     break;
 
                 case HttpException httpException:
-                    HandleHttpException(httpException, githubIssueSection);
+                    await HandleHttpException(httpException, githubIssueSection);
                     break;
 
                 case TwitterException twitterException:
-                    HandleTwitterException(twitterException, githubIssueSection);
+                    await HandleTwitterException(twitterException, githubIssueSection);
                     break;
 
                 case RequestException requestException:
-                    HandleRequestException(requestException, githubIssueSection);
+                    await HandleRequestException(requestException, githubIssueSection);
                     break;
                 case GeminiServiceUnavailableException:
                     _logger.LogWarning(exception, exception.Message);
                     break;
 
                 default:
-                    HandleGeneralException(exception, githubIssueSection);
+                    await HandleGeneralException(exception, githubIssueSection);
                     break;
             }
         }
 
-        private void HandleRequestException(RequestException requestException, GithubIssueLabels githubIssueSection)
+        private async Task HandleRequestException(RequestException requestException, GithubIssueLabels githubIssueSection)
         {
             var isTransient = requestException.Message.Contains("timed out", StringComparison.OrdinalIgnoreCase)
                 || requestException.GetInnerExceptions().Any(x => x.Message?.ContainsAny(StringComparison.OrdinalIgnoreCase, "Operation canceled", "task was canceled", "response ended prematurely") == true);
@@ -82,10 +87,10 @@ namespace GrammarNazi.Core.Services
                 return;
             }
 
-            HandleGeneralException(requestException, githubIssueSection);
+            await HandleGeneralException(requestException, githubIssueSection);
         }
 
-        private void HandleTwitterException(TwitterException twitterException, GithubIssueLabels githubIssueSection)
+        private async Task HandleTwitterException(TwitterException twitterException, GithubIssueLabels githubIssueSection)
         {
             if (twitterException.TwitterDescription.Contains("Try again later") || twitterException.TwitterDescription.Contains("Timeout limit"))
             {
@@ -93,10 +98,10 @@ namespace GrammarNazi.Core.Services
                 return;
             }
 
-            HandleGeneralException(twitterException, githubIssueSection);
+            await HandleGeneralException(twitterException, githubIssueSection);
         }
 
-        private void HandleHttpException(HttpException httpException, GithubIssueLabels githubIssueSection)
+        private async Task HandleHttpException(HttpException httpException, GithubIssueLabels githubIssueSection)
         {
             if (httpException.Message.ContainsAny("50013", "50001", "Forbidden", "160002") 
                 || httpException.HttpCode == HttpStatusCode.BadRequest)
@@ -105,12 +110,12 @@ namespace GrammarNazi.Core.Services
                 return;
             }
 
-            HandleGeneralException(httpException, githubIssueSection);
+            await HandleGeneralException(httpException, githubIssueSection);
         }
 
-        private static readonly ConcurrentDictionary<string, RateLimitState> SqlRateLimitStates = new();
+        private static readonly ConcurrentDictionary<string, RateLimitState> ExceptionRateLimitStates = new();
 
-        private void HandleSqlException(SqlException sqlException, GithubIssueLabels githubIssueSection)
+        private async Task HandleSqlException(SqlException sqlException, GithubIssueLabels githubIssueSection)
         {
             if (sqlException.Message.Contains("SHUTDOWN"))
             {
@@ -120,26 +125,27 @@ namespace GrammarNazi.Core.Services
 
             if (SqlExceptionHelper.IsTransient(sqlException))
             {
-                HandleTransientSqlException(sqlException, githubIssueSection);
+                await HandleTransientSqlException(sqlException, githubIssueSection);
                 return;
             }
 
-            HandleGeneralException(sqlException, githubIssueSection);
+            await HandleGeneralException(sqlException, githubIssueSection);
         }
 
-        private void HandleTransientSqlException(SqlException sqlException, GithubIssueLabels githubIssueSection)
+        private async Task HandleTransientSqlException(SqlException sqlException, GithubIssueLabels githubIssueSection)
         {
             _logger.LogWarning(sqlException, $"Transient SQL error: {sqlException.Message}");
 
-            var state = SqlRateLimitStates.GetOrAdd("SqlConnectivity", _ => new RateLimitState());
+            var state = ExceptionRateLimitStates.GetOrAdd("SqlConnectivity", _ => new RateLimitState());
+
+            bool shouldCreateIssue = false;
+            DateTime now;
 
             lock (state)
             {
-                var now = DateTime.UtcNow;
+                now = DateTime.UtcNow;
                 state.RecentOccurrences.Add(now);
                 state.RecentOccurrences.RemoveAll(x => x < now.AddMinutes(-10));
-
-                bool shouldCreateIssue = false;
 
                 if (now - state.LastIssueCreatedUtc >= TimeSpan.FromHours(6))
                 {
@@ -154,8 +160,12 @@ namespace GrammarNazi.Core.Services
                 if (shouldCreateIssue)
                 {
                     state.LastIssueCreatedUtc = now;
-                    _ = _githubService.CreateBugIssue($"Transient SQL Exception: {sqlException.Message}", sqlException, githubIssueSection);
                 }
+            }
+
+            if (shouldCreateIssue)
+            {
+                await _githubService.CreateBugIssue($"Transient SQL Exception: {sqlException.Message}", sqlException, githubIssueSection);
             }
         }
 
@@ -165,7 +175,7 @@ namespace GrammarNazi.Core.Services
             public System.Collections.Generic.List<DateTime> RecentOccurrences { get; } = new();
         }
 
-        private void HandleHttpRequestException(HttpRequestException requestException, GithubIssueLabels githubIssueSection)
+        private async Task HandleHttpRequestException(HttpRequestException requestException, GithubIssueLabels githubIssueSection)
         {
             if (requestException.StatusCode == HttpStatusCode.BadGateway)
             {
@@ -173,7 +183,7 @@ namespace GrammarNazi.Core.Services
                 return;
             }
 
-            HandleGeneralException(requestException, githubIssueSection);
+            await HandleGeneralException(requestException, githubIssueSection);
         }
 
         private void HandleApiRequestException(ApiRequestException apiRequestException)
@@ -189,7 +199,7 @@ namespace GrammarNazi.Core.Services
             _logger.LogError(apiRequestException, apiRequestException.Message);
         }
 
-        private void HandleGeneralException(Exception exception, GithubIssueLabels githubIssueSection)
+        private async Task HandleGeneralException(Exception exception, GithubIssueLabels githubIssueSection)
         {
             var message = exception is TwitterException tEx ? tEx.TwitterDescription : exception.Message;
 
@@ -205,8 +215,25 @@ namespace GrammarNazi.Core.Services
 
             _logger.LogError(exception, message);
 
-            // fire and forget
-            _ = _githubService.CreateBugIssue($"Application Exception: {message}", exception, githubIssueSection);
+            var state = ExceptionRateLimitStates.GetOrAdd(message, _ => new RateLimitState());
+
+            bool shouldCreateIssue = false;
+
+            lock (state)
+            {
+                var now = DateTime.UtcNow;
+
+                if (now - state.LastIssueCreatedUtc >= TimeSpan.FromHours(2))
+                {
+                    shouldCreateIssue = true;
+                    state.LastIssueCreatedUtc = now;
+                }
+            }
+
+            if (shouldCreateIssue)
+            {
+                await _githubService.CreateBugIssue($"Application Exception: {message}", exception, githubIssueSection);
+            }
         }
     }
 }

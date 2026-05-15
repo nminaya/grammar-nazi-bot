@@ -144,7 +144,7 @@ public class TwitterBotMentionHostedService : BaseTwitterHostedService
             }
             catch (Exception ex)
             {
-                _catchExceptionService.HandleException(ex, GithubIssueLabels.Twitter);
+                await _catchExceptionService.HandleException(ex, GithubIssueLabels.Twitter);
             }
 
             await Task.Delay(TwitterBotSettings.HostedServiceIntervalMilliseconds);

@@ -22,7 +22,7 @@ namespace GrammarNazi.Tests.Services
         public CatchExceptionServiceTests()
         {
             // Clear static state before each test
-            var field = typeof(CatchExceptionService).GetField("SqlRateLimitStates", BindingFlags.NonPublic | BindingFlags.Static);
+            var field = typeof(CatchExceptionService).GetField("ExceptionRateLimitStates", BindingFlags.NonPublic | BindingFlags.Static);
             var dictionary = (System.Collections.IDictionary)field.GetValue(null);
             dictionary.Clear();
         }
@@ -31,7 +31,7 @@ namespace GrammarNazi.Tests.Services
         [InlineData("bot was blocked by the user")]
         [InlineData("bot was kicked from the supergroup")]
         [InlineData("have no rights to send a message")]
-        public void HandleException_ApiRequestException_Should_LogWarning(string exceptionMessage)
+        public async Task HandleException_ApiRequestException_Should_LogWarning(string exceptionMessage)
         {
             // Arrange
             var loggerMock = Substitute.For<ILogger<CatchExceptionService>>();
@@ -42,7 +42,7 @@ namespace GrammarNazi.Tests.Services
             var exception = new ApiRequestException(exceptionMessage);
 
             // Act
-            service.HandleException(exception, GithubIssueLabels.Telegram);
+            await service.HandleException(exception, GithubIssueLabels.Telegram);
 
             // Assert
 
@@ -54,11 +54,11 @@ namespace GrammarNazi.Tests.Services
             Assert.Equal(1, numberOfCalls);
 
             // Verify CreateBugIssue was never called
-            githubServiceMock.DidNotReceive().CreateBugIssue(Arg.Any<string>(), Arg.Any<Exception>(), Arg.Any<GithubIssueLabels>());
+            await githubServiceMock.DidNotReceive().CreateBugIssue(Arg.Any<string>(), Arg.Any<Exception>(), Arg.Any<GithubIssueLabels>());
         }
 
         [Fact]
-        public void HandleException_GeminiServiceUnavailableException_Should_LogWarning()
+        public async Task HandleException_GeminiServiceUnavailableException_Should_LogWarning()
         {
             // Arrange
             var loggerMock = Substitute.For<ILogger<CatchExceptionService>>();
@@ -67,7 +67,7 @@ namespace GrammarNazi.Tests.Services
             var exception = new GeminiServiceUnavailableException("Gemini service unavailable");
 
             // Act
-            service.HandleException(exception, GithubIssueLabels.ProductionBug);
+            await service.HandleException(exception, GithubIssueLabels.ProductionBug);
 
             // Assert
             var numberOfCalls = loggerMock.ReceivedCalls()
@@ -75,12 +75,12 @@ namespace GrammarNazi.Tests.Services
                 .Count(callArguments => ((LogLevel)callArguments[0]).Equals(LogLevel.Warning));
 
             Assert.Equal(1, numberOfCalls);
-            githubServiceMock.DidNotReceive().CreateBugIssue(Arg.Any<string>(), Arg.Any<Exception>(), Arg.Any<GithubIssueLabels>());
+            await githubServiceMock.DidNotReceive().CreateBugIssue(Arg.Any<string>(), Arg.Any<Exception>(), Arg.Any<GithubIssueLabels>());
         }
 
         [Theory]
         [InlineData("Bot API Request timed out")]
-        public void HandleException_RequestException_Timeout_Should_LogWarning(string exceptionMessage)
+        public async Task HandleException_RequestException_Timeout_Should_LogWarning(string exceptionMessage)
         {
             // Arrange
             var loggerMock = Substitute.For<ILogger<CatchExceptionService>>();
@@ -91,7 +91,7 @@ namespace GrammarNazi.Tests.Services
             var exception = new RequestException(exceptionMessage);
 
             // Act
-            service.HandleException(exception, GithubIssueLabels.Telegram);
+            await service.HandleException(exception, GithubIssueLabels.Telegram);
 
             // Assert
             var numberOfCalls = loggerMock.ReceivedCalls()
@@ -100,11 +100,11 @@ namespace GrammarNazi.Tests.Services
 
             Assert.Equal(1, numberOfCalls);
 
-            githubServiceMock.DidNotReceive().CreateBugIssue(Arg.Any<string>(), Arg.Any<Exception>(), Arg.Any<GithubIssueLabels>());
+            await githubServiceMock.DidNotReceive().CreateBugIssue(Arg.Any<string>(), Arg.Any<Exception>(), Arg.Any<GithubIssueLabels>());
         }
 
         [Fact]
-        public void HandleException_RequestException_TaskCanceled_Should_LogWarning()
+        public async Task HandleException_RequestException_TaskCanceled_Should_LogWarning()
         {
             // Arrange
             var loggerMock = Substitute.For<ILogger<CatchExceptionService>>();
@@ -116,7 +116,7 @@ namespace GrammarNazi.Tests.Services
             var exception = new RequestException("Request canceled", innerException);
 
             // Act
-            service.HandleException(exception, GithubIssueLabels.Telegram);
+            await service.HandleException(exception, GithubIssueLabels.Telegram);
 
             // Assert
             var numberOfCalls = loggerMock.ReceivedCalls()
@@ -125,7 +125,7 @@ namespace GrammarNazi.Tests.Services
 
             Assert.Equal(1, numberOfCalls);
 
-            githubServiceMock.DidNotReceive().CreateBugIssue(Arg.Any<string>(), Arg.Any<Exception>(), Arg.Any<GithubIssueLabels>());
+            await githubServiceMock.DidNotReceive().CreateBugIssue(Arg.Any<string>(), Arg.Any<Exception>(), Arg.Any<GithubIssueLabels>());
         }
 
         [Theory]
@@ -145,7 +145,7 @@ namespace GrammarNazi.Tests.Services
             // Call multiple times to test rate limiting
             for (int i = 0; i < 15; i++)
             {
-                service.HandleException(exception, GithubIssueLabels.Telegram);
+                await service.HandleException(exception, GithubIssueLabels.Telegram);
             }
 
             // Assert
@@ -165,7 +165,7 @@ namespace GrammarNazi.Tests.Services
         }
 
         [Fact]
-        public void HandleException_NonTransientSqlException_Should_LogErrorAndCreateBugIssue()
+        public async Task HandleException_NonTransientSqlException_Should_LogErrorAndCreateBugIssue()
         {
             // Arrange
             var loggerMock = Substitute.For<ILogger<CatchExceptionService>>();
@@ -176,7 +176,7 @@ namespace GrammarNazi.Tests.Services
             var exception = CreateSqlException(123, "Fatal SQL error");
 
             // Act
-            service.HandleException(exception, GithubIssueLabels.Telegram);
+            await service.HandleException(exception, GithubIssueLabels.Telegram);
 
             // Assert
             var errorCalls = loggerMock.ReceivedCalls()
@@ -185,7 +185,7 @@ namespace GrammarNazi.Tests.Services
 
             Assert.Equal(1, errorCalls);
 
-            githubServiceMock.Received().CreateBugIssue("Application Exception: Fatal SQL error", exception, GithubIssueLabels.Telegram);
+            await githubServiceMock.Received().CreateBugIssue("Application Exception: Fatal SQL error", exception, GithubIssueLabels.Telegram);
         }
 
         private SqlException CreateSqlException(int number, string message)
@@ -207,7 +207,7 @@ namespace GrammarNazi.Tests.Services
         }
 
         [Fact]
-        public void HandleError_ExceptionCaptured_Should_LogErrorAndCreateBugIssue()
+        public async Task HandleError_ExceptionCaptured_Should_LogErrorAndCreateBugIssue()
         {
             // Arrange
             var loggerMock = Substitute.For<ILogger<CatchExceptionService>>();
@@ -218,7 +218,7 @@ namespace GrammarNazi.Tests.Services
             var exception = new Exception("Fatal test exception");
 
             // Act
-            service.HandleException(exception, GithubIssueLabels.Telegram);
+            await service.HandleException(exception, GithubIssueLabels.Telegram);
 
             // Assert
 
@@ -229,7 +229,38 @@ namespace GrammarNazi.Tests.Services
             Assert.Equal(1, numberOfCalls);
 
             // Verify CreateBugIssue was called
-            githubServiceMock.Received().CreateBugIssue("Application Exception: Fatal test exception", exception, GithubIssueLabels.Telegram);
+            await githubServiceMock.Received().CreateBugIssue("Application Exception: Fatal test exception", exception, GithubIssueLabels.Telegram);
+        }
+
+        [Fact]
+        public async Task HandleException_GeneralException_Should_RateLimit()
+        {
+            // Arrange
+            var loggerMock = Substitute.For<ILogger<CatchExceptionService>>();
+            var githubServiceMock = Substitute.For<IGithubService>();
+
+            var service = new CatchExceptionService(githubServiceMock, loggerMock);
+
+            var exception = new Exception("Fatal test exception");
+
+            // Act
+            // Call multiple times to test rate limiting
+            for (int i = 0; i < 5; i++)
+            {
+                await service.HandleException(exception, GithubIssueLabels.Telegram);
+            }
+
+            // Assert
+
+            // LogError should be called for every occurrence (5 times)
+            var errorCalls = loggerMock.ReceivedCalls()
+                .Select(call => call.GetArguments())
+                .Count(callArguments => ((LogLevel)callArguments[0]).Equals(LogLevel.Error));
+
+            Assert.Equal(5, errorCalls);
+
+            // CreateBugIssue should be called only once due to rate limiting (2-hour window)
+            await githubServiceMock.Received(1).CreateBugIssue(Arg.Any<string>(), Arg.Any<Exception>(), Arg.Any<GithubIssueLabels>());
         }
     }
 }

@@ -31,11 +31,9 @@ public class TelegramUpdateHandler : IUpdateHandler
         _logger = logger;
     }
 
-    public Task HandleErrorAsync(ITelegramBotClient botClient, Exception exception, HandleErrorSource source, CancellationToken cancellationToken)
+    public async Task HandleErrorAsync(ITelegramBotClient botClient, Exception exception, HandleErrorSource source, CancellationToken cancellationToken)
     {
-        _catchExceptionService.HandleException(exception, GithubIssueLabels.Telegram);
-
-        return Task.CompletedTask;
+        await _catchExceptionService.HandleException(exception, GithubIssueLabels.Telegram);
     }
 
     public async Task HandleUpdateAsync(ITelegramBotClient botClient, Update update, CancellationToken cancellationToken)

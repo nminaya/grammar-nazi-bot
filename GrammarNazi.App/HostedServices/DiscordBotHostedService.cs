@@ -88,7 +88,7 @@ public class DiscordBotHostedService : BackgroundService
                 }
                 catch (Exception ex)
                 {
-                    _catchExceptionService.HandleException(ex, GithubIssueLabels.Discord);
+                    await _catchExceptionService.HandleException(ex, GithubIssueLabels.Discord);
                 }
             }
         }
