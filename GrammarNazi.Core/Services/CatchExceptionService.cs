@@ -62,6 +62,7 @@ namespace GrammarNazi.Core.Services
                     HandleRequestException(requestException, githubIssueSection);
                     break;
                 case GeminiServiceUnavailableException:
+                case GroqRateLimitException:
                     _logger.LogWarning(exception, exception.Message);
                     break;
 
