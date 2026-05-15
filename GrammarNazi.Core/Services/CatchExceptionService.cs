@@ -113,8 +113,6 @@ namespace GrammarNazi.Core.Services
             await HandleGeneralException(httpException, githubIssueSection);
         }
 
-        private static readonly ConcurrentDictionary<string, RateLimitState> ExceptionRateLimitStates = new();
-
         private async Task HandleSqlException(SqlException sqlException, GithubIssueLabels githubIssueSection)
         {
             if (sqlException.Message.Contains("SHUTDOWN"))
@@ -136,43 +134,7 @@ namespace GrammarNazi.Core.Services
         {
             _logger.LogWarning(sqlException, $"Transient SQL error: {sqlException.Message}");
 
-            var state = ExceptionRateLimitStates.GetOrAdd("SqlConnectivity", _ => new RateLimitState());
-
-            bool shouldCreateIssue = false;
-            DateTime now;
-
-            lock (state)
-            {
-                now = DateTime.UtcNow;
-                state.RecentOccurrences.Add(now);
-                state.RecentOccurrences.RemoveAll(x => x < now.AddMinutes(-10));
-
-                if (now - state.LastIssueCreatedUtc >= TimeSpan.FromHours(6))
-                {
-                    shouldCreateIssue = true;
-                }
-                else if (state.RecentOccurrences.Count >= 10)
-                {
-                    shouldCreateIssue = true;
-                    state.RecentOccurrences.Clear(); // Reset burst count after escalating
-                }
-
-                if (shouldCreateIssue)
-                {
-                    state.LastIssueCreatedUtc = now;
-                }
-            }
-
-            if (shouldCreateIssue)
-            {
-                await _githubService.CreateBugIssue($"Transient SQL Exception: {sqlException.Message}", sqlException, githubIssueSection);
-            }
-        }
-
-        private class RateLimitState
-        {
-            public DateTime LastIssueCreatedUtc { get; set; }
-            public System.Collections.Generic.List<DateTime> RecentOccurrences { get; } = new();
+            await _githubService.CreateBugIssue($"Transient SQL Exception: {sqlException.Message}", sqlException, githubIssueSection);
         }
 
         private async Task HandleHttpRequestException(HttpRequestException requestException, GithubIssueLabels githubIssueSection)
@@ -215,25 +177,7 @@ namespace GrammarNazi.Core.Services
 
             _logger.LogError(exception, message);
 
-            var state = ExceptionRateLimitStates.GetOrAdd(message, _ => new RateLimitState());
-
-            bool shouldCreateIssue = false;
-
-            lock (state)
-            {
-                var now = DateTime.UtcNow;
-
-                if (now - state.LastIssueCreatedUtc >= TimeSpan.FromHours(2))
-                {
-                    shouldCreateIssue = true;
-                    state.LastIssueCreatedUtc = now;
-                }
-            }
-
-            if (shouldCreateIssue)
-            {
-                await _githubService.CreateBugIssue($"Application Exception: {message}", exception, githubIssueSection);
-            }
+            await _githubService.CreateBugIssue($"Application Exception: {message}", exception, githubIssueSection);
         }
     }
 }

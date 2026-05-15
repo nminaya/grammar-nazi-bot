@@ -19,13 +19,6 @@ namespace GrammarNazi.Tests.Services
 {
     public class CatchExceptionServiceTests
     {
-        public CatchExceptionServiceTests()
-        {
-            // Clear static state before each test
-            var field = typeof(CatchExceptionService).GetField("ExceptionRateLimitStates", BindingFlags.NonPublic | BindingFlags.Static);
-            var dictionary = (System.Collections.IDictionary)field.GetValue(null);
-            dictionary.Clear();
-        }
 
         [Theory]
         [InlineData("bot was blocked by the user")]
@@ -131,7 +124,7 @@ namespace GrammarNazi.Tests.Services
         [Theory]
         [InlineData(53, "Transient error")]
         [InlineData(0, "TCP Provider error")]
-        public async Task HandleException_TransientSqlException_Should_LogWarningAndRateLimit(int number, string message)
+        public async Task HandleException_TransientSqlException_Should_LogWarningAndCreateBugIssue(int number, string message)
         {
             // Arrange
             var loggerMock = Substitute.For<ILogger<CatchExceptionService>>();
@@ -142,26 +135,18 @@ namespace GrammarNazi.Tests.Services
             var exception = CreateSqlException(number, message);
 
             // Act
-            // Call multiple times to test rate limiting
-            for (int i = 0; i < 15; i++)
-            {
-                await service.HandleException(exception, GithubIssueLabels.Telegram);
-            }
+            await service.HandleException(exception, GithubIssueLabels.Telegram);
 
             // Assert
 
-            // LogWarning should be called for every occurrence (15 times)
+            // LogWarning should be called
             var warningCalls = loggerMock.ReceivedCalls()
                 .Select(call => call.GetArguments())
                 .Count(callArguments => ((LogLevel)callArguments[0]).Equals(LogLevel.Warning));
 
-            Assert.Equal(15, warningCalls);
+            Assert.Equal(1, warningCalls);
 
-            // CreateBugIssue should be called:
-            // 1. First time (Strategy A)
-            // 2. When burst reaches 10 (Burst override)
-            // Total: 2 calls
-            await githubServiceMock.Received(2).CreateBugIssue(Arg.Any<string>(), Arg.Any<Exception>(), Arg.Any<GithubIssueLabels>());
+            await githubServiceMock.Received(1).CreateBugIssue(Arg.Any<string>(), Arg.Any<Exception>(), Arg.Any<GithubIssueLabels>());
         }
 
         [Fact]
@@ -233,7 +218,7 @@ namespace GrammarNazi.Tests.Services
         }
 
         [Fact]
-        public async Task HandleException_GeneralException_Should_RateLimit()
+        public async Task HandleException_GeneralException_Should_LogAndCreateBugIssue()
         {
             // Arrange
             var loggerMock = Substitute.For<ILogger<CatchExceptionService>>();
@@ -244,22 +229,17 @@ namespace GrammarNazi.Tests.Services
             var exception = new Exception("Fatal test exception");
 
             // Act
-            // Call multiple times to test rate limiting
-            for (int i = 0; i < 5; i++)
-            {
-                await service.HandleException(exception, GithubIssueLabels.Telegram);
-            }
+            await service.HandleException(exception, GithubIssueLabels.Telegram);
 
             // Assert
 
-            // LogError should be called for every occurrence (5 times)
+            // LogError should be called
             var errorCalls = loggerMock.ReceivedCalls()
                 .Select(call => call.GetArguments())
                 .Count(callArguments => ((LogLevel)callArguments[0]).Equals(LogLevel.Error));
 
-            Assert.Equal(5, errorCalls);
+            Assert.Equal(1, errorCalls);
 
-            // CreateBugIssue should be called only once due to rate limiting (2-hour window)
             await githubServiceMock.Received(1).CreateBugIssue(Arg.Any<string>(), Arg.Any<Exception>(), Arg.Any<GithubIssueLabels>());
         }
     }

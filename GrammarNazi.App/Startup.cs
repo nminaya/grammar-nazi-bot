@@ -122,7 +122,9 @@ public class Startup
         services.AddTransient<IGrammarService, GroqApiService>();
         services.AddTransient<IGrammarService, CerebrasApiService>();
         services.AddTransient<ITwitterLogService, TwitterLogService>();
-        services.AddTransient<IGithubService, GithubService>();
+        services.AddSingleton<GithubService>();
+        services.AddSingleton<IGithubService>(s => s.GetRequiredService<GithubService>());
+        services.AddHostedService(s => s.GetRequiredService<GithubService>());
         services.AddTransient<ITelegramCommandHandlerService, TelegramCommandHandlerService>();
         services.AddTransient<ISentimentAnalysisService, MeaningCloudSentimentAnalysisService>();
         services.AddTransient<IDiscordChannelConfigService, DiscordChannelConfigService>();
