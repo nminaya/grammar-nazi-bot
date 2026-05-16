@@ -14,6 +14,7 @@ namespace GrammarNazi.Core.Services;
 
 public class GithubService : IGithubService
 {
+    private static readonly System.Threading.SemaphoreSlim _semaphore = new(1, 1);
     private readonly IGitHubClient _githubClient;
     private readonly GithubSettings _githubSettings;
 
@@ -25,37 +26,46 @@ public class GithubService : IGithubService
 
     public async Task CreateBugIssue(string title, Exception exception, GithubIssueLabels githubIssueSection)
     {
-        var issueTitle = GetTrimmedTitle(title);
+        await _semaphore.WaitAsync();
 
-        var issue = await GetIssueByTittle(issueTitle);
-
-        // Update count if issue exist
-        if (issue != null)
+        try
         {
-            var issueUpdate = new IssueUpdate
+            var issueTitle = GetTrimmedTitle(title);
+
+            var issue = await GetIssueByTittle(issueTitle);
+
+            // Update count if issue exist
+            if (issue != null)
             {
-                Title = issue.Title,
-                Body = GetBodyWithCounterUpdated(issue.Body)
+                var issueUpdate = new IssueUpdate
+                {
+                    Title = issue.Title,
+                    Body = GetBodyWithCounterUpdated(issue.Body)
+                };
+
+                await _githubClient.Issue.Update(_githubSettings.Username, _githubSettings.RepositoryName, issue.Number, issueUpdate);
+                return;
+            }
+
+            var bodyBuilder = new StringBuilder();
+            bodyBuilder.Append("This is an issue created automatically by GrammarNazi when an exception was captured.\n\n");
+            bodyBuilder.AppendLine($"Date (UTC): {DateTime.UtcNow}\n\n");
+            bodyBuilder.AppendLine("Exception:\n\n").AppendLine(exception.ToString());
+            bodyBuilder.AppendLine("\n\nException caught counter: 1.");
+
+            var newIssue = new NewIssue(issueTitle)
+            {
+                Body = bodyBuilder.ToString()
             };
+            newIssue.Labels.Add(GithubIssueLabels.ProductionBug.GetDescription());
+            newIssue.Labels.Add(githubIssueSection.GetDescription());
 
-            await _githubClient.Issue.Update(_githubSettings.Username, _githubSettings.RepositoryName, issue.Number, issueUpdate);
-            return;
+            await _githubClient.Issue.Create(_githubSettings.Username, _githubSettings.RepositoryName, newIssue);
         }
-
-        var bodyBuilder = new StringBuilder();
-        bodyBuilder.Append("This is an issue created automatically by GrammarNazi when an exception was captured.\n\n");
-        bodyBuilder.AppendLine($"Date (UTC): {DateTime.UtcNow}\n\n");
-        bodyBuilder.AppendLine("Exception:\n\n").AppendLine(exception.ToString());
-        bodyBuilder.AppendLine("\n\nException caught counter: 1.");
-
-        var newIssue = new NewIssue(issueTitle)
+        finally
         {
-            Body = bodyBuilder.ToString()
-        };
-        newIssue.Labels.Add(GithubIssueLabels.ProductionBug.GetDescription());
-        newIssue.Labels.Add(githubIssueSection.GetDescription());
-
-        await _githubClient.Issue.Create(_githubSettings.Username, _githubSettings.RepositoryName, newIssue);
+            _semaphore.Release();
+        }
     }
 
     private async Task<Issue> GetIssueByTittle(string title)
