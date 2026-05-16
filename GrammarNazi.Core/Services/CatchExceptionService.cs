@@ -110,7 +110,6 @@ namespace GrammarNazi.Core.Services
         }
 
         private static readonly ConcurrentDictionary<string, RateLimitState> SqlRateLimitStates = new();
-        private static readonly ConcurrentDictionary<string, RateLimitState> GeneralExceptionRateLimitStates = new();
 
         private void HandleSqlException(SqlException sqlException, GithubIssueLabels githubIssueSection)
         {
@@ -133,14 +132,7 @@ namespace GrammarNazi.Core.Services
         {
             _logger.LogWarning(sqlException, $"Transient SQL error: {sqlException.Message}");
 
-            var title = $"Transient SQL Exception: {sqlException.Message}";
-
-            HandleRateLimitedIssueCreation(SqlRateLimitStates, "SqlConnectivity", title, sqlException, githubIssueSection);
-        }
-
-        private void HandleRateLimitedIssueCreation(ConcurrentDictionary<string, RateLimitState> rateLimitStates, string key, string title, Exception exception, GithubIssueLabels githubIssueSection)
-        {
-            var state = rateLimitStates.GetOrAdd(key, _ => new RateLimitState());
+            var state = SqlRateLimitStates.GetOrAdd("SqlConnectivity", _ => new RateLimitState());
 
             lock (state)
             {
@@ -157,13 +149,13 @@ namespace GrammarNazi.Core.Services
                 else if (state.RecentOccurrences.Count >= 10)
                 {
                     shouldCreateIssue = true;
+                    state.RecentOccurrences.Clear(); // Reset burst count after escalating
                 }
 
                 if (shouldCreateIssue)
                 {
                     state.LastIssueCreatedUtc = now;
-                    state.RecentOccurrences.Clear(); // Reset burst count after creating issue
-                    _ = _githubService.CreateBugIssue(title, exception, githubIssueSection);
+                    _ = _githubService.CreateBugIssue($"Transient SQL Exception: {sqlException.Message}", sqlException, githubIssueSection);
                 }
             }
         }
@@ -214,9 +206,8 @@ namespace GrammarNazi.Core.Services
 
             _logger.LogError(exception, message);
 
-            var title = $"Application Exception: {message}";
-
-            HandleRateLimitedIssueCreation(GeneralExceptionRateLimitStates, title, title, exception, githubIssueSection);
+            // fire and forget
+            _ = _githubService.CreateBugIssue($"Application Exception: {message}", exception, githubIssueSection);
         }
     }
 }

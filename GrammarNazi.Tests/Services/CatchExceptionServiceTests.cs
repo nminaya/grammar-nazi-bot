@@ -8,7 +8,6 @@ using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
-using System.Net.Http;
 using System.Reflection;
 using System.Threading.Tasks;
 using Telegram.Bot.Exceptions;
@@ -23,13 +22,9 @@ namespace GrammarNazi.Tests.Services
         public CatchExceptionServiceTests()
         {
             // Clear static state before each test
-            var sqlField = typeof(CatchExceptionService).GetField("SqlRateLimitStates", BindingFlags.NonPublic | BindingFlags.Static);
-            var sqlDictionary = (System.Collections.IDictionary)sqlField.GetValue(null);
-            sqlDictionary.Clear();
-
-            var generalField = typeof(CatchExceptionService).GetField("GeneralExceptionRateLimitStates", BindingFlags.NonPublic | BindingFlags.Static);
-            var generalDictionary = (System.Collections.IDictionary)generalField.GetValue(null);
-            generalDictionary.Clear();
+            var field = typeof(CatchExceptionService).GetField("SqlRateLimitStates", BindingFlags.NonPublic | BindingFlags.Static);
+            var dictionary = (System.Collections.IDictionary)field.GetValue(null);
+            dictionary.Clear();
         }
 
         [Theory]
@@ -256,40 +251,6 @@ namespace GrammarNazi.Tests.Services
 
             // Verify CreateBugIssue was called
             githubServiceMock.Received().CreateBugIssue("Application Exception: Fatal test exception", exception, GithubIssueLabels.Telegram);
-        }
-
-        [Fact]
-        public async Task HandleException_GeneralException_Should_LogErrorsAndRateLimit()
-        {
-            // Arrange
-            var loggerMock = Substitute.For<ILogger<CatchExceptionService>>();
-            var githubServiceMock = Substitute.For<IGithubService>();
-
-            var service = new CatchExceptionService(githubServiceMock, loggerMock);
-
-            var exception = new HttpRequestException("Network failure");
-
-            // Act
-            // Call multiple times to test rate limiting
-            for (int i = 0; i < 20; i++)
-            {
-                service.HandleException(exception, GithubIssueLabels.Telegram);
-            }
-
-            // Assert
-
-            // LogError should be called for every occurrence (20 times)
-            var errorCalls = loggerMock.ReceivedCalls()
-                .Select(call => call.GetArguments())
-                .Count(callArguments => ((LogLevel)callArguments[0]).Equals(LogLevel.Error));
-
-            Assert.Equal(20, errorCalls);
-
-            // CreateBugIssue should be called:
-            // 1. First time
-            // 2. When burst reaches 10
-            // Total: 2 calls
-            await githubServiceMock.Received(2).CreateBugIssue("Application Exception: Network failure", exception, GithubIssueLabels.Telegram);
         }
     }
 }
