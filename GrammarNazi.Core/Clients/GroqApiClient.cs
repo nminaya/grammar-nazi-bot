@@ -1,5 +1,6 @@
 using GrammarNazi.Domain.Clients;
 using GrammarNazi.Domain.Entities.Settings;
+using GrammarNazi.Domain.Exceptions;
 using Microsoft.Extensions.Options;
 using Newtonsoft.Json;
 using System;
@@ -53,6 +54,12 @@ public class GroqApiClient(IHttpClientFactory httpClientFactory, IOptions<GroqAp
         if (response.StatusCode != HttpStatusCode.OK)
         {
             var errorContent = await response.Content.ReadAsStringAsync();
+
+            if (response.StatusCode == HttpStatusCode.TooManyRequests)
+            {
+                throw new GroqRateLimitException("Groq API Rate limit reached.", new Exception(errorContent));
+            }
+
             throw new InvalidOperationException($"Unsuccessful Groq API response {response.StatusCode}", new Exception(errorContent));
         }
 
