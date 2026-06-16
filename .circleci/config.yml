@@ -7,13 +7,19 @@ jobs:
      - checkout 
 
      # build image
-     # DOCKER_BUILDKIT=0 forces the legacy builder so the image uses the
-     # Docker v2 schema 2 manifest. BuildKit produces an OCI manifest, which
-     # the Heroku Container Registry rejects with "error from registry: unsupported".
+     # --provenance=false --sbom=false stop buildx from attaching attestations.
+     # With attestations the image becomes an OCI image index (manifest list),
+     # which the Heroku Container Registry rejects with
+     # "error from registry: unsupported". Disabling them (plus --load and a
+     # single --platform) yields a plain Docker v2 schema 2 manifest Heroku accepts.
      - run: |
-         export DOCKER_BUILDKIT=0
          docker info
-         docker build -t aspnetapp -f GrammarNazi.App/Dockerfile .
+         docker buildx build \
+           --platform linux/amd64 \
+           --provenance=false \
+           --sbom=false \
+           --load \
+           -t aspnetapp -f GrammarNazi.App/Dockerfile .
      # deploy the image
      - run: |         
          docker login --username=$HEROKU_USERNAME --password=$HEROKU_API_KEY registry.heroku.com
