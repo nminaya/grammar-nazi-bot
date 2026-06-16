@@ -7,7 +7,11 @@ jobs:
      - checkout 
 
      # build image
-     - run: |         
+     # DOCKER_BUILDKIT=0 forces the legacy builder so the image uses the
+     # Docker v2 schema 2 manifest. BuildKit produces an OCI manifest, which
+     # the Heroku Container Registry rejects with "error from registry: unsupported".
+     - run: |
+         export DOCKER_BUILDKIT=0
          docker info
          docker build -t aspnetapp -f GrammarNazi.App/Dockerfile .
      # deploy the image
