@@ -12,41 +12,8 @@ using Xunit;
 
 namespace GrammarNazi.Tests.Clients;
 
-public class GroqApiClientTests
+public class CerebrasApiClientTests
 {
-    [Fact]
-    public async Task GetChatCompletion_RateLimitResponse_ThrowsGroqRateLimitException()
-    {
-        // Arrange
-        var httpClientFactoryMock = Substitute.For<IHttpClientFactory>();
-        var optionsMock = Substitute.For<IOptions<GroqApiSettings>>();
-
-        optionsMock.Value.Returns(new GroqApiSettings
-        {
-            Model = "test-model",
-            ApiKey = "test-key"
-        });
-
-        var httpClient = new HttpClient(new MockHttpMessageHandler(async (request, cancellationToken) =>
-        {
-            return new HttpResponseMessage
-            {
-                StatusCode = HttpStatusCode.TooManyRequests,
-                Content = new StringContent("{\"error\":{\"message\":\"Rate limit reached\"}}")
-            };
-        }))
-        {
-            BaseAddress = new Uri("https://api.groq.com/")
-        };
-
-        httpClientFactoryMock.CreateClient("groqApi").Returns(httpClient);
-
-        var client = new GroqApiClient(httpClientFactoryMock, optionsMock);
-
-        // Act & Assert
-        await Assert.ThrowsAsync<GroqRateLimitException>(() => client.GetChatCompletion("system", "user"));
-    }
-
     [Theory]
     [InlineData(HttpStatusCode.ServiceUnavailable)]
     [InlineData(HttpStatusCode.BadGateway)]
@@ -55,9 +22,9 @@ public class GroqApiClientTests
     {
         // Arrange
         var httpClientFactoryMock = Substitute.For<IHttpClientFactory>();
-        var optionsMock = Substitute.For<IOptions<GroqApiSettings>>();
+        var optionsMock = Substitute.For<IOptions<CerebrasApiSettings>>();
 
-        optionsMock.Value.Returns(new GroqApiSettings
+        optionsMock.Value.Returns(new CerebrasApiSettings
         {
             Model = "test-model",
             ApiKey = "test-key"
@@ -72,12 +39,12 @@ public class GroqApiClientTests
             };
         }))
         {
-            BaseAddress = new Uri("https://api.groq.com/")
+            BaseAddress = new Uri("https://api.cerebras.ai/")
         };
 
-        httpClientFactoryMock.CreateClient("groqApi").Returns(httpClient);
+        httpClientFactoryMock.CreateClient("cerebrasApi").Returns(httpClient);
 
-        var client = new GroqApiClient(httpClientFactoryMock, optionsMock);
+        var client = new CerebrasApiClient(httpClientFactoryMock, optionsMock);
 
         // Act & Assert
         await Assert.ThrowsAsync<ExternalApiUnavailableException>(() => client.GetChatCompletion("system", "user"));
@@ -88,9 +55,9 @@ public class GroqApiClientTests
     {
         // Arrange
         var httpClientFactoryMock = Substitute.For<IHttpClientFactory>();
-        var optionsMock = Substitute.For<IOptions<GroqApiSettings>>();
+        var optionsMock = Substitute.For<IOptions<CerebrasApiSettings>>();
 
-        optionsMock.Value.Returns(new GroqApiSettings
+        optionsMock.Value.Returns(new CerebrasApiSettings
         {
             Model = "test-model",
             ApiKey = "test-key"
@@ -105,16 +72,16 @@ public class GroqApiClientTests
             };
         }))
         {
-            BaseAddress = new Uri("https://api.groq.com/")
+            BaseAddress = new Uri("https://api.cerebras.ai/")
         };
 
-        httpClientFactoryMock.CreateClient("groqApi").Returns(httpClient);
+        httpClientFactoryMock.CreateClient("cerebrasApi").Returns(httpClient);
 
-        var client = new GroqApiClient(httpClientFactoryMock, optionsMock);
+        var client = new CerebrasApiClient(httpClientFactoryMock, optionsMock);
 
         // Act & Assert
         var exception = await Assert.ThrowsAsync<InvalidOperationException>(() => client.GetChatCompletion("system", "user"));
-        Assert.Contains("Unsuccessful Groq API response InternalServerError", exception.Message);
+        Assert.Contains("Unsuccessful Cerebras API response InternalServerError", exception.Message);
     }
 
     private class MockHttpMessageHandler : HttpMessageHandler

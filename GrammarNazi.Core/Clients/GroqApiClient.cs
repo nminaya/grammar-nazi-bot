@@ -60,6 +60,13 @@ public class GroqApiClient(IHttpClientFactory httpClientFactory, IOptions<GroqAp
                 throw new GroqRateLimitException("Groq API Rate limit reached.", new Exception(errorContent));
             }
 
+            if (response.StatusCode == HttpStatusCode.ServiceUnavailable
+                || response.StatusCode == HttpStatusCode.BadGateway
+                || response.StatusCode == HttpStatusCode.GatewayTimeout)
+            {
+                throw new ExternalApiUnavailableException($"Groq API is currently unavailable ({response.StatusCode}).", new Exception(errorContent));
+            }
+
             throw new InvalidOperationException($"Unsuccessful Groq API response {response.StatusCode}", new Exception(errorContent));
         }
 

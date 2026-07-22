@@ -1,5 +1,6 @@
 using GrammarNazi.Domain.Clients;
 using GrammarNazi.Domain.Entities.Settings;
+using GrammarNazi.Domain.Exceptions;
 using Microsoft.Extensions.Options;
 using Newtonsoft.Json;
 using System;
@@ -53,6 +54,14 @@ public class CerebrasApiClient(IHttpClientFactory httpClientFactory, IOptions<Ce
         if (response.StatusCode != HttpStatusCode.OK)
         {
             var errorContent = await response.Content.ReadAsStringAsync();
+
+            if (response.StatusCode == HttpStatusCode.ServiceUnavailable
+                || response.StatusCode == HttpStatusCode.BadGateway
+                || response.StatusCode == HttpStatusCode.GatewayTimeout)
+            {
+                throw new ExternalApiUnavailableException($"Cerebras API is currently unavailable ({response.StatusCode}).", new Exception(errorContent));
+            }
+
             throw new InvalidOperationException($"Unsuccessful Cerebras API response {response.StatusCode}", new Exception(errorContent));
         }
 
