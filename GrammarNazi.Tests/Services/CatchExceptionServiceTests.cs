@@ -320,6 +320,58 @@ namespace GrammarNazi.Tests.Services
             return exception;
         }
 
+        [Theory]
+        [InlineData(System.Net.HttpStatusCode.InternalServerError)]
+        [InlineData(System.Net.HttpStatusCode.BadGateway)]
+        [InlineData(System.Net.HttpStatusCode.ServiceUnavailable)]
+        [InlineData(System.Net.HttpStatusCode.GatewayTimeout)]
+        public void HandleException_HttpException_TransientServerError_Should_LogWarning(System.Net.HttpStatusCode statusCode)
+        {
+            // Arrange
+            var loggerMock = Substitute.For<ILogger<CatchExceptionService>>();
+            var githubServiceMock = Substitute.For<IGithubService>();
+
+            var service = new CatchExceptionService(githubServiceMock, loggerMock);
+
+            var exception = new Discord.Net.HttpException(statusCode, null, null);
+
+            // Act
+            service.HandleException(exception, GithubIssueLabels.Discord);
+
+            // Assert
+            var warningCalls = loggerMock.ReceivedCalls()
+                .Select(call => call.GetArguments())
+                .Count(callArguments => ((LogLevel)callArguments[0]).Equals(LogLevel.Warning));
+
+            Assert.Equal(1, warningCalls);
+
+            githubServiceMock.DidNotReceive().CreateBugIssue(Arg.Any<string>(), Arg.Any<Exception>(), Arg.Any<GithubIssueLabels>());
+        }
+
+        [Fact]
+        public void HandleException_HttpException_NonTransient_Should_LogErrorAndCreateBugIssue()
+        {
+            // Arrange
+            var loggerMock = Substitute.For<ILogger<CatchExceptionService>>();
+            var githubServiceMock = Substitute.For<IGithubService>();
+
+            var service = new CatchExceptionService(githubServiceMock, loggerMock);
+
+            var exception = new Discord.Net.HttpException(System.Net.HttpStatusCode.Unauthorized, null, null);
+
+            // Act
+            service.HandleException(exception, GithubIssueLabels.Discord);
+
+            // Assert
+            var errorCalls = loggerMock.ReceivedCalls()
+                .Select(call => call.GetArguments())
+                .Count(callArguments => ((LogLevel)callArguments[0]).Equals(LogLevel.Error));
+
+            Assert.Equal(1, errorCalls);
+
+            githubServiceMock.Received().CreateBugIssue(Arg.Any<string>(), exception, GithubIssueLabels.Discord);
+        }
+
         [Fact]
         public void HandleError_ExceptionCaptured_Should_LogErrorAndCreateBugIssue()
         {
