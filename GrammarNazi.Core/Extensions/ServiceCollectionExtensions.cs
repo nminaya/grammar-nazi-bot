@@ -19,18 +19,18 @@ public static class ServiceCollectionExtensions
 
     public static IServiceCollection AddNamedHttpClients(this IServiceCollection serviceCollection)
     {
-        serviceCollection.AddHttpClient("datamuseApi", c => c.BaseAddress = new Uri("https://api.datamuse.com/"));
-        serviceCollection.AddHttpClient("languageToolApi", c => c.BaseAddress = new Uri("https://languagetool.org/"));
-        serviceCollection.AddHttpClient("yandexSpellerApi", c => c.BaseAddress = new Uri("https://speller.yandex.net/"));
-        serviceCollection.AddHttpClient("sentimApi", c => c.BaseAddress = new Uri("https://sentim-api.herokuapp.com/"));
-        serviceCollection.AddHttpClient("geminiApi", c => c.BaseAddress = new Uri("https://generativelanguage.googleapis.com/"));
-        serviceCollection.AddHttpClient("groqApi", c => c.BaseAddress = new Uri("https://api.groq.com/"));
-        serviceCollection.AddHttpClient("cerebrasApi", c => c.BaseAddress = new Uri("https://api.cerebras.ai/"));
+        serviceCollection.AddHttpClient("datamuseApi", c => { c.BaseAddress = new Uri("https://api.datamuse.com/"); c.Timeout = TimeSpan.FromSeconds(30); });
+        serviceCollection.AddHttpClient("languageToolApi", c => { c.BaseAddress = new Uri("https://languagetool.org/"); c.Timeout = TimeSpan.FromSeconds(30); });
+        serviceCollection.AddHttpClient("yandexSpellerApi", c => { c.BaseAddress = new Uri("https://speller.yandex.net/"); c.Timeout = TimeSpan.FromSeconds(30); });
+        serviceCollection.AddHttpClient("sentimApi", c => { c.BaseAddress = new Uri("https://sentim-api.herokuapp.com/"); c.Timeout = TimeSpan.FromSeconds(30); });
+        serviceCollection.AddHttpClient("geminiApi", c => { c.BaseAddress = new Uri("https://generativelanguage.googleapis.com/"); c.Timeout = TimeSpan.FromSeconds(30); });
+        serviceCollection.AddHttpClient("groqApi", c => { c.BaseAddress = new Uri("https://api.groq.com/"); c.Timeout = TimeSpan.FromSeconds(30); });
+        serviceCollection.AddHttpClient("cerebrasApi", c => { c.BaseAddress = new Uri("https://api.cerebras.ai/"); c.Timeout = TimeSpan.FromSeconds(30); });
 
         var meaningCloudSettings = serviceCollection.BuildServiceProvider().GetService<IOptions<MeaningCloudSettings>>().Value;
 
-        serviceCollection.AddHttpClient("meaninCloudSentimentAnalysisApi", c => c.BaseAddress = new Uri(meaningCloudSettings.MeaningCloudSentimentHostUrl));
-        serviceCollection.AddHttpClient("meaninCloudLanguageApi", c => c.BaseAddress = new Uri(meaningCloudSettings.MeaningCloudLanguageHostUrl));
+        serviceCollection.AddHttpClient("meaninCloudSentimentAnalysisApi", c => { c.BaseAddress = new Uri(meaningCloudSettings.MeaningCloudSentimentHostUrl); c.Timeout = TimeSpan.FromSeconds(30); });
+        serviceCollection.AddHttpClient("meaninCloudLanguageApi", c => { c.BaseAddress = new Uri(meaningCloudSettings.MeaningCloudLanguageHostUrl); c.Timeout = TimeSpan.FromSeconds(30); });
 
         return serviceCollection;
     }

@@ -79,6 +79,49 @@ namespace GrammarNazi.Tests.Services
         }
 
         [Fact]
+        public void HandleException_TaskCanceledExceptionWithInnerTimeoutException_Should_LogWarning()
+        {
+            // Arrange
+            var loggerMock = Substitute.For<ILogger<CatchExceptionService>>();
+            var githubServiceMock = Substitute.For<IGithubService>();
+            var service = new CatchExceptionService(githubServiceMock, loggerMock);
+            var timeoutException = new TimeoutException("The operation timed out.");
+            var exception = new TaskCanceledException("Task canceled due to timeout", timeoutException);
+
+            // Act
+            service.HandleException(exception, GithubIssueLabels.Telegram);
+
+            // Assert
+            var numberOfCalls = loggerMock.ReceivedCalls()
+                .Select(call => call.GetArguments())
+                .Count(callArguments => ((LogLevel)callArguments[0]).Equals(LogLevel.Warning));
+
+            Assert.Equal(1, numberOfCalls);
+            githubServiceMock.DidNotReceive().CreateBugIssue(Arg.Any<string>(), Arg.Any<Exception>(), Arg.Any<GithubIssueLabels>());
+        }
+
+        [Fact]
+        public void HandleException_TaskCanceledExceptionWithoutInnerException_Should_LogErrorAndCreateBugIssue()
+        {
+            // Arrange
+            var loggerMock = Substitute.For<ILogger<CatchExceptionService>>();
+            var githubServiceMock = Substitute.For<IGithubService>();
+            var service = new CatchExceptionService(githubServiceMock, loggerMock);
+            var exception = new TaskCanceledException("Task canceled normally");
+
+            // Act
+            service.HandleException(exception, GithubIssueLabels.Telegram);
+
+            // Assert
+            var numberOfCalls = loggerMock.ReceivedCalls()
+                .Select(call => call.GetArguments())
+                .Count(callArguments => ((LogLevel)callArguments[0]).Equals(LogLevel.Error));
+
+            Assert.Equal(1, numberOfCalls);
+            githubServiceMock.Received().CreateBugIssue("Application Exception: Task canceled normally", exception, GithubIssueLabels.Telegram);
+        }
+
+        [Fact]
         public void HandleException_GroqRateLimitException_Should_LogWarning()
         {
             // Arrange
