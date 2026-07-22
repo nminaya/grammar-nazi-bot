@@ -58,13 +58,13 @@ namespace GrammarNazi.Tests.Services
         }
 
         [Fact]
-        public void HandleException_GeminiServiceUnavailableException_Should_LogWarning()
+        public void HandleException_ExternalApiUnavailableException_Should_LogWarning()
         {
             // Arrange
             var loggerMock = Substitute.For<ILogger<CatchExceptionService>>();
             var githubServiceMock = Substitute.For<IGithubService>();
             var service = new CatchExceptionService(githubServiceMock, loggerMock);
-            var exception = new GeminiServiceUnavailableException("Gemini service unavailable");
+            var exception = new ExternalApiUnavailableException("External API service unavailable");
 
             // Act
             service.HandleException(exception, GithubIssueLabels.ProductionBug);

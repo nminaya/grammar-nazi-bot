@@ -34,12 +34,16 @@ public class GeminiApiClient(IHttpClientFactory httpClientFactory, IOptions<Gemi
 
         if (response.StatusCode != HttpStatusCode.OK)
         {
-            if (response.StatusCode == HttpStatusCode.ServiceUnavailable)
+            var errorContent = await response.Content.ReadAsStringAsync();
+
+            if (response.StatusCode == HttpStatusCode.ServiceUnavailable
+                || response.StatusCode == HttpStatusCode.BadGateway
+                || response.StatusCode == HttpStatusCode.GatewayTimeout)
             {
-                throw new GeminiServiceUnavailableException("Gemini API is currently unavailable.");
+                throw new ExternalApiUnavailableException($"Gemini API is currently unavailable ({response.StatusCode}).", new Exception(errorContent));
             }
 
-            throw new InvalidOperationException($"Unsuccessful Gemini API response {response.StatusCode}", new(await response.Content.ReadAsStringAsync()));
+            throw new InvalidOperationException($"Unsuccessful Gemini API response {response.StatusCode}", new Exception(errorContent));
         }
 
         var content = await response.Content.ReadAsStringAsync();
