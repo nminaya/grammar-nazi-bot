@@ -163,7 +163,7 @@ namespace GrammarNazi.Tests.Services
             var exception = CreateSqlException(number, message);
 
             // Act
-            // Call multiple times to test rate limiting
+            // Call multiple times to test rate limiting (burst-only)
             for (int i = 0; i < 15; i++)
             {
                 service.HandleException(exception, GithubIssueLabels.Telegram);
@@ -179,10 +179,60 @@ namespace GrammarNazi.Tests.Services
             Assert.Equal(15, warningCalls);
 
             // CreateBugIssue should be called:
-            // 1. First time (Strategy A)
-            // 2. When burst reaches 10 (Burst override)
-            // Total: 2 calls
-            await githubServiceMock.Received(2).CreateBugIssue(Arg.Any<string>(), Arg.Any<Exception>(), Arg.Any<GithubIssueLabels>());
+            // 1. When burst reaches 10 (at occurrence #10)
+            // Occurrences 11-15 accumulate but don't reach 10 again.
+            // Total: 1 call
+            await githubServiceMock.Received(1).CreateBugIssue(Arg.Any<string>(), Arg.Any<Exception>(), Arg.Any<GithubIssueLabels>());
+        }
+
+        [Fact]
+        public void HandleException_SingleTransientSqlException_Should_LogWarningOnly_And_NotCreateIssue()
+        {
+            // Arrange
+            var loggerMock = Substitute.For<ILogger<CatchExceptionService>>();
+            var githubServiceMock = Substitute.For<IGithubService>();
+
+            var service = new CatchExceptionService(githubServiceMock, loggerMock);
+
+            var exception = CreateSqlException(53, "Transient error");
+
+            // Act
+            service.HandleException(exception, GithubIssueLabels.Telegram);
+
+            // Assert
+            var warningCalls = loggerMock.ReceivedCalls()
+                .Select(call => call.GetArguments())
+                .Count(callArguments => ((LogLevel)callArguments[0]).Equals(LogLevel.Warning));
+
+            Assert.Equal(1, warningCalls);
+
+            githubServiceMock.DidNotReceive().CreateBugIssue(Arg.Any<string>(), Arg.Any<Exception>(), Arg.Any<GithubIssueLabels>());
+        }
+
+        [Fact]
+        public async Task HandleException_TransientSqlException_BurstThreshold_Should_CreateIssueAtTenthOccurrence()
+        {
+            // Arrange
+            var loggerMock = Substitute.For<ILogger<CatchExceptionService>>();
+            var githubServiceMock = Substitute.For<IGithubService>();
+
+            var service = new CatchExceptionService(githubServiceMock, loggerMock);
+
+            var exception = CreateSqlException(53, "Transient error");
+
+            // Act & Assert
+            // First 9 occurrences should not create a Bug Issue
+            for (int i = 0; i < 9; i++)
+            {
+                service.HandleException(exception, GithubIssueLabels.Telegram);
+            }
+
+            _ = githubServiceMock.DidNotReceive().CreateBugIssue(Arg.Any<string>(), Arg.Any<Exception>(), Arg.Any<GithubIssueLabels>());
+
+            // The 10th occurrence should trigger exactly one Bug Issue
+            service.HandleException(exception, GithubIssueLabels.Telegram);
+
+            await githubServiceMock.Received(1).CreateBugIssue(Arg.Any<string>(), Arg.Any<Exception>(), Arg.Any<GithubIssueLabels>());
         }
 
         [Fact]
