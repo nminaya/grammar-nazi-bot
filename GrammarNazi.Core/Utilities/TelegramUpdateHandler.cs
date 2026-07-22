@@ -96,14 +96,7 @@ public class TelegramUpdateHandler : IUpdateHandler
         }
 
         // Send "Typing..." notification
-        try
-        {
-            await client.SendChatAction(message.Chat.Id, ChatAction.Typing);
-        }
-        catch (Exception ex)
-        {
-            _logger.LogWarning(ex, "Failed to send chat action Typing on Telegram: " + ex.Message);
-        }
+        await client.SendChatAction(message.Chat.Id, ChatAction.Typing);
 
         var messageBuilder = new StringBuilder();
 

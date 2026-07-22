@@ -135,14 +135,7 @@ public class DiscordBotHostedService : BackgroundService
             return;
         }
 
-        try
-        {
-            await message.Channel.TriggerTypingAsync();
-        }
-        catch (Exception ex)
-        {
-            _logger.LogWarning(ex, "Failed to trigger typing indicator on Discord: " + ex.Message);
-        }
+        await message.Channel.TriggerTypingAsync();
 
         var messageBuilder = new StringBuilder();
 
