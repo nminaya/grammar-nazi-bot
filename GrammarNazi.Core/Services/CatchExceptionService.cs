@@ -13,6 +13,7 @@ using System.Net;
 using System.Net.Http;
 using System.Net.Mail;
 using System.Net.Sockets;
+using System.Threading.Tasks;
 using Telegram.Bot.Exceptions;
 using Tweetinvi.Exceptions;
 
@@ -63,6 +64,7 @@ namespace GrammarNazi.Core.Services
                     break;
                 case ExternalApiUnavailableException:
                 case GroqRateLimitException:
+                case TaskCanceledException when exception.InnerException is TimeoutException:
                     _logger.LogWarning(exception, exception.Message);
                     break;
 
