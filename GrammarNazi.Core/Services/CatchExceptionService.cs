@@ -106,6 +106,15 @@ namespace GrammarNazi.Core.Services
                 return;
             }
 
+            if (httpException.HttpCode is HttpStatusCode.InternalServerError
+                or HttpStatusCode.BadGateway
+                or HttpStatusCode.ServiceUnavailable
+                or HttpStatusCode.GatewayTimeout)
+            {
+                _logger.LogWarning(httpException, httpException.Message);
+                return;
+            }
+
             HandleGeneralException(httpException, githubIssueSection);
         }
 
