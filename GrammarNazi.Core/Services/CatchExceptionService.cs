@@ -142,11 +142,7 @@ namespace GrammarNazi.Core.Services
 
                 bool shouldCreateIssue = false;
 
-                if (now - state.LastIssueCreatedUtc >= TimeSpan.FromHours(6))
-                {
-                    shouldCreateIssue = true;
-                }
-                else if (state.RecentOccurrences.Count >= 10)
+                if (state.RecentOccurrences.Count >= 10)
                 {
                     shouldCreateIssue = true;
                     state.RecentOccurrences.Clear(); // Reset burst count after escalating
@@ -154,7 +150,6 @@ namespace GrammarNazi.Core.Services
 
                 if (shouldCreateIssue)
                 {
-                    state.LastIssueCreatedUtc = now;
                     _ = _githubService.CreateBugIssue($"Transient SQL Exception: {sqlException.Message}", sqlException, githubIssueSection);
                 }
             }
@@ -162,7 +157,6 @@ namespace GrammarNazi.Core.Services
 
         private class RateLimitState
         {
-            public DateTime LastIssueCreatedUtc { get; set; }
             public System.Collections.Generic.List<DateTime> RecentOccurrences { get; } = new();
         }
 
