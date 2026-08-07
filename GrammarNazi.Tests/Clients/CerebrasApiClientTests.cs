@@ -15,6 +15,49 @@ namespace GrammarNazi.Tests.Clients;
 public class CerebrasApiClientTests
 {
     [Theory]
+    [InlineData(HttpStatusCode.NotFound)]
+    [InlineData(HttpStatusCode.Unauthorized)]
+    [InlineData(HttpStatusCode.Forbidden)]
+    public async Task GetChatCompletion_PermanentFailureResponse_ThrowsExternalApiPermanentFailureException(HttpStatusCode httpStatusCode)
+    {
+        // Arrange
+        var httpClientFactoryMock = Substitute.For<IHttpClientFactory>();
+        var optionsMock = Substitute.For<IOptions<CerebrasApiSettings>>();
+
+        const string configuredModel = "test-model";
+        optionsMock.Value.Returns(new CerebrasApiSettings
+        {
+            Model = configuredModel,
+            ApiKey = "test-key"
+        });
+
+        var contentStr = httpStatusCode == HttpStatusCode.NotFound
+            ? "{\"message\":\"Model does not exist or you do not have access to it.\",\"type\":\"not_found_error\",\"param\":\"model\",\"code\":\"model_not_found\"}"
+            : "Error Content";
+
+        var httpClient = new HttpClient(new MockHttpMessageHandler(async (request, cancellationToken) =>
+        {
+            return new HttpResponseMessage
+            {
+                StatusCode = httpStatusCode,
+                Content = new StringContent(contentStr)
+            };
+        }))
+        {
+            BaseAddress = new Uri("https://api.cerebras.ai/")
+        };
+
+        httpClientFactoryMock.CreateClient("cerebrasApi").Returns(httpClient);
+
+        var client = new CerebrasApiClient(httpClientFactoryMock, optionsMock);
+
+        // Act & Assert
+        var exception = await Assert.ThrowsAsync<ExternalApiPermanentFailureException>(() => client.GetChatCompletion("system", "user"));
+        Assert.Contains(configuredModel, exception.Message);
+        Assert.Contains("retired", exception.Message);
+    }
+
+    [Theory]
     [InlineData(HttpStatusCode.ServiceUnavailable)]
     [InlineData(HttpStatusCode.BadGateway)]
     [InlineData(HttpStatusCode.GatewayTimeout)]
@@ -82,6 +125,74 @@ public class CerebrasApiClientTests
         // Act & Assert
         var exception = await Assert.ThrowsAsync<InvalidOperationException>(() => client.GetChatCompletion("system", "user"));
         Assert.Contains("Unsuccessful Cerebras API response InternalServerError", exception.Message);
+    }
+
+    [Fact]
+    public async Task GetChatCompletion_BadRequestWithPermanentKeyword_ThrowsExternalApiPermanentFailureException()
+    {
+        // Arrange
+        var httpClientFactoryMock = Substitute.For<IHttpClientFactory>();
+        var optionsMock = Substitute.For<IOptions<CerebrasApiSettings>>();
+
+        const string configuredModel = "test-model";
+        optionsMock.Value.Returns(new CerebrasApiSettings
+        {
+            Model = configuredModel,
+            ApiKey = "test-key"
+        });
+
+        var httpClient = new HttpClient(new MockHttpMessageHandler(async (request, cancellationToken) =>
+        {
+            return new HttpResponseMessage
+            {
+                StatusCode = HttpStatusCode.BadRequest,
+                Content = new StringContent("{\"error\":{\"code\":\"model_not_found\"}}")
+            };
+        }))
+        {
+            BaseAddress = new Uri("https://api.cerebras.ai/")
+        };
+
+        httpClientFactoryMock.CreateClient("cerebrasApi").Returns(httpClient);
+
+        var client = new CerebrasApiClient(httpClientFactoryMock, optionsMock);
+
+        // Act & Assert
+        var exception = await Assert.ThrowsAsync<ExternalApiPermanentFailureException>(() => client.GetChatCompletion("system", "user"));
+        Assert.Contains(configuredModel, exception.Message);
+    }
+
+    [Fact]
+    public async Task GetChatCompletion_BadRequestWithoutPermanentKeyword_ThrowsInvalidOperationException()
+    {
+        // Arrange
+        var httpClientFactoryMock = Substitute.For<IHttpClientFactory>();
+        var optionsMock = Substitute.For<IOptions<CerebrasApiSettings>>();
+
+        optionsMock.Value.Returns(new CerebrasApiSettings
+        {
+            Model = "test-model",
+            ApiKey = "test-key"
+        });
+
+        var httpClient = new HttpClient(new MockHttpMessageHandler(async (request, cancellationToken) =>
+        {
+            return new HttpResponseMessage
+            {
+                StatusCode = HttpStatusCode.BadRequest,
+                Content = new StringContent("Generic error")
+            };
+        }))
+        {
+            BaseAddress = new Uri("https://api.cerebras.ai/")
+        };
+
+        httpClientFactoryMock.CreateClient("cerebrasApi").Returns(httpClient);
+
+        var client = new CerebrasApiClient(httpClientFactoryMock, optionsMock);
+
+        // Act & Assert
+        await Assert.ThrowsAsync<InvalidOperationException>(() => client.GetChatCompletion("system", "user"));
     }
 
     private class MockHttpMessageHandler : HttpMessageHandler

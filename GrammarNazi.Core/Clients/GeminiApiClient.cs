@@ -43,6 +43,16 @@ public class GeminiApiClient(IHttpClientFactory httpClientFactory, IOptions<Gemi
                 throw new ExternalApiUnavailableException($"Gemini API is currently unavailable ({response.StatusCode}).", new Exception(errorContent));
             }
 
+            if (response.StatusCode == HttpStatusCode.NotFound
+                || response.StatusCode == HttpStatusCode.Unauthorized
+                || response.StatusCode == HttpStatusCode.Forbidden
+                || (response.StatusCode == HttpStatusCode.BadRequest && GrammarNazi.Core.Utilities.ExternalApiPermanentExceptionHelper.IsPermanentFailure(errorContent)))
+            {
+                throw new ExternalApiPermanentFailureException(
+                    $"Gemini API rejected model '{_geminiApiSettings.ModelVersion}' ({response.StatusCode}) — the model may have been retired or the API key may lack access. Retrying will not help.",
+                    new Exception(errorContent));
+            }
+
             throw new InvalidOperationException($"Unsuccessful Gemini API response {response.StatusCode}", new Exception(errorContent));
         }
 
