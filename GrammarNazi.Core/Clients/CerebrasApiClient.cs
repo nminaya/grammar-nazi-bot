@@ -62,6 +62,15 @@ public class CerebrasApiClient(IHttpClientFactory httpClientFactory, IOptions<Ce
                 throw new ExternalApiUnavailableException($"Cerebras API is currently unavailable ({response.StatusCode}).", new Exception(errorContent));
             }
 
+            if (response.StatusCode == HttpStatusCode.NotFound
+                || response.StatusCode == HttpStatusCode.Unauthorized
+                || response.StatusCode == HttpStatusCode.Forbidden)
+            {
+                throw new ExternalApiConfigurationException(
+                    $"Cerebras API rejected the request ({response.StatusCode}). Check the configured model/API key. Model: {_cerebrasApiSettings.Model}",
+                    new Exception(errorContent));
+            }
+
             throw new InvalidOperationException($"Unsuccessful Cerebras API response {response.StatusCode}", new Exception(errorContent));
         }
 

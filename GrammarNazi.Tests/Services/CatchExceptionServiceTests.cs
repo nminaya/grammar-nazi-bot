@@ -25,6 +25,44 @@ namespace GrammarNazi.Tests.Services
             var field = typeof(CatchExceptionService).GetField("SqlRateLimitStates", BindingFlags.NonPublic | BindingFlags.Static);
             var dictionary = (System.Collections.IDictionary)field.GetValue(null);
             dictionary.Clear();
+
+            var extField = typeof(CatchExceptionService).GetField("ExternalApiConfigRateLimitStates", BindingFlags.NonPublic | BindingFlags.Static);
+            var extDictionary = (System.Collections.IDictionary)extField.GetValue(null);
+            extDictionary.Clear();
+        }
+
+        [Fact]
+        public async Task HandleException_ExternalApiConfigurationException_Should_LogError_And_CreateGitHubIssueOncePerDistinctMessage()
+        {
+            // Arrange
+            var loggerMock = Substitute.For<ILogger<CatchExceptionService>>();
+            var githubServiceMock = Substitute.For<IGithubService>();
+
+            var service = new CatchExceptionService(githubServiceMock, loggerMock);
+
+            const string message = "Cerebras API rejected the request (NotFound). Check the configured model/API key. Model: test-model";
+            var exception = new ExternalApiConfigurationException(message);
+
+            // Act
+            // Call multiple times to test that only one GitHub issue is created per distinct message
+            for (int i = 0; i < 5; i++)
+            {
+                service.HandleException(exception, GithubIssueLabels.Telegram);
+            }
+
+            // Assert
+            // LogError should be called for every occurrence (5 times)
+            var errorCalls = loggerMock.ReceivedCalls()
+                .Select(call => call.GetArguments())
+                .Count(callArguments => ((LogLevel)callArguments[0]).Equals(LogLevel.Error));
+
+            Assert.Equal(5, errorCalls);
+
+            // CreateBugIssue should only be called once
+            await githubServiceMock.Received(1).CreateBugIssue(
+                $"Application Exception: {message}",
+                exception,
+                GithubIssueLabels.Telegram);
         }
 
         [Theory]

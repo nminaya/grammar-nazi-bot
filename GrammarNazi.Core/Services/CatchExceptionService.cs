@@ -62,6 +62,11 @@ namespace GrammarNazi.Core.Services
                 case RequestException requestException:
                     HandleRequestException(requestException, githubIssueSection);
                     break;
+
+                case ExternalApiConfigurationException externalApiConfigurationException:
+                    HandleExternalApiConfigurationException(externalApiConfigurationException, githubIssueSection);
+                    break;
+
                 case ExternalApiUnavailableException:
                 case GroqRateLimitException:
                 case TaskCanceledException when exception.InnerException is TimeoutException:
@@ -121,6 +126,30 @@ namespace GrammarNazi.Core.Services
         }
 
         private static readonly ConcurrentDictionary<string, RateLimitState> SqlRateLimitStates = new();
+        private static readonly ConcurrentDictionary<string, RateLimitState> ExternalApiConfigRateLimitStates = new();
+
+        private void HandleExternalApiConfigurationException(ExternalApiConfigurationException exception, GithubIssueLabels githubIssueSection)
+        {
+            _logger.LogError(exception, exception.Message);
+
+            var state = ExternalApiConfigRateLimitStates.GetOrAdd(exception.Message, _ => new RateLimitState());
+
+            lock (state)
+            {
+                bool shouldCreateIssue = false;
+
+                if (state.RecentOccurrences.Count == 0)
+                {
+                    shouldCreateIssue = true;
+                    state.RecentOccurrences.Add(DateTime.UtcNow);
+                }
+
+                if (shouldCreateIssue)
+                {
+                    _ = _githubService.CreateBugIssue($"Application Exception: {exception.Message}", exception, githubIssueSection);
+                }
+            }
+        }
 
         private void HandleSqlException(SqlException sqlException, GithubIssueLabels githubIssueSection)
         {

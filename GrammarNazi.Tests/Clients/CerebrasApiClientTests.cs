@@ -15,6 +15,48 @@ namespace GrammarNazi.Tests.Clients;
 public class CerebrasApiClientTests
 {
     [Theory]
+    [InlineData(HttpStatusCode.NotFound)]
+    [InlineData(HttpStatusCode.Unauthorized)]
+    [InlineData(HttpStatusCode.Forbidden)]
+    public async Task GetChatCompletion_ConfigurationErrorResponse_ThrowsExternalApiConfigurationException(HttpStatusCode httpStatusCode)
+    {
+        // Arrange
+        var httpClientFactoryMock = Substitute.For<IHttpClientFactory>();
+        var optionsMock = Substitute.For<IOptions<CerebrasApiSettings>>();
+
+        const string configuredModel = "test-model";
+        optionsMock.Value.Returns(new CerebrasApiSettings
+        {
+            Model = configuredModel,
+            ApiKey = "test-key"
+        });
+
+        var contentStr = httpStatusCode == HttpStatusCode.NotFound
+            ? "{\"message\":\"Model does not exist or you do not have access to it.\",\"type\":\"not_found_error\",\"param\":\"model\",\"code\":\"model_not_found\"}"
+            : "Error Content";
+
+        var httpClient = new HttpClient(new MockHttpMessageHandler(async (request, cancellationToken) =>
+        {
+            return new HttpResponseMessage
+            {
+                StatusCode = httpStatusCode,
+                Content = new StringContent(contentStr)
+            };
+        }))
+        {
+            BaseAddress = new Uri("https://api.cerebras.ai/")
+        };
+
+        httpClientFactoryMock.CreateClient("cerebrasApi").Returns(httpClient);
+
+        var client = new CerebrasApiClient(httpClientFactoryMock, optionsMock);
+
+        // Act & Assert
+        var exception = await Assert.ThrowsAsync<ExternalApiConfigurationException>(() => client.GetChatCompletion("system", "user"));
+        Assert.Contains(configuredModel, exception.Message);
+    }
+
+    [Theory]
     [InlineData(HttpStatusCode.ServiceUnavailable)]
     [InlineData(HttpStatusCode.BadGateway)]
     [InlineData(HttpStatusCode.GatewayTimeout)]

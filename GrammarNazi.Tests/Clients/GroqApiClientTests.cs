@@ -14,6 +14,48 @@ namespace GrammarNazi.Tests.Clients;
 
 public class GroqApiClientTests
 {
+    [Theory]
+    [InlineData(HttpStatusCode.NotFound)]
+    [InlineData(HttpStatusCode.Unauthorized)]
+    [InlineData(HttpStatusCode.Forbidden)]
+    public async Task GetChatCompletion_ConfigurationErrorResponse_ThrowsExternalApiConfigurationException(HttpStatusCode httpStatusCode)
+    {
+        // Arrange
+        var httpClientFactoryMock = Substitute.For<IHttpClientFactory>();
+        var optionsMock = Substitute.For<IOptions<GroqApiSettings>>();
+
+        const string configuredModel = "test-model";
+        optionsMock.Value.Returns(new GroqApiSettings
+        {
+            Model = configuredModel,
+            ApiKey = "test-key"
+        });
+
+        var contentStr = httpStatusCode == HttpStatusCode.NotFound
+            ? "{\"message\":\"Model does not exist or you do not have access to it.\",\"type\":\"not_found_error\",\"param\":\"model\",\"code\":\"model_not_found\"}"
+            : "Error Content";
+
+        var httpClient = new HttpClient(new MockHttpMessageHandler(async (request, cancellationToken) =>
+        {
+            return new HttpResponseMessage
+            {
+                StatusCode = httpStatusCode,
+                Content = new StringContent(contentStr)
+            };
+        }))
+        {
+            BaseAddress = new Uri("https://api.groq.com/")
+        };
+
+        httpClientFactoryMock.CreateClient("groqApi").Returns(httpClient);
+
+        var client = new GroqApiClient(httpClientFactoryMock, optionsMock);
+
+        // Act & Assert
+        var exception = await Assert.ThrowsAsync<ExternalApiConfigurationException>(() => client.GetChatCompletion("system", "user"));
+        Assert.Contains(configuredModel, exception.Message);
+    }
+
     [Fact]
     public async Task GetChatCompletion_RateLimitResponse_ThrowsGroqRateLimitException()
     {
