@@ -26,13 +26,13 @@ namespace GrammarNazi.Tests.Services
             var dictionary = (System.Collections.IDictionary)field.GetValue(null);
             dictionary.Clear();
 
-            var extField = typeof(CatchExceptionService).GetField("ExternalApiConfigRateLimitStates", BindingFlags.NonPublic | BindingFlags.Static);
+            var extField = typeof(CatchExceptionService).GetField("ExternalApiPermanentFailureRateLimitStates", BindingFlags.NonPublic | BindingFlags.Static);
             var extDictionary = (System.Collections.IDictionary)extField.GetValue(null);
             extDictionary.Clear();
         }
 
         [Fact]
-        public async Task HandleException_ExternalApiConfigurationException_Should_LogError_And_CreateGitHubIssueOncePerDistinctMessage()
+        public async Task HandleException_ExternalApiPermanentFailureException_DistinctMessages_Should_CreateMultipleIssues()
         {
             // Arrange
             var loggerMock = Substitute.For<ILogger<CatchExceptionService>>();
@@ -40,29 +40,109 @@ namespace GrammarNazi.Tests.Services
 
             var service = new CatchExceptionService(githubServiceMock, loggerMock);
 
-            const string message = "Cerebras API rejected the request (NotFound). Check the configured model/API key. Model: test-model";
-            var exception = new ExternalApiConfigurationException(message);
+            var ex1 = new ExternalApiPermanentFailureException("Message A");
+            var ex2 = new ExternalApiPermanentFailureException("Message B");
 
             // Act
-            // Call multiple times to test that only one GitHub issue is created per distinct message
+            service.HandleException(ex1, GithubIssueLabels.Telegram);
+            service.HandleException(ex2, GithubIssueLabels.Telegram);
+
+            // Assert
+            await githubServiceMock.Received(1).CreateBugIssue(
+                $"External API Failure: Message A",
+                ex1,
+                GithubIssueLabels.Telegram);
+
+            await githubServiceMock.Received(1).CreateBugIssue(
+                $"External API Failure: Message B",
+                ex2,
+                GithubIssueLabels.Telegram);
+        }
+
+        [Fact]
+        public async Task HandleException_ExternalApiPermanentFailureException_DuplicateSuppressionExpiresAfter24h()
+        {
+            // Arrange
+            var loggerMock = Substitute.For<ILogger<CatchExceptionService>>();
+            var githubServiceMock = Substitute.For<IGithubService>();
+
+            var service = new CatchExceptionService(githubServiceMock, loggerMock);
+
+            var innerEx = new Exception("{\"message\":\"Model does not exist or you do not have access to it.\",\"type\":\"not_found_error\",\"param\":\"model\",\"code\":\"model_not_found\"}");
+            var exception = new ExternalApiPermanentFailureException("Message A", innerEx);
+
+            // Act 1: Initial call
+            service.HandleException(exception, GithubIssueLabels.Telegram);
+
+            // Assert 1: Issue filed once
+            await githubServiceMock.Received(1).CreateBugIssue(
+                "External API Failure: Message A",
+                exception,
+                GithubIssueLabels.Telegram);
+
+            // Manipulate state to age out the occurrence (make it older than 24 hours)
+            var field = typeof(CatchExceptionService).GetField("ExternalApiPermanentFailureRateLimitStates", BindingFlags.NonPublic | BindingFlags.Static);
+            var dictionary = (System.Collections.IDictionary)field.GetValue(null);
+            var state = dictionary["Message A"];
+            var recentOccurrencesField = state.GetType().GetProperty("RecentOccurrences");
+            var recentOccurrences = (System.Collections.Generic.List<DateTime>)recentOccurrencesField.GetValue(state);
+            recentOccurrences.Clear();
+            recentOccurrences.Add(DateTime.UtcNow.AddHours(-25)); // aged out
+
+            // Act 2: Handle exception again
+            service.HandleException(exception, GithubIssueLabels.Telegram);
+
+            // Assert 2: Second issue filed
+            await githubServiceMock.Received(2).CreateBugIssue(
+                "External API Failure: Message A",
+                exception,
+                GithubIssueLabels.Telegram);
+
+            // Verify LogError is called twice (since both occurrences actually filed an issue)
+            var errorCalls = loggerMock.ReceivedCalls()
+                .Select(call => call.GetArguments())
+                .Count(callArguments => ((LogLevel)callArguments[0]).Equals(LogLevel.Error));
+
+            Assert.Equal(2, errorCalls);
+        }
+
+        [Fact]
+        public void HandleException_ExternalApiPermanentFailureException_LogsErrorOnFirst_And_LogsWarningOnDuplicates()
+        {
+            // Arrange
+            var loggerMock = Substitute.For<ILogger<CatchExceptionService>>();
+            var githubServiceMock = Substitute.For<IGithubService>();
+
+            var service = new CatchExceptionService(githubServiceMock, loggerMock);
+
+            var exception = new ExternalApiPermanentFailureException("Message A");
+
+            // Act: Call 5 times
             for (int i = 0; i < 5; i++)
             {
                 service.HandleException(exception, GithubIssueLabels.Telegram);
             }
 
             // Assert
-            // LogError should be called for every occurrence (5 times)
+            // LogError should be called exactly once
             var errorCalls = loggerMock.ReceivedCalls()
                 .Select(call => call.GetArguments())
                 .Count(callArguments => ((LogLevel)callArguments[0]).Equals(LogLevel.Error));
 
-            Assert.Equal(5, errorCalls);
+            Assert.Equal(1, errorCalls);
 
-            // CreateBugIssue should only be called once
-            await githubServiceMock.Received(1).CreateBugIssue(
-                $"Application Exception: {message}",
-                exception,
-                GithubIssueLabels.Telegram);
+            // LogWarning should be called exactly 4 times (for duplicates)
+            var warningCalls = loggerMock.ReceivedCalls()
+                .Select(call => call.GetArguments())
+                .Count(callArguments => ((LogLevel)callArguments[0]).Equals(LogLevel.Warning));
+
+            Assert.Equal(4, warningCalls);
+
+            // Title prefix is NEVER "Application Exception: " for ExternalApiPermanentFailureException
+            githubServiceMock.DidNotReceive().CreateBugIssue(
+                Arg.Is<string>(title => title.StartsWith("Application Exception:")),
+                Arg.Any<Exception>(),
+                Arg.Any<GithubIssueLabels>());
         }
 
         [Theory]

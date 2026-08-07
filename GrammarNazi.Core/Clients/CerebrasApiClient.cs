@@ -64,10 +64,11 @@ public class CerebrasApiClient(IHttpClientFactory httpClientFactory, IOptions<Ce
 
             if (response.StatusCode == HttpStatusCode.NotFound
                 || response.StatusCode == HttpStatusCode.Unauthorized
-                || response.StatusCode == HttpStatusCode.Forbidden)
+                || response.StatusCode == HttpStatusCode.Forbidden
+                || (response.StatusCode == HttpStatusCode.BadRequest && GrammarNazi.Core.Utilities.ExternalApiPermanentExceptionHelper.IsPermanentFailure(errorContent)))
             {
-                throw new ExternalApiConfigurationException(
-                    $"Cerebras API rejected the request ({response.StatusCode}). Check the configured model/API key. Model: {_cerebrasApiSettings.Model}",
+                throw new ExternalApiPermanentFailureException(
+                    $"Cerebras API rejected model '{_cerebrasApiSettings.Model}' ({response.StatusCode}) — the model may have been retired or the API key may lack access. Retrying will not help.",
                     new Exception(errorContent));
             }
 

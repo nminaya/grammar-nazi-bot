@@ -18,7 +18,7 @@ public class GroqApiClientTests
     [InlineData(HttpStatusCode.NotFound)]
     [InlineData(HttpStatusCode.Unauthorized)]
     [InlineData(HttpStatusCode.Forbidden)]
-    public async Task GetChatCompletion_ConfigurationErrorResponse_ThrowsExternalApiConfigurationException(HttpStatusCode httpStatusCode)
+    public async Task GetChatCompletion_PermanentFailureResponse_ThrowsExternalApiPermanentFailureException(HttpStatusCode httpStatusCode)
     {
         // Arrange
         var httpClientFactoryMock = Substitute.For<IHttpClientFactory>();
@@ -52,8 +52,9 @@ public class GroqApiClientTests
         var client = new GroqApiClient(httpClientFactoryMock, optionsMock);
 
         // Act & Assert
-        var exception = await Assert.ThrowsAsync<ExternalApiConfigurationException>(() => client.GetChatCompletion("system", "user"));
+        var exception = await Assert.ThrowsAsync<ExternalApiPermanentFailureException>(() => client.GetChatCompletion("system", "user"));
         Assert.Contains(configuredModel, exception.Message);
+        Assert.Contains("retired", exception.Message);
     }
 
     [Fact]
@@ -157,6 +158,74 @@ public class GroqApiClientTests
         // Act & Assert
         var exception = await Assert.ThrowsAsync<InvalidOperationException>(() => client.GetChatCompletion("system", "user"));
         Assert.Contains("Unsuccessful Groq API response InternalServerError", exception.Message);
+    }
+
+    [Fact]
+    public async Task GetChatCompletion_BadRequestWithModelDecommissioned_ThrowsExternalApiPermanentFailureException()
+    {
+        // Arrange
+        var httpClientFactoryMock = Substitute.For<IHttpClientFactory>();
+        var optionsMock = Substitute.For<IOptions<GroqApiSettings>>();
+
+        const string configuredModel = "test-model";
+        optionsMock.Value.Returns(new GroqApiSettings
+        {
+            Model = configuredModel,
+            ApiKey = "test-key"
+        });
+
+        var httpClient = new HttpClient(new MockHttpMessageHandler(async (request, cancellationToken) =>
+        {
+            return new HttpResponseMessage
+            {
+                StatusCode = HttpStatusCode.BadRequest,
+                Content = new StringContent("{\"error\":{\"code\":\"model_decommissioned\"}}")
+            };
+        }))
+        {
+            BaseAddress = new Uri("https://api.groq.com/")
+        };
+
+        httpClientFactoryMock.CreateClient("groqApi").Returns(httpClient);
+
+        var client = new GroqApiClient(httpClientFactoryMock, optionsMock);
+
+        // Act & Assert
+        var exception = await Assert.ThrowsAsync<ExternalApiPermanentFailureException>(() => client.GetChatCompletion("system", "user"));
+        Assert.Contains(configuredModel, exception.Message);
+    }
+
+    [Fact]
+    public async Task GetChatCompletion_BadRequestWithoutPermanentKeyword_ThrowsInvalidOperationException()
+    {
+        // Arrange
+        var httpClientFactoryMock = Substitute.For<IHttpClientFactory>();
+        var optionsMock = Substitute.For<IOptions<GroqApiSettings>>();
+
+        optionsMock.Value.Returns(new GroqApiSettings
+        {
+            Model = "test-model",
+            ApiKey = "test-key"
+        });
+
+        var httpClient = new HttpClient(new MockHttpMessageHandler(async (request, cancellationToken) =>
+        {
+            return new HttpResponseMessage
+            {
+                StatusCode = HttpStatusCode.BadRequest,
+                Content = new StringContent("Generic error")
+            };
+        }))
+        {
+            BaseAddress = new Uri("https://api.groq.com/")
+        };
+
+        httpClientFactoryMock.CreateClient("groqApi").Returns(httpClient);
+
+        var client = new GroqApiClient(httpClientFactoryMock, optionsMock);
+
+        // Act & Assert
+        await Assert.ThrowsAsync<InvalidOperationException>(() => client.GetChatCompletion("system", "user"));
     }
 
     private class MockHttpMessageHandler : HttpMessageHandler

@@ -63,8 +63,8 @@ namespace GrammarNazi.Core.Services
                     HandleRequestException(requestException, githubIssueSection);
                     break;
 
-                case ExternalApiConfigurationException externalApiConfigurationException:
-                    HandleExternalApiConfigurationException(externalApiConfigurationException, githubIssueSection);
+                case ExternalApiPermanentFailureException externalApiPermanentFailureException:
+                    HandleExternalApiPermanentFailureException(externalApiPermanentFailureException, githubIssueSection);
                     break;
 
                 case ExternalApiUnavailableException:
@@ -126,27 +126,33 @@ namespace GrammarNazi.Core.Services
         }
 
         private static readonly ConcurrentDictionary<string, RateLimitState> SqlRateLimitStates = new();
-        private static readonly ConcurrentDictionary<string, RateLimitState> ExternalApiConfigRateLimitStates = new();
+        private static readonly ConcurrentDictionary<string, RateLimitState> ExternalApiPermanentFailureRateLimitStates = new();
 
-        private void HandleExternalApiConfigurationException(ExternalApiConfigurationException exception, GithubIssueLabels githubIssueSection)
+        private void HandleExternalApiPermanentFailureException(ExternalApiPermanentFailureException exception, GithubIssueLabels githubIssueSection)
         {
-            _logger.LogError(exception, exception.Message);
-
-            var state = ExternalApiConfigRateLimitStates.GetOrAdd(exception.Message, _ => new RateLimitState());
+            var state = ExternalApiPermanentFailureRateLimitStates.GetOrAdd(exception.Message, _ => new RateLimitState());
 
             lock (state)
             {
+                var now = DateTime.UtcNow;
+                state.RecentOccurrences.RemoveAll(x => x < now.AddDays(-1));
+
                 bool shouldCreateIssue = false;
 
                 if (state.RecentOccurrences.Count == 0)
                 {
                     shouldCreateIssue = true;
-                    state.RecentOccurrences.Add(DateTime.UtcNow);
+                    state.RecentOccurrences.Add(now);
                 }
 
                 if (shouldCreateIssue)
                 {
-                    _ = _githubService.CreateBugIssue($"Application Exception: {exception.Message}", exception, githubIssueSection);
+                    _logger.LogError(exception, exception.Message);
+                    _ = _githubService.CreateBugIssue($"External API Failure: {exception.Message}", exception, githubIssueSection);
+                }
+                else
+                {
+                    _logger.LogWarning(exception, exception.Message);
                 }
             }
         }

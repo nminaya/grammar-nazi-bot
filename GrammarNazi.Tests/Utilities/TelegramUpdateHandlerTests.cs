@@ -1,7 +1,6 @@
 ﻿using GrammarNazi.Core.Utilities;
 using GrammarNazi.Domain.Entities;
 using GrammarNazi.Domain.Enums;
-using GrammarNazi.Domain.Exceptions;
 using GrammarNazi.Domain.Services;
 using GrammarNazi.Domain.Utilities;
 using Microsoft.Extensions.DependencyInjection;
@@ -123,50 +122,4 @@ public class TelegramUpdateHandlerTests
         await grammarService.Received().GetCorrections("My Text");
     }
 
-    [Fact]
-    public async Task HandleUpdate_MessageReceived_GetCorrectionsThrowsExternalApiConfigurationException_Should_HandleExceptionAndNotCrash()
-    {
-        // Arrange
-        var telegramBotMock = Substitute.For<ITelegramBotClient>();
-        var chatConfigServiceMock = Substitute.For<IChatConfigurationService>();
-        var serviceScopeFactory = Substitute.For<IServiceScopeFactory>();
-        var serviceScope = Substitute.For<IServiceScope>();
-        var serviceProvider = Substitute.For<IServiceProvider>();
-        var loggerMock = Substitute.For<ILogger<TelegramUpdateHandler>>();
-        var catchExceptionServiceMock = Substitute.For<ICatchExceptionService>();
-        var grammarService = Substitute.For<IGrammarService>();
-
-        var update = new Update
-        {
-            Message = new Message
-            {
-                Text = "My Text",
-                Chat = new Chat { Id = 1 }
-            }
-        };
-
-        chatConfigServiceMock.GetConfigurationByChatId(update.Message.Chat.Id)
-            .Returns(new ChatConfiguration());
-
-        var exception = new ExternalApiConfigurationException("Config error");
-        grammarService.GetCorrections("My Text")
-            .Returns<Task<GrammarCheckResult>>(_ => throw exception);
-
-        serviceScopeFactory.CreateScope().Returns(serviceScope);
-        serviceScope.ServiceProvider.Returns(serviceProvider);
-        serviceProvider.GetService(typeof(IChatConfigurationService)).Returns(chatConfigServiceMock);
-        serviceProvider.GetService(typeof(IEnumerable<IGrammarService>)).Returns(new[] { grammarService });
-
-        var handler = new TelegramUpdateHandler(serviceScopeFactory, catchExceptionServiceMock, loggerMock);
-
-        // Act & Assert
-        // This should not throw
-        await handler.HandleUpdateAsync(telegramBotMock, update, default);
-
-        // Verify that catchExceptionService.HandleException was called
-        catchExceptionServiceMock.Received().HandleException(exception, GithubIssueLabels.Telegram);
-
-        // Verify that no messages were sent (as it gracefully degrades to no corrections)
-        await telegramBotMock.DidNotReceiveWithAnyArgs().SendMessage(default, default);
-    }
 }

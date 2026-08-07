@@ -45,10 +45,11 @@ public class GeminiApiClient(IHttpClientFactory httpClientFactory, IOptions<Gemi
 
             if (response.StatusCode == HttpStatusCode.NotFound
                 || response.StatusCode == HttpStatusCode.Unauthorized
-                || response.StatusCode == HttpStatusCode.Forbidden)
+                || response.StatusCode == HttpStatusCode.Forbidden
+                || (response.StatusCode == HttpStatusCode.BadRequest && GrammarNazi.Core.Utilities.ExternalApiPermanentExceptionHelper.IsPermanentFailure(errorContent)))
             {
-                throw new ExternalApiConfigurationException(
-                    $"Gemini API rejected the request ({response.StatusCode}). Check the configured model/API key. Model: {_geminiApiSettings.ModelVersion}",
+                throw new ExternalApiPermanentFailureException(
+                    $"Gemini API rejected model '{_geminiApiSettings.ModelVersion}' ({response.StatusCode}) — the model may have been retired or the API key may lack access. Retrying will not help.",
                     new Exception(errorContent));
             }
 
