@@ -62,6 +62,11 @@ namespace GrammarNazi.Core.Services
                 case RequestException requestException:
                     HandleRequestException(requestException, githubIssueSection);
                     break;
+
+                case ExternalApiPermanentFailureException externalApiPermanentFailureException:
+                    HandleExternalApiPermanentFailureException(externalApiPermanentFailureException, githubIssueSection);
+                    break;
+
                 case ExternalApiUnavailableException:
                 case GroqRateLimitException:
                 case TaskCanceledException when exception.InnerException is TimeoutException:
@@ -121,6 +126,36 @@ namespace GrammarNazi.Core.Services
         }
 
         private static readonly ConcurrentDictionary<string, RateLimitState> SqlRateLimitStates = new();
+        private static readonly ConcurrentDictionary<string, RateLimitState> ExternalApiPermanentFailureRateLimitStates = new();
+
+        private void HandleExternalApiPermanentFailureException(ExternalApiPermanentFailureException exception, GithubIssueLabels githubIssueSection)
+        {
+            var state = ExternalApiPermanentFailureRateLimitStates.GetOrAdd(exception.Message, _ => new RateLimitState());
+
+            lock (state)
+            {
+                var now = DateTime.UtcNow;
+                state.RecentOccurrences.RemoveAll(x => x < now.AddDays(-1));
+
+                bool shouldCreateIssue = false;
+
+                if (state.RecentOccurrences.Count == 0)
+                {
+                    shouldCreateIssue = true;
+                    state.RecentOccurrences.Add(now);
+                }
+
+                if (shouldCreateIssue)
+                {
+                    _logger.LogError(exception, exception.Message);
+                    _ = _githubService.CreateBugIssue($"External API Failure: {exception.Message}", exception, githubIssueSection);
+                }
+                else
+                {
+                    _logger.LogWarning(exception, exception.Message);
+                }
+            }
+        }
 
         private void HandleSqlException(SqlException sqlException, GithubIssueLabels githubIssueSection)
         {

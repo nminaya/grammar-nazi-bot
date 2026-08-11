@@ -77,13 +77,15 @@ public class Startup
         services.Configure<GroqApiSettings>(d =>
         {
             d.ApiKey = Environment.GetEnvironmentVariable("GROQ_API_KEY");
-            d.Model = Environment.GetEnvironmentVariable("GROQ_MODEL") ?? "llama-3.3-70b-versatile";
+            // Default model changed to "openai/gpt-oss-120b" because the previous default ("llama-3.3-70b-versatile") was scheduled for retirement by the provider.
+            d.Model = Environment.GetEnvironmentVariable("GROQ_MODEL") ?? "openai/gpt-oss-120b";
         });
 
         services.Configure<CerebrasApiSettings>(d =>
         {
             d.ApiKey = Environment.GetEnvironmentVariable("CEREBRAS_API_KEY");
-            d.Model = Environment.GetEnvironmentVariable("CEREBRAS_MODEL") ?? "llama3.1-8b";
+            // Default model changed to "gpt-oss-120b" because the previous default ("llama3.1-8b") was retired by the provider.
+            d.Model = Environment.GetEnvironmentVariable("CEREBRAS_MODEL") ?? "gpt-oss-120b";
         });
 
         services.Configure<MeaningCloudSettings>(m =>

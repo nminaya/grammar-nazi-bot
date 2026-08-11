@@ -67,6 +67,16 @@ public class GroqApiClient(IHttpClientFactory httpClientFactory, IOptions<GroqAp
                 throw new ExternalApiUnavailableException($"Groq API is currently unavailable ({response.StatusCode}).", new Exception(errorContent));
             }
 
+            if (response.StatusCode == HttpStatusCode.NotFound
+                || response.StatusCode == HttpStatusCode.Unauthorized
+                || response.StatusCode == HttpStatusCode.Forbidden
+                || (response.StatusCode == HttpStatusCode.BadRequest && GrammarNazi.Core.Utilities.ExternalApiPermanentExceptionHelper.IsPermanentFailure(errorContent)))
+            {
+                throw new ExternalApiPermanentFailureException(
+                    $"Groq API rejected model '{_groqApiSettings.Model}' ({response.StatusCode}) — the model may have been retired or the API key may lack access. Retrying will not help.",
+                    new Exception(errorContent));
+            }
+
             throw new InvalidOperationException($"Unsuccessful Groq API response {response.StatusCode}", new Exception(errorContent));
         }
 
