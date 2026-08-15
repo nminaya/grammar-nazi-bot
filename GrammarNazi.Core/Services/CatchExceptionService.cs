@@ -35,6 +35,15 @@ namespace GrammarNazi.Core.Services
                 exception = taskFailedException.InnerException;
             }
 
+            // Rate-limit / unavailability signals raised from inside the HttpClient handler chain may surface wrapped.
+            // Check the whole inner-exception chain so they are never mistaken for a general application exception.
+            if (exception is ExternalApiRateLimitException or ExternalApiUnavailableException
+                || exception.GetInnerExceptions().Any(x => x is ExternalApiRateLimitException or ExternalApiUnavailableException))
+            {
+                _logger.LogWarning(exception, exception.Message);
+                return;
+            }
+
             switch (exception)
             {
                 case ApiRequestException apiRequestException:
@@ -65,8 +74,6 @@ namespace GrammarNazi.Core.Services
                     HandleExternalApiPermanentFailureException(externalApiPermanentFailureException, githubIssueSection);
                     break;
 
-                case ExternalApiUnavailableException:
-                case ExternalApiRateLimitException:
                 case TaskCanceledException when exception.InnerException is TimeoutException:
                     _logger.LogWarning(exception, exception.Message);
                     break;

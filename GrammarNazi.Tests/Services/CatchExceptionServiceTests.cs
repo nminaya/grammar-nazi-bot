@@ -7,6 +7,7 @@ using NSubstitute;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Net.Http;
 using System.Reflection;
 using System.Threading.Tasks;
 using Telegram.Bot.Exceptions;
@@ -22,6 +23,29 @@ namespace GrammarNazi.Tests.Services
         public CatchExceptionServiceTests()
         {
             ExceptionThrottler.ResetForTesting();
+        }
+
+        [Fact]
+        public void HandleException_HttpRequestExceptionWithInnerExternalApiRateLimitException_Should_LogWarning_And_NotCreateBugIssue()
+        {
+            // Arrange
+            var loggerMock = Substitute.For<ILogger<CatchExceptionService>>();
+            var githubServiceMock = Substitute.For<IGithubService>();
+            var service = new CatchExceptionService(githubServiceMock, loggerMock);
+
+            var rateLimitEx = new ExternalApiRateLimitException("Inner rate limit");
+            var exception = new HttpRequestException("Wrapped rate limit exception", rateLimitEx);
+
+            // Act
+            service.HandleException(exception, GithubIssueLabels.ProductionBug);
+
+            // Assert
+            var numberOfCalls = loggerMock.ReceivedCalls()
+                .Select(call => call.GetArguments())
+                .Count(callArguments => ((LogLevel)callArguments[0]).Equals(LogLevel.Warning));
+
+            Assert.Equal(1, numberOfCalls);
+            githubServiceMock.DidNotReceive().CreateBugIssue(Arg.Any<string>(), Arg.Any<Exception>(), Arg.Any<GithubIssueLabels>());
         }
 
         [Fact]

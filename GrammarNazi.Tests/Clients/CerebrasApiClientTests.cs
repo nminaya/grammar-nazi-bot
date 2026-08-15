@@ -1,4 +1,5 @@
 using GrammarNazi.Core.Clients;
+using GrammarNazi.Core.Extensions;
 using GrammarNazi.Domain.Entities.Settings;
 using GrammarNazi.Domain.Exceptions;
 using Microsoft.Extensions.Options;
@@ -14,6 +15,63 @@ namespace GrammarNazi.Tests.Clients;
 
 public class CerebrasApiClientTests
 {
+    [Fact]
+    public async Task GetChatCompletion_ServiceUnavailableFirstAttempt_RetriesAndReturnsParsedContent()
+    {
+        // Arrange
+        var httpClientFactoryMock = Substitute.For<IHttpClientFactory>();
+        var optionsMock = Substitute.For<IOptions<CerebrasApiSettings>>();
+
+        optionsMock.Value.Returns(new CerebrasApiSettings
+        {
+            Model = "test-model",
+            ApiKey = "test-key"
+        });
+
+        int callCount = 0;
+        var innerHandler = new MockHttpMessageHandler(async (request, cancellationToken) =>
+        {
+            callCount++;
+            if (callCount == 1)
+            {
+                return new HttpResponseMessage
+                {
+                    StatusCode = HttpStatusCode.ServiceUnavailable,
+                    Content = new StringContent("{\"error\":{\"message\":\"Service Unavailable\"}}")
+                };
+            }
+
+            return new HttpResponseMessage
+            {
+                StatusCode = HttpStatusCode.OK,
+                Content = new StringContent("{\"choices\":[{\"message\":{\"content\":\"Hello from retry\"}}]}\n")
+            };
+        });
+
+        var pipeline = ServiceCollectionExtensions.CreateApiResiliencePipeline(2);
+        var limiter = new ServiceCollectionExtensions.SlidingWindowRateLimiter(25, TimeSpan.FromMinutes(1));
+        var resilienceHandler = new ServiceCollectionExtensions.ApiResilienceHandler(limiter, pipeline)
+        {
+            InnerHandler = innerHandler
+        };
+
+        var httpClient = new HttpClient(resilienceHandler)
+        {
+            BaseAddress = new Uri("https://api.cerebras.ai/")
+        };
+
+        httpClientFactoryMock.CreateClient("cerebrasApi").Returns(httpClient);
+
+        var client = new CerebrasApiClient(httpClientFactoryMock, optionsMock);
+
+        // Act
+        var result = await client.GetChatCompletion("system", "user");
+
+        // Assert
+        Assert.Equal("Hello from retry", result);
+        Assert.Equal(2, callCount);
+    }
+
     [Fact]
     public async Task GetChatCompletion_RateLimitResponseWithDeltaHeader_ThrowsExternalApiRateLimitExceptionWithRetryAfter()
     {

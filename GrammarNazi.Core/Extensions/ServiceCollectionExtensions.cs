@@ -34,24 +34,24 @@ public static class ServiceCollectionExtensions
         serviceCollection.AddHttpClient("sentimApi", c => { c.BaseAddress = new Uri("https://sentim-api.herokuapp.com/"); c.Timeout = TimeSpan.FromSeconds(30); });
         serviceCollection.AddHttpClient("geminiApi", c => { c.BaseAddress = new Uri("https://generativelanguage.googleapis.com/"); c.Timeout = TimeSpan.FromSeconds(30); });
 
-        var provider = serviceCollection.BuildServiceProvider();
-        var groqSettings = provider.GetService<IOptions<GroqApiSettings>>()?.Value;
-        var cerebrasSettings = provider.GetService<IOptions<CerebrasApiSettings>>()?.Value;
-
-        int groqRpm = groqSettings?.RequestsPerMinute ?? 25;
-        int groqRetries = groqSettings?.MaxRetries ?? 2;
-        int cerebrasRpm = cerebrasSettings?.RequestsPerMinute ?? 25;
-        int cerebrasRetries = cerebrasSettings?.MaxRetries ?? 2;
-
-        var groqPipeline = CreateApiResiliencePipeline(groqRetries);
-        var cerebrasPipeline = CreateApiResiliencePipeline(cerebrasRetries);
+        serviceCollection.AddSingleton<GroqResilienceHolder>();
+        serviceCollection.AddSingleton<CerebrasResilienceHolder>();
 
         serviceCollection.AddHttpClient("groqApi", c => { c.BaseAddress = new Uri("https://api.groq.com/"); c.Timeout = TimeSpan.FromSeconds(30); })
-            .AddHttpMessageHandler(() => new ApiResilienceHandler(groqRpm, groqPipeline));
+            .AddHttpMessageHandler(sp =>
+            {
+                var holder = sp.GetRequiredService<GroqResilienceHolder>();
+                return new ApiResilienceHandler(holder.Limiter, holder.Pipeline);
+            });
 
         serviceCollection.AddHttpClient("cerebrasApi", c => { c.BaseAddress = new Uri("https://api.cerebras.ai/"); c.Timeout = TimeSpan.FromSeconds(30); })
-            .AddHttpMessageHandler(() => new ApiResilienceHandler(cerebrasRpm, cerebrasPipeline));
+            .AddHttpMessageHandler(sp =>
+            {
+                var holder = sp.GetRequiredService<CerebrasResilienceHolder>();
+                return new ApiResilienceHandler(holder.Limiter, holder.Pipeline);
+            });
 
+        var provider = serviceCollection.BuildServiceProvider();
         var meaningCloudSettings = provider.GetService<IOptions<MeaningCloudSettings>>().Value;
 
         serviceCollection.AddHttpClient("meaninCloudSentimentAnalysisApi", c => { c.BaseAddress = new Uri(meaningCloudSettings.MeaningCloudSentimentHostUrl); c.Timeout = TimeSpan.FromSeconds(30); });
@@ -60,94 +60,67 @@ public static class ServiceCollectionExtensions
         return serviceCollection;
     }
 
-    private static ResiliencePipeline<HttpResponseMessage> CreateApiResiliencePipeline(int maxRetries)
+    internal class GroqResilienceHolder(IOptions<GroqApiSettings> options)
+    {
+        public SlidingWindowRateLimiter Limiter { get; } = new(options.Value.RequestsPerMinute, TimeSpan.FromMinutes(1));
+        public ResiliencePipeline<HttpResponseMessage> Pipeline { get; } = CreateApiResiliencePipeline(options.Value.MaxRetries);
+    }
+
+    internal class CerebrasResilienceHolder(IOptions<CerebrasApiSettings> options)
+    {
+        public SlidingWindowRateLimiter Limiter { get; } = new(options.Value.RequestsPerMinute, TimeSpan.FromMinutes(1));
+        public ResiliencePipeline<HttpResponseMessage> Pipeline { get; } = CreateApiResiliencePipeline(options.Value.MaxRetries);
+    }
+
+    internal static ResiliencePipeline<HttpResponseMessage> CreateApiResiliencePipeline(int maxRetries)
     {
         var builder = new ResiliencePipelineBuilder<HttpResponseMessage>();
 
-        // 1. Circuit breaker (outermost strategy in Polly pipeline)
+        // 1. Retry (outermost strategy in pipeline)
+        builder.AddRetry(new RetryStrategyOptions<HttpResponseMessage>
+        {
+            ShouldHandle = new PredicateBuilder<HttpResponseMessage>()
+                .HandleResult(r => r.StatusCode == HttpStatusCode.ServiceUnavailable
+                                || r.StatusCode == HttpStatusCode.BadGateway
+                                || r.StatusCode == HttpStatusCode.GatewayTimeout),
+            MaxRetryAttempts = maxRetries,
+            BackoffType = DelayBackoffType.Exponential,
+            UseJitter = true,
+            Delay = TimeSpan.FromSeconds(1),
+            MaxDelay = TimeSpan.FromSeconds(4)
+        });
+
+        // 2. Circuit breaker (innermost strategy in pipeline)
         builder.AddCircuitBreaker(new CircuitBreakerStrategyOptions<HttpResponseMessage>
         {
             ShouldHandle = new PredicateBuilder<HttpResponseMessage>()
                 .HandleResult(r => r.StatusCode == HttpStatusCode.TooManyRequests),
             BreakDuration = TimeSpan.FromSeconds(60),
-            SamplingDuration = TimeSpan.FromSeconds(30),
+            SamplingDuration = TimeSpan.FromSeconds(60),
             FailureRatio = 0.5,
-            MinimumThroughput = 2
-        });
-
-        // 2. Retry (innermost strategy)
-        builder.AddRetry(new RetryStrategyOptions<HttpResponseMessage>
-        {
-            ShouldHandle = new PredicateBuilder<HttpResponseMessage>()
-                .HandleResult(r =>
-                {
-                    if (r.StatusCode == HttpStatusCode.TooManyRequests)
-                    {
-                        var retryAfter = r.Headers.RetryAfter;
-                        if (retryAfter != null)
-                        {
-                            TimeSpan? delta = retryAfter.Delta;
-                            if (!delta.HasValue && retryAfter.Date.HasValue)
-                            {
-                                delta = retryAfter.Date.Value - DateTimeOffset.UtcNow;
-                            }
-                            if (delta.HasValue && delta.Value > TimeSpan.FromSeconds(4))
-                            {
-                                return false; // Retry-After asks for > 4s, give up immediately
-                            }
-                        }
-                        return true;
-                    }
-                    return r.StatusCode == HttpStatusCode.ServiceUnavailable
-                        || r.StatusCode == HttpStatusCode.BadGateway
-                        || r.StatusCode == HttpStatusCode.GatewayTimeout;
-                }),
-            MaxRetryAttempts = maxRetries,
-            BackoffType = DelayBackoffType.Exponential,
-            UseJitter = true,
-            Delay = TimeSpan.FromSeconds(1),
-            MaxDelay = TimeSpan.FromSeconds(4),
-            DelayGenerator = args =>
-            {
-                var result = args.Outcome.Result;
-                if (result?.Headers?.RetryAfter != null)
-                {
-                    var retryAfter = result.Headers.RetryAfter;
-                    TimeSpan? delta = retryAfter.Delta;
-                    if (!delta.HasValue && retryAfter.Date.HasValue)
-                    {
-                        delta = retryAfter.Date.Value - DateTimeOffset.UtcNow;
-                    }
-                    if (delta.HasValue)
-                    {
-                        var delay = delta.Value > TimeSpan.FromSeconds(4) ? TimeSpan.FromSeconds(4) : delta.Value;
-                        if (delay < TimeSpan.Zero) delay = TimeSpan.Zero;
-                        return ValueTask.FromResult<TimeSpan?>(delay);
-                    }
-                }
-                return ValueTask.FromResult<TimeSpan?>(null);
-            }
+            MinimumThroughput = 10
         });
 
         return builder.Build();
     }
 
-    private class ApiResilienceHandler(int requestsPerMinute, ResiliencePipeline<HttpResponseMessage> pipeline) : DelegatingHandler
+    internal class ApiResilienceHandler(SlidingWindowRateLimiter rateLimiter, ResiliencePipeline<HttpResponseMessage> pipeline) : DelegatingHandler
     {
-        private readonly SlidingWindowRateLimiter _rateLimiter = new(requestsPerMinute, TimeSpan.FromMinutes(1));
-
-        protected override async Task<HttpResponseMessage> SendAsync(HttpRequestMessage request, CancellationToken cancellationToken)
+        protected override Task<HttpResponseMessage> SendAsync(HttpRequestMessage request, CancellationToken cancellationToken)
         {
-            if (!_rateLimiter.TryAcquire())
+            return pipeline.ExecuteAsync(async ct =>
             {
-                throw new ExternalApiRateLimitException("API rate limit reached by client rate limiter.");
-            }
+                if (!rateLimiter.TryAcquire())
+                {
+                    throw new ExternalApiRateLimitException("API rate limit reached by client rate limiter.");
+                }
 
-            return await pipeline.ExecuteAsync(async ct => await base.SendAsync(request, ct), cancellationToken);
+                return await base.SendAsync(request, ct);
+            }, cancellationToken).AsTask();
         }
     }
 
-    private class SlidingWindowRateLimiter(int permitLimit, TimeSpan window)
+    internal class SlidingWindowRateLimiter(int permitLimit, TimeSpan window)
     {
         private readonly object _lock = new();
         private readonly Queue<DateTime> _timestamps = new();
