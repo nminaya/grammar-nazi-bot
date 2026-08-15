@@ -58,7 +58,7 @@ public class GroqApiClientTests
     }
 
     [Fact]
-    public async Task GetChatCompletion_RateLimitResponse_ThrowsGroqRateLimitException()
+    public async Task GetChatCompletion_RateLimitResponse_ThrowsExternalApiRateLimitException()
     {
         // Arrange
         var httpClientFactoryMock = Substitute.For<IHttpClientFactory>();
@@ -87,7 +87,7 @@ public class GroqApiClientTests
         var client = new GroqApiClient(httpClientFactoryMock, optionsMock);
 
         // Act & Assert
-        await Assert.ThrowsAsync<GroqRateLimitException>(() => client.GetChatCompletion("system", "user"));
+        await Assert.ThrowsAsync<ExternalApiRateLimitException>(() => client.GetChatCompletion("system", "user"));
     }
 
     [Theory]

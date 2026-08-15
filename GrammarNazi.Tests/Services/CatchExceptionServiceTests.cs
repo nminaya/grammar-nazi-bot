@@ -1,11 +1,10 @@
-﻿using GrammarNazi.Core.Services;
+using GrammarNazi.Core.Services;
+using GrammarNazi.Core.Utilities;
 using GrammarNazi.Domain.Enums;
 using GrammarNazi.Domain.Services;
-using LiteDB;
 using Microsoft.Extensions.Logging;
 using NSubstitute;
 using System;
-using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
@@ -17,18 +16,12 @@ using Microsoft.Data.SqlClient;
 
 namespace GrammarNazi.Tests.Services
 {
+    [Collection("CatchExceptionServiceTests")]
     public class CatchExceptionServiceTests
     {
         public CatchExceptionServiceTests()
         {
-            // Clear static state before each test
-            var field = typeof(CatchExceptionService).GetField("SqlRateLimitStates", BindingFlags.NonPublic | BindingFlags.Static);
-            var dictionary = (System.Collections.IDictionary)field.GetValue(null);
-            dictionary.Clear();
-
-            var extField = typeof(CatchExceptionService).GetField("ExternalApiPermanentFailureRateLimitStates", BindingFlags.NonPublic | BindingFlags.Static);
-            var extDictionary = (System.Collections.IDictionary)extField.GetValue(null);
-            extDictionary.Clear();
+            ExceptionThrottler.ResetForTesting();
         }
 
         [Fact]
@@ -80,12 +73,12 @@ namespace GrammarNazi.Tests.Services
                 exception,
                 GithubIssueLabels.Telegram);
 
-            // Manipulate state to age out the occurrence (make it older than 24 hours)
-            var field = typeof(CatchExceptionService).GetField("ExternalApiPermanentFailureRateLimitStates", BindingFlags.NonPublic | BindingFlags.Static);
+            // Manipulate ExceptionThrottler internal state to age out occurrence
+            var field = typeof(ExceptionThrottler).GetField("_states", BindingFlags.NonPublic | BindingFlags.Static);
             var dictionary = (System.Collections.IDictionary)field.GetValue(null);
             var state = dictionary["Message A"];
             var recentOccurrencesField = state.GetType().GetProperty("RecentOccurrences");
-            var recentOccurrences = (System.Collections.Generic.List<DateTime>)recentOccurrencesField.GetValue(state);
+            var recentOccurrences = (List<DateTime>)recentOccurrencesField.GetValue(state);
             recentOccurrences.Clear();
             recentOccurrences.Add(DateTime.UtcNow.AddHours(-25)); // aged out
 
@@ -124,21 +117,18 @@ namespace GrammarNazi.Tests.Services
             }
 
             // Assert
-            // LogError should be called exactly once
             var errorCalls = loggerMock.ReceivedCalls()
                 .Select(call => call.GetArguments())
                 .Count(callArguments => ((LogLevel)callArguments[0]).Equals(LogLevel.Error));
 
             Assert.Equal(1, errorCalls);
 
-            // LogWarning should be called exactly 4 times (for duplicates)
             var warningCalls = loggerMock.ReceivedCalls()
                 .Select(call => call.GetArguments())
                 .Count(callArguments => ((LogLevel)callArguments[0]).Equals(LogLevel.Warning));
 
             Assert.Equal(4, warningCalls);
 
-            // Title prefix is NEVER "Application Exception: " for ExternalApiPermanentFailureException
             githubServiceMock.DidNotReceive().CreateBugIssue(
                 Arg.Is<string>(title => title.StartsWith("Application Exception:")),
                 Arg.Any<Exception>(),
@@ -163,15 +153,12 @@ namespace GrammarNazi.Tests.Services
             service.HandleException(exception, GithubIssueLabels.Telegram);
 
             // Assert
-
-            // Verify LogWarning was called
             var numberOfCalls = loggerMock.ReceivedCalls()
                 .Select(call => call.GetArguments())
                 .Count(callArguments => ((LogLevel)callArguments[0]).Equals(LogLevel.Warning));
 
             Assert.Equal(1, numberOfCalls);
 
-            // Verify CreateBugIssue was never called
             githubServiceMock.DidNotReceive().CreateBugIssue(Arg.Any<string>(), Arg.Any<Exception>(), Arg.Any<GithubIssueLabels>());
         }
 
@@ -240,13 +227,13 @@ namespace GrammarNazi.Tests.Services
         }
 
         [Fact]
-        public void HandleException_GroqRateLimitException_Should_LogWarning()
+        public void HandleException_ExternalApiRateLimitException_Should_LogWarning()
         {
             // Arrange
             var loggerMock = Substitute.For<ILogger<CatchExceptionService>>();
             var githubServiceMock = Substitute.For<IGithubService>();
             var service = new CatchExceptionService(githubServiceMock, loggerMock);
-            var exception = new GroqRateLimitException("Groq rate limit reached");
+            var exception = new ExternalApiRateLimitException("API rate limit reached");
 
             // Act
             service.HandleException(exception, GithubIssueLabels.ProductionBug);
@@ -324,25 +311,18 @@ namespace GrammarNazi.Tests.Services
             var exception = CreateSqlException(number, message);
 
             // Act
-            // Call multiple times to test rate limiting (burst-only)
             for (int i = 0; i < 15; i++)
             {
                 service.HandleException(exception, GithubIssueLabels.Telegram);
             }
 
             // Assert
-
-            // LogWarning should be called for every occurrence (15 times)
             var warningCalls = loggerMock.ReceivedCalls()
                 .Select(call => call.GetArguments())
                 .Count(callArguments => ((LogLevel)callArguments[0]).Equals(LogLevel.Warning));
 
             Assert.Equal(15, warningCalls);
 
-            // CreateBugIssue should be called:
-            // 1. When burst reaches 10 (at occurrence #10)
-            // Occurrences 11-15 accumulate but don't reach 10 again.
-            // Total: 1 call
             await githubServiceMock.Received(1).CreateBugIssue(Arg.Any<string>(), Arg.Any<Exception>(), Arg.Any<GithubIssueLabels>());
         }
 
@@ -382,7 +362,6 @@ namespace GrammarNazi.Tests.Services
             var exception = CreateSqlException(53, "Transient error");
 
             // Act & Assert
-            // First 9 occurrences should not create a Bug Issue
             for (int i = 0; i < 9; i++)
             {
                 service.HandleException(exception, GithubIssueLabels.Telegram);
@@ -390,7 +369,6 @@ namespace GrammarNazi.Tests.Services
 
             _ = githubServiceMock.DidNotReceive().CreateBugIssue(Arg.Any<string>(), Arg.Any<Exception>(), Arg.Any<GithubIssueLabels>());
 
-            // The 10th occurrence should trigger exactly one Bug Issue
             service.HandleException(exception, GithubIssueLabels.Telegram);
 
             await githubServiceMock.Received(1).CreateBugIssue(Arg.Any<string>(), Arg.Any<Exception>(), Arg.Any<GithubIssueLabels>());
@@ -418,6 +396,31 @@ namespace GrammarNazi.Tests.Services
             Assert.Equal(1, errorCalls);
 
             githubServiceMock.Received().CreateBugIssue("Application Exception: Fatal SQL error", exception, GithubIssueLabels.Telegram);
+        }
+
+        [Fact]
+        public void ExceptionThrottler_ThresholdAndBounding_BehavesAsExpected()
+        {
+            ExceptionThrottler.ResetForTesting();
+
+            // Threshold = 1: First call returns true, subsequent calls within window return false
+            Assert.True(ExceptionThrottler.ShouldReport("KeyA", TimeSpan.FromMinutes(10), threshold: 1));
+            Assert.False(ExceptionThrottler.ShouldReport("KeyA", TimeSpan.FromMinutes(10), threshold: 1));
+
+            // Threshold = 3: Calls 1 and 2 return false, call 3 returns true
+            Assert.False(ExceptionThrottler.ShouldReport("KeyB", TimeSpan.FromMinutes(10), threshold: 3));
+            Assert.False(ExceptionThrottler.ShouldReport("KeyB", TimeSpan.FromMinutes(10), threshold: 3));
+            Assert.True(ExceptionThrottler.ShouldReport("KeyB", TimeSpan.FromMinutes(10), threshold: 3));
+
+            // Test bounding: push 260 keys
+            for (int i = 0; i < 260; i++)
+            {
+                ExceptionThrottler.ShouldReport($"Key_{i}", TimeSpan.FromMinutes(10), threshold: 1);
+            }
+
+            var field = typeof(ExceptionThrottler).GetField("_states", BindingFlags.NonPublic | BindingFlags.Static);
+            var dictionary = (System.Collections.IDictionary)field.GetValue(null);
+            Assert.True(dictionary.Count <= 250);
         }
 
         private SqlException CreateSqlException(int number, string message)
@@ -505,14 +508,12 @@ namespace GrammarNazi.Tests.Services
             service.HandleException(exception, GithubIssueLabels.Telegram);
 
             // Assert
-
             var numberOfCalls = loggerMock.ReceivedCalls()
                 .Select(call => call.GetArguments())
                 .Count(callArguments => ((LogLevel)callArguments[0]).Equals(LogLevel.Error));
 
             Assert.Equal(1, numberOfCalls);
 
-            // Verify CreateBugIssue was called
             githubServiceMock.Received().CreateBugIssue("Application Exception: Fatal test exception", exception, GithubIssueLabels.Telegram);
         }
     }

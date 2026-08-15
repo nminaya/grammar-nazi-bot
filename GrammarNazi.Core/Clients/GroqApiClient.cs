@@ -3,6 +3,7 @@ using GrammarNazi.Domain.Entities.Settings;
 using GrammarNazi.Domain.Exceptions;
 using Microsoft.Extensions.Options;
 using Newtonsoft.Json;
+using Polly.CircuitBreaker;
 using System;
 using System.Collections.Generic;
 using System.Net;
@@ -49,7 +50,15 @@ public class GroqApiClient(IHttpClientFactory httpClientFactory, IOptions<GroqAp
 
         request.Headers.Add("Authorization", $"Bearer {_groqApiSettings.ApiKey}");
 
-        var response = await httpClient.SendAsync(request);
+        HttpResponseMessage response;
+        try
+        {
+            response = await httpClient.SendAsync(request);
+        }
+        catch (BrokenCircuitException ex)
+        {
+            throw new ExternalApiRateLimitException("Groq API circuit breaker is open.", ex);
+        }
 
         if (response.StatusCode != HttpStatusCode.OK)
         {
@@ -57,7 +66,10 @@ public class GroqApiClient(IHttpClientFactory httpClientFactory, IOptions<GroqAp
 
             if (response.StatusCode == HttpStatusCode.TooManyRequests)
             {
-                throw new GroqRateLimitException("Groq API Rate limit reached.", new Exception(errorContent));
+                throw new ExternalApiRateLimitException(
+                    "Groq API Rate limit reached.",
+                    GetRetryAfter(response),
+                    new Exception(errorContent));
             }
 
             if (response.StatusCode == HttpStatusCode.ServiceUnavailable
@@ -84,6 +96,25 @@ public class GroqApiClient(IHttpClientFactory httpClientFactory, IOptions<GroqAp
         var result = JsonConvert.DeserializeObject<GroqChatCompletionResponse>(content);
 
         return result?.Choices?[0]?.Message?.Content ?? string.Empty;
+    }
+
+    private static TimeSpan? GetRetryAfter(HttpResponseMessage response)
+    {
+        var retryAfter = response.Headers.RetryAfter;
+        if (retryAfter == null) return null;
+
+        if (retryAfter.Delta.HasValue)
+        {
+            return retryAfter.Delta.Value < TimeSpan.Zero ? TimeSpan.Zero : retryAfter.Delta.Value;
+        }
+
+        if (retryAfter.Date.HasValue)
+        {
+            var delta = retryAfter.Date.Value - DateTimeOffset.UtcNow;
+            return delta < TimeSpan.Zero ? TimeSpan.Zero : delta;
+        }
+
+        return null;
     }
 
     private class GroqChatCompletionResponse

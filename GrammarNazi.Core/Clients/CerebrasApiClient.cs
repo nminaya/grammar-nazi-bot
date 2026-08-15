@@ -3,6 +3,7 @@ using GrammarNazi.Domain.Entities.Settings;
 using GrammarNazi.Domain.Exceptions;
 using Microsoft.Extensions.Options;
 using Newtonsoft.Json;
+using Polly.CircuitBreaker;
 using System;
 using System.Collections.Generic;
 using System.Net;
@@ -49,11 +50,27 @@ public class CerebrasApiClient(IHttpClientFactory httpClientFactory, IOptions<Ce
 
         request.Headers.Add("Authorization", $"Bearer {_cerebrasApiSettings.ApiKey}");
 
-        var response = await httpClient.SendAsync(request);
+        HttpResponseMessage response;
+        try
+        {
+            response = await httpClient.SendAsync(request);
+        }
+        catch (BrokenCircuitException ex)
+        {
+            throw new ExternalApiRateLimitException("Cerebras API circuit breaker is open.", ex);
+        }
 
         if (response.StatusCode != HttpStatusCode.OK)
         {
             var errorContent = await response.Content.ReadAsStringAsync();
+
+            if (response.StatusCode == HttpStatusCode.TooManyRequests)
+            {
+                throw new ExternalApiRateLimitException(
+                    "Cerebras API rate limit reached.",
+                    GetRetryAfter(response),
+                    new Exception(errorContent));
+            }
 
             if (response.StatusCode == HttpStatusCode.ServiceUnavailable
                 || response.StatusCode == HttpStatusCode.BadGateway
@@ -79,6 +96,25 @@ public class CerebrasApiClient(IHttpClientFactory httpClientFactory, IOptions<Ce
         var result = JsonConvert.DeserializeObject<CebrasChatCompletionResponse>(content);
 
         return result?.Choices?[0]?.Message?.Content ?? string.Empty;
+    }
+
+    private static TimeSpan? GetRetryAfter(HttpResponseMessage response)
+    {
+        var retryAfter = response.Headers.RetryAfter;
+        if (retryAfter == null) return null;
+
+        if (retryAfter.Delta.HasValue)
+        {
+            return retryAfter.Delta.Value < TimeSpan.Zero ? TimeSpan.Zero : retryAfter.Delta.Value;
+        }
+
+        if (retryAfter.Date.HasValue)
+        {
+            var delta = retryAfter.Date.Value - DateTimeOffset.UtcNow;
+            return delta < TimeSpan.Zero ? TimeSpan.Zero : delta;
+        }
+
+        return null;
     }
 
     private class CebrasChatCompletionResponse

@@ -79,6 +79,14 @@ public class Startup
             d.ApiKey = Environment.GetEnvironmentVariable("GROQ_API_KEY");
             // Default model changed to "openai/gpt-oss-120b" because the previous default ("llama-3.3-70b-versatile") was scheduled for retirement by the provider.
             d.Model = Environment.GetEnvironmentVariable("GROQ_MODEL") ?? "openai/gpt-oss-120b";
+            if (int.TryParse(Environment.GetEnvironmentVariable("GROQ_REQUESTS_PER_MINUTE"), out var groqRpm))
+            {
+                d.RequestsPerMinute = groqRpm;
+            }
+            if (int.TryParse(Environment.GetEnvironmentVariable("GROQ_MAX_RETRIES"), out var groqRetries))
+            {
+                d.MaxRetries = groqRetries;
+            }
         });
 
         services.Configure<CerebrasApiSettings>(d =>
@@ -86,6 +94,14 @@ public class Startup
             d.ApiKey = Environment.GetEnvironmentVariable("CEREBRAS_API_KEY");
             // Default model changed to "gpt-oss-120b" because the previous default ("llama3.1-8b") was retired by the provider.
             d.Model = Environment.GetEnvironmentVariable("CEREBRAS_MODEL") ?? "gpt-oss-120b";
+            if (int.TryParse(Environment.GetEnvironmentVariable("CEREBRAS_REQUESTS_PER_MINUTE"), out var cerebrasRpm))
+            {
+                d.RequestsPerMinute = cerebrasRpm;
+            }
+            if (int.TryParse(Environment.GetEnvironmentVariable("CEREBRAS_MAX_RETRIES"), out var cerebrasRetries))
+            {
+                d.MaxRetries = cerebrasRetries;
+            }
         });
 
         services.Configure<MeaningCloudSettings>(m =>
