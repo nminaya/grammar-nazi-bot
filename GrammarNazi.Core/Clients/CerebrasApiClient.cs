@@ -3,7 +3,6 @@ using GrammarNazi.Domain.Entities.Settings;
 using GrammarNazi.Domain.Exceptions;
 using Microsoft.Extensions.Options;
 using Newtonsoft.Json;
-using Polly.CircuitBreaker;
 using System;
 using System.Collections.Generic;
 using System.Net;
@@ -50,15 +49,7 @@ public class CerebrasApiClient(IHttpClientFactory httpClientFactory, IOptions<Ce
 
         request.Headers.Add("Authorization", $"Bearer {_cerebrasApiSettings.ApiKey}");
 
-        HttpResponseMessage response;
-        try
-        {
-            response = await httpClient.SendAsync(request);
-        }
-        catch (BrokenCircuitException ex)
-        {
-            throw new ExternalApiRateLimitException("Cerebras API circuit breaker is open.", ex);
-        }
+        var response = await httpClient.SendAsync(request);
 
         if (response.StatusCode != HttpStatusCode.OK)
         {

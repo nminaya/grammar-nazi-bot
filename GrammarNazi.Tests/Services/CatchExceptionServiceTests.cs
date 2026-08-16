@@ -26,6 +26,51 @@ namespace GrammarNazi.Tests.Services
         }
 
         [Fact]
+        public void HandleException_BrokenCircuitException_Should_LogWarning_And_NotCreateBugIssue()
+        {
+            // Arrange
+            var loggerMock = Substitute.For<ILogger<CatchExceptionService>>();
+            var githubServiceMock = Substitute.For<IGithubService>();
+            var service = new CatchExceptionService(githubServiceMock, loggerMock);
+
+            var exception = new Polly.CircuitBreaker.BrokenCircuitException("Circuit breaker open");
+
+            // Act
+            service.HandleException(exception, GithubIssueLabels.ProductionBug);
+
+            // Assert
+            var numberOfCalls = loggerMock.ReceivedCalls()
+                .Select(call => call.GetArguments())
+                .Count(callArguments => ((LogLevel)callArguments[0]).Equals(LogLevel.Warning));
+
+            Assert.Equal(1, numberOfCalls);
+            githubServiceMock.DidNotReceive().CreateBugIssue(Arg.Any<string>(), Arg.Any<Exception>(), Arg.Any<GithubIssueLabels>());
+        }
+
+        [Fact]
+        public void HandleException_HttpRequestExceptionWithInnerBrokenCircuitException_Should_LogWarning_And_NotCreateBugIssue()
+        {
+            // Arrange
+            var loggerMock = Substitute.For<ILogger<CatchExceptionService>>();
+            var githubServiceMock = Substitute.For<IGithubService>();
+            var service = new CatchExceptionService(githubServiceMock, loggerMock);
+
+            var circuitEx = new Polly.CircuitBreaker.BrokenCircuitException("Inner circuit open");
+            var exception = new HttpRequestException("Wrapped circuit exception", circuitEx);
+
+            // Act
+            service.HandleException(exception, GithubIssueLabels.ProductionBug);
+
+            // Assert
+            var numberOfCalls = loggerMock.ReceivedCalls()
+                .Select(call => call.GetArguments())
+                .Count(callArguments => ((LogLevel)callArguments[0]).Equals(LogLevel.Warning));
+
+            Assert.Equal(1, numberOfCalls);
+            githubServiceMock.DidNotReceive().CreateBugIssue(Arg.Any<string>(), Arg.Any<Exception>(), Arg.Any<GithubIssueLabels>());
+        }
+
+        [Fact]
         public void HandleException_HttpRequestExceptionWithInnerExternalApiRateLimitException_Should_LogWarning_And_NotCreateBugIssue()
         {
             // Arrange

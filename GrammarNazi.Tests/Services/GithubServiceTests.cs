@@ -191,13 +191,8 @@ public class GithubServiceTests
         // Act 1: Initial call creates issue and populates cache
         await githubService.CreateBugIssue(issueTitle, new Exception(), GithubIssueLabels.Telegram);
 
-        // Age out cache entry via reflection
-        var cacheField = typeof(GithubService).GetField("_issueCache", BindingFlags.NonPublic | BindingFlags.Static);
-        var cacheDict = (System.Collections.IDictionary)cacheField.GetValue(null);
-        var cachedEntry = cacheDict[issueTitle];
-        var cachedRecordType = cachedEntry.GetType();
-        var agedEntry = Activator.CreateInstance(cachedRecordType, 1, DateTime.UtcNow.AddHours(-7));
-        cacheDict[issueTitle] = agedEntry;
+        // Plant pre-expired entry using cache test hook
+        GetCache().SetForTesting(issueTitle, 1, DateTime.UtcNow.AddHours(-7));
 
         // Act 2: Call after TTL expiry
         await githubService.CreateBugIssue(issueTitle, new Exception(), GithubIssueLabels.Telegram);
@@ -233,10 +228,7 @@ public class GithubServiceTests
         }
 
         // Assert: Cache count is capped below MaxCacheEntries (250)
-        var cacheField = typeof(GithubService).GetField("_issueCache", BindingFlags.NonPublic | BindingFlags.Static);
-        var cacheDict = (System.Collections.IDictionary)cacheField.GetValue(null);
-
-        Assert.True(cacheDict.Count <= 250);
+        Assert.True(GetCache().Count <= 250);
     }
 
     [Fact]
@@ -290,6 +282,12 @@ public class GithubServiceTests
 
         // Assert
         Assert.Equal(expectedUpdatedBody, result);
+    }
+
+    private static GithubService.IssueNumberCache GetCache()
+    {
+        var cacheField = typeof(GithubService).GetField("_issueCache", BindingFlags.NonPublic | BindingFlags.Static);
+        return (GithubService.IssueNumberCache)cacheField.GetValue(null);
     }
 
     private static Issue CreateMockIssue(int number, string title, string body)

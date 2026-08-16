@@ -10,24 +10,15 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Text.RegularExpressions;
+using System.Threading;
 using System.Threading.Tasks;
 
 namespace GrammarNazi.Core.Services;
 
 public class GithubService : IGithubService
 {
-    private static readonly System.Threading.SemaphoreSlim _semaphore = new(1, 1);
-
-    /// <summary>
-    /// Process-local cache for GitHub issue titles to numbers.
-    /// Note: This cache is process-local. If the application is deployed in a multi-replica setup,
-    /// duplicate issues may still occur across different instances.
-    /// </summary>
-    private static readonly Dictionary<string, CachedIssue> _issueCache = new(StringComparer.Ordinal);
-    private static readonly TimeSpan CacheTtl = TimeSpan.FromHours(6);
-    private const int MaxCacheEntries = 250;
-
-    private sealed record CachedIssue(int Number, DateTime CachedAtUtc);
+    private static readonly SemaphoreSlim _semaphore = new(1, 1);
+    private static readonly IssueNumberCache _issueCache = new();
 
     private static readonly Regex CounterRegex = new(@"Exception caught counter:\s*(\d+)", RegexOptions.Compiled);
 
@@ -46,83 +37,33 @@ public class GithubService : IGithubService
 
         try
         {
-            var now = DateTime.UtcNow;
-
-            // Time-based sweep on every call
-            if (_issueCache.Count > 0)
-            {
-                var expired = _issueCache.Where(kvp => now - kvp.Value.CachedAtUtc > CacheTtl)
-                                         .Select(kvp => kvp.Key)
-                                         .ToList();
-                foreach (var key in expired) _issueCache.Remove(key);
-            }
-
-            // Hard size cap
-            if (_issueCache.Count >= MaxCacheEntries)
-            {
-                var itemsToEvict = _issueCache
-                    .OrderBy(kvp => kvp.Value.CachedAtUtc)
-                    .Take(_issueCache.Count - (int)(MaxCacheEntries * 0.8))
-                    .Select(kvp => kvp.Key)
-                    .ToList();
-                foreach (var key in itemsToEvict) _issueCache.Remove(key);
-            }
-
             var issueTitle = GetTrimmedTitle(title);
 
-            // Cache lookup
-            if (_issueCache.TryGetValue(issueTitle, out var cachedIssue))
+            if (_issueCache.TryGet(issueTitle, out var cachedIssueNumber))
             {
-                try
+                if (await TryIncrementCounter(cachedIssueNumber))
                 {
-                    var existingIssue = await _githubClient.Issue.Get(_githubSettings.Username, _githubSettings.RepositoryName, cachedIssue.Number);
-                    var issueUpdate = new IssueUpdate
-                    {
-                        Title = existingIssue.Title,
-                        Body = GetBodyWithCounterUpdated(existingIssue.Body)
-                    };
-
-                    await _githubClient.Issue.Update(_githubSettings.Username, _githubSettings.RepositoryName, existingIssue.Number, issueUpdate);
                     return;
                 }
-                catch (NotFoundException)
-                {
-                    _issueCache.Remove(issueTitle);
-                }
+
+                // Issue no longer exists on GitHub. Drop the stale entry and fall back to a remote lookup.
+                _issueCache.Remove(issueTitle);
             }
 
-            // Remote lookup (cache miss)
-            var issue = await GetIssueByTittle(issueTitle);
+            var existingIssue = await FindOpenIssueByTitle(issueTitle);
 
-            if (issue != null)
+            if (existingIssue != null)
             {
-                _issueCache[issueTitle] = new CachedIssue(issue.Number, now);
-
-                var issueUpdate = new IssueUpdate
-                {
-                    Title = issue.Title,
-                    Body = GetBodyWithCounterUpdated(issue.Body)
-                };
-
-                await _githubClient.Issue.Update(_githubSettings.Username, _githubSettings.RepositoryName, issue.Number, issueUpdate);
+                _issueCache.Set(issueTitle, existingIssue.Number);
+                await UpdateCounter(existingIssue);
                 return;
             }
 
-            var bodyBuilder = new StringBuilder();
-            bodyBuilder.Append("This is an issue created automatically by GrammarNazi when an exception was captured.\n\n");
-            bodyBuilder.AppendLine($"Date (UTC): {now}\n\n");
-            bodyBuilder.AppendLine("Exception:\n\n").AppendLine(exception.ToString());
-            bodyBuilder.AppendLine("\n\nException caught counter: 1.");
+            var createdIssue = await CreateIssue(issueTitle, exception, githubIssueSection);
 
-            var newIssue = new NewIssue(issueTitle)
-            {
-                Body = bodyBuilder.ToString()
-            };
-            newIssue.Labels.Add(GithubIssueLabels.ProductionBug.GetDescription());
-            newIssue.Labels.Add(githubIssueSection.GetDescription());
-
-            var createdIssue = await _githubClient.Issue.Create(_githubSettings.Username, _githubSettings.RepositoryName, newIssue);
-            _issueCache[issueTitle] = new CachedIssue(createdIssue.Number, now);
+            // Seeded before the semaphore is released, so a burst of identical exceptions never races
+            // GitHub's eventually consistent issue list.
+            _issueCache.Set(issueTitle, createdIssue.Number);
         }
         finally
         {
@@ -130,12 +71,37 @@ public class GithubService : IGithubService
         }
     }
 
-    internal static void ResetForTesting()
+    /// <summary>
+    /// Increments the counter on a known issue number.
+    /// Returns false when the issue no longer exists, so the caller can fall back to a remote lookup.
+    /// </summary>
+    private async Task<bool> TryIncrementCounter(int issueNumber)
     {
-        _issueCache.Clear();
+        try
+        {
+            var issue = await _githubClient.Issue.Get(_githubSettings.Username, _githubSettings.RepositoryName, issueNumber);
+            await UpdateCounter(issue);
+
+            return true;
+        }
+        catch (NotFoundException)
+        {
+            return false;
+        }
     }
 
-    private async Task<Issue> GetIssueByTittle(string title)
+    private Task UpdateCounter(Issue issue)
+    {
+        var issueUpdate = new IssueUpdate
+        {
+            Title = issue.Title,
+            Body = GetBodyWithCounterUpdated(issue.Body)
+        };
+
+        return _githubClient.Issue.Update(_githubSettings.Username, _githubSettings.RepositoryName, issue.Number, issueUpdate);
+    }
+
+    private async Task<Issue> FindOpenIssueByTitle(string title)
     {
         var request = new RepositoryIssueRequest
         {
@@ -150,7 +116,31 @@ public class GithubService : IGithubService
         var issues = await _githubClient.Issue.GetAllForRepository(
             _githubSettings.Username, _githubSettings.RepositoryName, request, options);
 
-        return issues.FirstOrDefault(v => v.PullRequest == null && v.Title == title);
+        return issues.FirstOrDefault(x => x.PullRequest == null && x.Title == title);
+    }
+
+    private Task<Issue> CreateIssue(string issueTitle, Exception exception, GithubIssueLabels githubIssueSection)
+    {
+        var newIssue = new NewIssue(issueTitle)
+        {
+            Body = BuildIssueBody(exception)
+        };
+
+        newIssue.Labels.Add(GithubIssueLabels.ProductionBug.GetDescription());
+        newIssue.Labels.Add(githubIssueSection.GetDescription());
+
+        return _githubClient.Issue.Create(_githubSettings.Username, _githubSettings.RepositoryName, newIssue);
+    }
+
+    private static string BuildIssueBody(Exception exception)
+    {
+        var bodyBuilder = new StringBuilder();
+        bodyBuilder.Append("This is an issue created automatically by GrammarNazi when an exception was captured.\n\n");
+        bodyBuilder.AppendLine($"Date (UTC): {DateTime.UtcNow}\n\n");
+        bodyBuilder.AppendLine("Exception:\n\n").AppendLine(exception.ToString());
+        bodyBuilder.AppendLine("\n\nException caught counter: 1.");
+
+        return bodyBuilder.ToString();
     }
 
     private static string GetTrimmedTitle(string title)
@@ -179,5 +169,99 @@ public class GithubService : IGithubService
         }
 
         return issueBody + "\n\nException caught counter: 1.";
+    }
+
+    internal static void ResetForTesting() => _issueCache.Clear();
+
+    /// <summary>
+    /// Process-local map of issue title to issue number. Closes the read-after-write gap on GitHub's
+    /// eventually consistent issue list endpoint: an issue created by this process is known immediately,
+    /// without waiting for it to appear in a LIST response.
+    /// Note: process-local. Under a multi-replica deployment each instance keeps its own map, so duplicate
+    /// issues could still be created across instances.
+    /// Not thread-safe: every member must be called while holding the enclosing service's semaphore.
+    /// </summary>
+    internal sealed class IssueNumberCache
+    {
+        private static readonly TimeSpan Ttl = TimeSpan.FromHours(6);
+        private const int MaxEntries = 250;
+        private const double EvictionTargetRatio = 0.8;
+
+        private readonly Dictionary<string, Entry> _entries = new(StringComparer.Ordinal);
+
+        public bool TryGet(string title, out int issueNumber)
+        {
+            RemoveExpired();
+
+            if (_entries.TryGetValue(title, out var entry))
+            {
+                issueNumber = entry.Number;
+                return true;
+            }
+
+            issueNumber = default;
+
+            return false;
+        }
+
+        public void Set(string title, int issueNumber)
+        {
+            RemoveExpired();
+            EvictOldestIfFull();
+
+            _entries[title] = new Entry(issueNumber, DateTime.UtcNow);
+        }
+
+        public void Remove(string title) => _entries.Remove(title);
+
+        private void RemoveExpired()
+        {
+            if (_entries.Count == 0)
+            {
+                return;
+            }
+
+            var now = DateTime.UtcNow;
+
+            var expired = _entries.Where(x => now - x.Value.CachedAtUtc > Ttl)
+                                  .Select(x => x.Key)
+                                  .ToList();
+
+            foreach (var key in expired)
+            {
+                _entries.Remove(key);
+            }
+        }
+
+        private void EvictOldestIfFull()
+        {
+            if (_entries.Count < MaxEntries)
+            {
+                return;
+            }
+
+            var target = (int)(MaxEntries * EvictionTargetRatio);
+
+            var toEvict = _entries.OrderBy(x => x.Value.CachedAtUtc)
+                                  .Take(_entries.Count - target)
+                                  .Select(x => x.Key)
+                                  .ToList();
+
+            foreach (var key in toEvict)
+            {
+                _entries.Remove(key);
+            }
+        }
+
+        // Test hooks. InternalsVisibleTo("GrammarNazi.Tests") is already declared in GrammarNazi.Core.csproj.
+        internal int Count => _entries.Count;
+
+        internal void Clear() => _entries.Clear();
+
+        /// <summary>Inserts an entry with an explicit timestamp so expiry can be tested without waiting.</summary>
+        internal void SetForTesting(string title, int issueNumber, DateTime cachedAtUtc)
+            => _entries[title] = new Entry(issueNumber, cachedAtUtc);
+
+        private sealed record Entry(int Number, DateTime CachedAtUtc);
     }
 }

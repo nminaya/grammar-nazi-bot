@@ -6,6 +6,7 @@ using GrammarNazi.Domain.Exceptions;
 using GrammarNazi.Domain.Services;
 using Microsoft.Data.SqlClient;
 using Microsoft.Extensions.Logging;
+using Polly.CircuitBreaker;
 using System;
 using System.Linq;
 using System.Net;
@@ -35,10 +36,7 @@ namespace GrammarNazi.Core.Services
                 exception = taskFailedException.InnerException;
             }
 
-            // Rate-limit / unavailability signals raised from inside the HttpClient handler chain may surface wrapped.
-            // Check the whole inner-exception chain so they are never mistaken for a general application exception.
-            if (exception is ExternalApiRateLimitException or ExternalApiUnavailableException
-                || exception.GetInnerExceptions().Any(x => x is ExternalApiRateLimitException or ExternalApiUnavailableException))
+            if (IsTransientExternalApiFailure(exception))
             {
                 _logger.LogWarning(exception, exception.Message);
                 return;
@@ -82,6 +80,18 @@ namespace GrammarNazi.Core.Services
                     HandleGeneralException(exception, githubIssueSection);
                     break;
             }
+        }
+
+        /// <summary>
+        /// Transient signals from an external API or from the Polly resilience pipeline guarding it.
+        /// These are self-healing and must never open a production bug issue.
+        /// Checked against the whole inner-exception chain because exceptions raised inside the
+        /// HttpClient handler chain may surface wrapped.
+        /// </summary>
+        private static bool IsTransientExternalApiFailure(Exception exception)
+        {
+            return exception is ExternalApiRateLimitException or ExternalApiUnavailableException or BrokenCircuitException
+                || exception.GetInnerExceptions().Any(x => x is ExternalApiRateLimitException or ExternalApiUnavailableException or BrokenCircuitException);
         }
 
         private void HandleRequestException(RequestException requestException, GithubIssueLabels githubIssueSection)

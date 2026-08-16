@@ -1,4 +1,5 @@
 using GrammarNazi.Domain.BotCommands;
+using GrammarNazi.Domain.Constants;
 using GrammarNazi.Domain.Entities.Settings;
 using GrammarNazi.Domain.Exceptions;
 using Microsoft.EntityFrameworkCore;
@@ -60,16 +61,16 @@ public static class ServiceCollectionExtensions
         return serviceCollection;
     }
 
-    internal class GroqResilienceHolder(IOptions<GroqApiSettings> options)
+    internal class GroqResilienceHolder
     {
-        public SlidingWindowRateLimiter Limiter { get; } = new(options.Value.RequestsPerMinute, TimeSpan.FromMinutes(1));
-        public ResiliencePipeline<HttpResponseMessage> Pipeline { get; } = CreateApiResiliencePipeline(options.Value.MaxRetries);
+        public SlidingWindowRateLimiter Limiter { get; } = new(Defaults.GroqRequestsPerMinute, TimeSpan.FromMinutes(1));
+        public ResiliencePipeline<HttpResponseMessage> Pipeline { get; } = CreateApiResiliencePipeline(Defaults.GroqMaxRetries);
     }
 
-    internal class CerebrasResilienceHolder(IOptions<CerebrasApiSettings> options)
+    internal class CerebrasResilienceHolder
     {
-        public SlidingWindowRateLimiter Limiter { get; } = new(options.Value.RequestsPerMinute, TimeSpan.FromMinutes(1));
-        public ResiliencePipeline<HttpResponseMessage> Pipeline { get; } = CreateApiResiliencePipeline(options.Value.MaxRetries);
+        public SlidingWindowRateLimiter Limiter { get; } = new(Defaults.CerebrasRequestsPerMinute, TimeSpan.FromMinutes(1));
+        public ResiliencePipeline<HttpResponseMessage> Pipeline { get; } = CreateApiResiliencePipeline(Defaults.CerebrasMaxRetries);
     }
 
     internal static ResiliencePipeline<HttpResponseMessage> CreateApiResiliencePipeline(int maxRetries)
