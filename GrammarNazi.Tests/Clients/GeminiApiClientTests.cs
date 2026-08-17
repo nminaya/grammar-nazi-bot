@@ -14,6 +14,43 @@ namespace GrammarNazi.Tests.Clients;
 
 public class GeminiApiClientTests
 {
+    [Fact]
+    public async Task GenerateContent_RateLimitResponse_ThrowsExternalApiRateLimitExceptionWithRetryAfter()
+    {
+        // Arrange
+        var httpClientFactoryMock = Substitute.For<IHttpClientFactory>();
+        var optionsMock = Substitute.For<IOptions<GeminiApiSettings>>();
+
+        optionsMock.Value.Returns(new GeminiApiSettings
+        {
+            ModelVersion = "test-model-version",
+            ApiKey = "test-key"
+        });
+
+        var httpClient = new HttpClient(new MockHttpMessageHandler(async (request, cancellationToken) =>
+        {
+            var response = new HttpResponseMessage
+            {
+                StatusCode = HttpStatusCode.TooManyRequests,
+                Content = new StringContent("{\"error\":{\"message\":\"Rate limit reached\"}}")
+            };
+            response.Headers.RetryAfter = new System.Net.Http.Headers.RetryConditionHeaderValue(TimeSpan.FromSeconds(15));
+            return response;
+        }))
+        {
+            BaseAddress = new Uri("https://generativelanguage.googleapis.com/")
+        };
+
+        httpClientFactoryMock.CreateClient("geminiApi").Returns(httpClient);
+
+        var client = new GeminiApiClient(httpClientFactoryMock, optionsMock);
+
+        // Act & Assert
+        var ex = await Assert.ThrowsAsync<ExternalApiRateLimitException>(() => client.GenerateContent("prompt"));
+        Assert.NotNull(ex.RetryAfter);
+        Assert.Equal(TimeSpan.FromSeconds(15), ex.RetryAfter.Value);
+    }
+
     [Theory]
     [InlineData(HttpStatusCode.NotFound)]
     [InlineData(HttpStatusCode.Unauthorized)]

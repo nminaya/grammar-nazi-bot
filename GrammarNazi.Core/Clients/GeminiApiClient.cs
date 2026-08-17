@@ -1,7 +1,7 @@
-﻿using GrammarNazi.Domain.Clients;
+using GrammarNazi.Core.Utilities;
+using GrammarNazi.Domain.Clients;
 using GrammarNazi.Domain.Entities.GeminiAPI;
 using GrammarNazi.Domain.Entities.Settings;
-using GrammarNazi.Domain.Exceptions;
 using Microsoft.Extensions.Options;
 using Newtonsoft.Json;
 using System;
@@ -35,25 +35,7 @@ public class GeminiApiClient(IHttpClientFactory httpClientFactory, IOptions<Gemi
         if (response.StatusCode != HttpStatusCode.OK)
         {
             var errorContent = await response.Content.ReadAsStringAsync();
-
-            if (response.StatusCode == HttpStatusCode.ServiceUnavailable
-                || response.StatusCode == HttpStatusCode.BadGateway
-                || response.StatusCode == HttpStatusCode.GatewayTimeout)
-            {
-                throw new ExternalApiUnavailableException($"Gemini API is currently unavailable ({response.StatusCode}).", new Exception(errorContent));
-            }
-
-            if (response.StatusCode == HttpStatusCode.NotFound
-                || response.StatusCode == HttpStatusCode.Unauthorized
-                || response.StatusCode == HttpStatusCode.Forbidden
-                || (response.StatusCode == HttpStatusCode.BadRequest && GrammarNazi.Core.Utilities.ExternalApiPermanentExceptionHelper.IsPermanentFailure(errorContent)))
-            {
-                throw new ExternalApiPermanentFailureException(
-                    $"Gemini API rejected model '{_geminiApiSettings.ModelVersion}' ({response.StatusCode}) — the model may have been retired or the API key may lack access. Retrying will not help.",
-                    new Exception(errorContent));
-            }
-
-            throw new InvalidOperationException($"Unsuccessful Gemini API response {response.StatusCode}", new Exception(errorContent));
+            throw ExternalApiResponseHelper.CreateExceptionForErrorResponse(response, "Gemini", _geminiApiSettings.ModelVersion, errorContent);
         }
 
         var content = await response.Content.ReadAsStringAsync();

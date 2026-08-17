@@ -1,10 +1,10 @@
+using GrammarNazi.Core.Utilities;
 using GrammarNazi.Domain.Clients;
+using GrammarNazi.Domain.Entities.OpenAiAPI;
 using GrammarNazi.Domain.Entities.Settings;
-using GrammarNazi.Domain.Exceptions;
 using Microsoft.Extensions.Options;
 using Newtonsoft.Json;
 using System;
-using System.Collections.Generic;
 using System.Net;
 using System.Net.Http;
 using System.Net.Http.Json;
@@ -54,72 +54,12 @@ public class CerebrasApiClient(IHttpClientFactory httpClientFactory, IOptions<Ce
         if (response.StatusCode != HttpStatusCode.OK)
         {
             var errorContent = await response.Content.ReadAsStringAsync();
-
-            if (response.StatusCode == HttpStatusCode.TooManyRequests)
-            {
-                throw new ExternalApiRateLimitException(
-                    "Cerebras API rate limit reached.",
-                    GetRetryAfter(response),
-                    new Exception(errorContent));
-            }
-
-            if (response.StatusCode == HttpStatusCode.ServiceUnavailable
-                || response.StatusCode == HttpStatusCode.BadGateway
-                || response.StatusCode == HttpStatusCode.GatewayTimeout)
-            {
-                throw new ExternalApiUnavailableException($"Cerebras API is currently unavailable ({response.StatusCode}).", new Exception(errorContent));
-            }
-
-            if (response.StatusCode == HttpStatusCode.NotFound
-                || response.StatusCode == HttpStatusCode.Unauthorized
-                || response.StatusCode == HttpStatusCode.Forbidden
-                || (response.StatusCode == HttpStatusCode.BadRequest && GrammarNazi.Core.Utilities.ExternalApiPermanentExceptionHelper.IsPermanentFailure(errorContent)))
-            {
-                throw new ExternalApiPermanentFailureException(
-                    $"Cerebras API rejected model '{_cerebrasApiSettings.Model}' ({response.StatusCode}) — the model may have been retired or the API key may lack access. Retrying will not help.",
-                    new Exception(errorContent));
-            }
-
-            throw new InvalidOperationException($"Unsuccessful Cerebras API response {response.StatusCode}", new Exception(errorContent));
+            throw ExternalApiResponseHelper.CreateExceptionForErrorResponse(response, "Cerebras", _cerebrasApiSettings.Model, errorContent);
         }
 
         var content = await response.Content.ReadAsStringAsync();
-        var result = JsonConvert.DeserializeObject<CebrasChatCompletionResponse>(content);
+        var result = JsonConvert.DeserializeObject<OpenAiChatCompletionResponse>(content);
 
         return result?.Choices?[0]?.Message?.Content ?? string.Empty;
-    }
-
-    private static TimeSpan? GetRetryAfter(HttpResponseMessage response)
-    {
-        var retryAfter = response.Headers.RetryAfter;
-        if (retryAfter == null) return null;
-
-        if (retryAfter.Delta.HasValue)
-        {
-            return retryAfter.Delta.Value < TimeSpan.Zero ? TimeSpan.Zero : retryAfter.Delta.Value;
-        }
-
-        if (retryAfter.Date.HasValue)
-        {
-            var delta = retryAfter.Date.Value - DateTimeOffset.UtcNow;
-            return delta < TimeSpan.Zero ? TimeSpan.Zero : delta;
-        }
-
-        return null;
-    }
-
-    private class CebrasChatCompletionResponse
-    {
-        public List<Choice> Choices { get; set; }
-
-        public class Choice
-        {
-            public Message Message { get; set; }
-        }
-
-        public class Message
-        {
-            public string Content { get; set; }
-        }
     }
 }
