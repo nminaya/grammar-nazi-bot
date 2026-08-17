@@ -26,6 +26,106 @@ namespace GrammarNazi.Tests.Services
         }
 
         [Fact]
+        public void ExceptionThrottler_AtCapacity_EvictsExpiredKeysBeforeActiveKeys()
+        {
+            ExceptionThrottler.ResetForTesting();
+
+            // Create expired keys
+            var field = typeof(ExceptionThrottler).GetField("_states", BindingFlags.NonPublic | BindingFlags.Static);
+            var dictionary = (System.Collections.IDictionary)field.GetValue(null);
+
+            // Report Key24h with 24h window
+            Assert.True(ExceptionThrottler.ShouldReport("Key24h", TimeSpan.FromHours(24), threshold: 1));
+
+            // Fill capacity with 249 other keys
+            for (int i = 0; i < 249; i++)
+            {
+                ExceptionThrottler.ShouldReport($"FillerKey_{i}", TimeSpan.FromMinutes(10), threshold: 1);
+            }
+
+            // Key24h is refreshed recently so it's active
+            Assert.False(ExceptionThrottler.ShouldReport("Key24h", TimeSpan.FromHours(24), threshold: 1));
+
+            // Force FillerKeys to be expired by modifying their timestamps
+            foreach (var key in dictionary.Keys.Cast<string>().Where(k => k.StartsWith("FillerKey_")).ToList())
+            {
+                var state = dictionary[key];
+                var recentOccurrencesField = state.GetType().GetProperty("RecentOccurrences");
+                var recentOccurrences = (List<DateTime>)recentOccurrencesField.GetValue(state);
+                recentOccurrences.Clear();
+                recentOccurrences.Add(DateTime.UtcNow.AddMinutes(-15)); // Aged past 10m window
+            }
+
+            // Report new Key250 with 10m window, forcing eviction sweep
+            ExceptionThrottler.ShouldReport("Key250", TimeSpan.FromMinutes(10), threshold: 1);
+
+            // Key24h was preserved because expired FillerKeys were swept first
+            Assert.False(ExceptionThrottler.ShouldReport("Key24h", TimeSpan.FromHours(24), threshold: 1));
+        }
+
+        [Fact]
+        public void HandleHttpRequestException_TransientConnectionError_Should_LogWarning_And_NotCreateBugIssue()
+        {
+            // Arrange
+            var loggerMock = Substitute.For<ILogger<CatchExceptionService>>();
+            var githubServiceMock = Substitute.For<IGithubService>();
+            var service = new CatchExceptionService(githubServiceMock, loggerMock);
+
+            var exception = new HttpRequestException(HttpRequestError.ConnectionError, "Connection refused");
+
+            // Act
+            service.HandleException(exception, GithubIssueLabels.ProductionBug);
+
+            // Assert
+            var numberOfCalls = loggerMock.ReceivedCalls()
+                .Select(call => call.GetArguments())
+                .Count(callArguments => ((LogLevel)callArguments[0]).Equals(LogLevel.Warning));
+
+            Assert.Equal(1, numberOfCalls);
+            githubServiceMock.DidNotReceive().CreateBugIssue(Arg.Any<string>(), Arg.Any<Exception>(), Arg.Any<GithubIssueLabels>());
+        }
+
+        [Fact]
+        public void HandleHttpRequestException_SecureConnectionError_Should_LogError_And_CreateBugIssue()
+        {
+            // Arrange
+            var loggerMock = Substitute.For<ILogger<CatchExceptionService>>();
+            var githubServiceMock = Substitute.For<IGithubService>();
+            var service = new CatchExceptionService(githubServiceMock, loggerMock);
+
+            var exception = new HttpRequestException(HttpRequestError.SecureConnectionError, "TLS handshake failed");
+
+            // Act
+            service.HandleException(exception, GithubIssueLabels.ProductionBug);
+
+            // Assert
+            var numberOfCalls = loggerMock.ReceivedCalls()
+                .Select(call => call.GetArguments())
+                .Count(callArguments => ((LogLevel)callArguments[0]).Equals(LogLevel.Error));
+
+            Assert.Equal(1, numberOfCalls);
+            githubServiceMock.Received().CreateBugIssue(Arg.Any<string>(), exception, GithubIssueLabels.ProductionBug);
+        }
+
+        [Fact]
+        public void HandleException_InvalidOperationExceptionWithInnerExternalApiUnavailableException_Should_CreateBugIssue()
+        {
+            // Arrange
+            var loggerMock = Substitute.For<ILogger<CatchExceptionService>>();
+            var githubServiceMock = Substitute.For<IGithubService>();
+            var service = new CatchExceptionService(githubServiceMock, loggerMock);
+
+            var innerEx = new ExternalApiUnavailableException("Transient API failure");
+            var exception = new InvalidOperationException("Parser invariant failed", innerEx);
+
+            // Act
+            service.HandleException(exception, GithubIssueLabels.ProductionBug);
+
+            // Assert: Outer InvalidOperationException is NOT masked, bug issue IS created
+            githubServiceMock.Received().CreateBugIssue("Application Exception: Parser invariant failed", exception, GithubIssueLabels.ProductionBug);
+        }
+
+        [Fact]
         public void HandleException_BrokenCircuitException_Should_LogWarning_And_NotCreateBugIssue()
         {
             // Arrange
@@ -34,52 +134,6 @@ namespace GrammarNazi.Tests.Services
             var service = new CatchExceptionService(githubServiceMock, loggerMock);
 
             var exception = new Polly.CircuitBreaker.BrokenCircuitException("Circuit breaker open");
-
-            // Act
-            service.HandleException(exception, GithubIssueLabels.ProductionBug);
-
-            // Assert
-            var numberOfCalls = loggerMock.ReceivedCalls()
-                .Select(call => call.GetArguments())
-                .Count(callArguments => ((LogLevel)callArguments[0]).Equals(LogLevel.Warning));
-
-            Assert.Equal(1, numberOfCalls);
-            githubServiceMock.DidNotReceive().CreateBugIssue(Arg.Any<string>(), Arg.Any<Exception>(), Arg.Any<GithubIssueLabels>());
-        }
-
-        [Fact]
-        public void HandleException_HttpRequestExceptionWithInnerBrokenCircuitException_Should_LogWarning_And_NotCreateBugIssue()
-        {
-            // Arrange
-            var loggerMock = Substitute.For<ILogger<CatchExceptionService>>();
-            var githubServiceMock = Substitute.For<IGithubService>();
-            var service = new CatchExceptionService(githubServiceMock, loggerMock);
-
-            var circuitEx = new Polly.CircuitBreaker.BrokenCircuitException("Inner circuit open");
-            var exception = new HttpRequestException("Wrapped circuit exception", circuitEx);
-
-            // Act
-            service.HandleException(exception, GithubIssueLabels.ProductionBug);
-
-            // Assert
-            var numberOfCalls = loggerMock.ReceivedCalls()
-                .Select(call => call.GetArguments())
-                .Count(callArguments => ((LogLevel)callArguments[0]).Equals(LogLevel.Warning));
-
-            Assert.Equal(1, numberOfCalls);
-            githubServiceMock.DidNotReceive().CreateBugIssue(Arg.Any<string>(), Arg.Any<Exception>(), Arg.Any<GithubIssueLabels>());
-        }
-
-        [Fact]
-        public void HandleException_HttpRequestExceptionWithInnerExternalApiRateLimitException_Should_LogWarning_And_NotCreateBugIssue()
-        {
-            // Arrange
-            var loggerMock = Substitute.For<ILogger<CatchExceptionService>>();
-            var githubServiceMock = Substitute.For<IGithubService>();
-            var service = new CatchExceptionService(githubServiceMock, loggerMock);
-
-            var rateLimitEx = new ExternalApiRateLimitException("Inner rate limit");
-            var exception = new HttpRequestException("Wrapped rate limit exception", rateLimitEx);
 
             // Act
             service.HandleException(exception, GithubIssueLabels.ProductionBug);

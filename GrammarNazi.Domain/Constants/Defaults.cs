@@ -1,4 +1,4 @@
-using GrammarNazi.Domain.Enums;
+﻿using GrammarNazi.Domain.Enums;
 
 namespace GrammarNazi.Domain.Constants;
 
@@ -25,4 +25,10 @@ public static class Defaults
     /// </summary>
     public const int GroqRequestsPerMinute = 25;
     public const int GroqMaxRetries = 2;
+
+    /// <summary>
+    /// Gemini API free tier quota is 15 requests per minute for Gemini 1.5 models. 15 requests per minute matches the free tier limit.
+    /// </summary>
+    public const int GeminiRequestsPerMinute = 15;
+    public const int GeminiMaxRetries = 2;
 }

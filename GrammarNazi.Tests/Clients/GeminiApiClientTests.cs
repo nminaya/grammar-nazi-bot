@@ -98,6 +98,8 @@ public class GeminiApiClientTests
     [InlineData(HttpStatusCode.ServiceUnavailable)]
     [InlineData(HttpStatusCode.BadGateway)]
     [InlineData(HttpStatusCode.GatewayTimeout)]
+    [InlineData(HttpStatusCode.InternalServerError)]
+    [InlineData(HttpStatusCode.RequestTimeout)]
     public async Task GenerateContent_TransientErrorResponse_ThrowsExternalApiUnavailableException(HttpStatusCode httpStatusCode)
     {
         // Arrange
@@ -130,8 +132,10 @@ public class GeminiApiClientTests
         await Assert.ThrowsAsync<ExternalApiUnavailableException>(() => client.GenerateContent("prompt"));
     }
 
-    [Fact]
-    public async Task GenerateContent_OtherErrorResponse_ThrowsInvalidOperationException()
+    [Theory]
+    [InlineData(HttpStatusCode.MethodNotAllowed)]
+    [InlineData((HttpStatusCode)418)]
+    public async Task GenerateContent_OtherErrorResponse_ThrowsInvalidOperationException(HttpStatusCode httpStatusCode)
     {
         // Arrange
         var httpClientFactoryMock = Substitute.For<IHttpClientFactory>();
@@ -147,8 +151,8 @@ public class GeminiApiClientTests
         {
             return new HttpResponseMessage
             {
-                StatusCode = HttpStatusCode.InternalServerError,
-                Content = new StringContent("Internal Server Error")
+                StatusCode = httpStatusCode,
+                Content = new StringContent("Unclassified Error")
             };
         }))
         {
@@ -161,7 +165,7 @@ public class GeminiApiClientTests
 
         // Act & Assert
         var exception = await Assert.ThrowsAsync<InvalidOperationException>(() => client.GenerateContent("prompt"));
-        Assert.Contains("Unsuccessful Gemini API response InternalServerError", exception.Message);
+        Assert.Contains($"Unsuccessful Gemini API response {httpStatusCode}", exception.Message);
     }
 
     [Fact]

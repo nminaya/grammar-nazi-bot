@@ -39,14 +39,14 @@ public class GithubService : IGithubService
         {
             var issueTitle = GetTrimmedTitle(title);
 
-            if (_issueCache.TryGet(issueTitle, out var cachedIssueNumber))
+            if (_issueCache.TryGet(issueTitle, out var cachedIssueNumber, out var cachedAtUtc))
             {
-                if (await TryIncrementCounter(cachedIssueNumber))
+                if (await TryIncrementCounter(cachedIssueNumber, issueTitle, cachedAtUtc))
                 {
                     return;
                 }
 
-                // Issue no longer exists on GitHub. Drop the stale entry and fall back to a remote lookup.
+                // Issue no longer matches open state/title on GitHub. Drop the stale entry and fall back to a remote lookup.
                 _issueCache.Remove(issueTitle);
             }
 
@@ -73,19 +73,36 @@ public class GithubService : IGithubService
 
     /// <summary>
     /// Increments the counter on a known issue number.
-    /// Returns false when the issue no longer exists, so the caller can fall back to a remote lookup.
+    /// Returns false when the issue no longer exists or is closed, so the caller can fall back to a remote lookup or fresh creation.
+    /// Policy: A recurrence of an exception after its GitHub issue is closed files a new issue rather than reopening the old one.
     /// </summary>
-    private async Task<bool> TryIncrementCounter(int issueNumber)
+    private async Task<bool> TryIncrementCounter(int issueNumber, string expectedTitle, DateTime cachedAtUtc)
     {
         try
         {
             var issue = await _githubClient.Issue.Get(_githubSettings.Username, _githubSettings.RepositoryName, issueNumber);
-            await UpdateCounter(issue);
 
+            bool isOpen = issue.State.StringValue != null && issue.State.Value == ItemState.Open;
+            bool titleMatches = string.Equals(issue.Title, expectedTitle, StringComparison.Ordinal);
+            bool hasProductionBugLabel = issue.Labels != null && issue.Labels.Any(l => l?.Name != null && string.Equals(l.Name, GithubIssueLabels.ProductionBug.GetDescription(), StringComparison.Ordinal));
+
+            if (!isOpen || !titleMatches || !hasProductionBugLabel)
+            {
+                return false;
+            }
+
+            await UpdateCounter(issue);
             return true;
         }
         catch (NotFoundException)
         {
+            // GitHub's single-issue GET may lag momentarily after creation. If the cached entry was created within the last 60s,
+            // treat 404 as transient to avoid filing a duplicate.
+            if (DateTime.UtcNow - cachedAtUtc <= TimeSpan.FromSeconds(60))
+            {
+                return true;
+            }
+
             return false;
         }
     }
@@ -103,6 +120,8 @@ public class GithubService : IGithubService
 
     private async Task<Issue> FindOpenIssueByTitle(string title)
     {
+        // Note: RepositoryIssueRequest serializes filter=assigned (inherited from IssueRequest).
+        // GitHub's repository-issues endpoint has no filter parameter and ignores it.
         var request = new RepositoryIssueRequest
         {
             State = ItemStateFilter.Open,
@@ -111,7 +130,7 @@ public class GithubService : IGithubService
         };
         request.Labels.Add(GithubIssueLabels.ProductionBug.GetDescription());
 
-        var options = new ApiOptions { PageSize = 100, PageCount = 1 };
+        var options = new ApiOptions { PageSize = 100 };
 
         var issues = await _githubClient.Issue.GetAllForRepository(
             _githubSettings.Username, _githubSettings.RepositoryName, request, options);
@@ -171,7 +190,18 @@ public class GithubService : IGithubService
         return issueBody + "\n\nException caught counter: 1.";
     }
 
-    internal static void ResetForTesting() => _issueCache.Clear();
+    internal static void ResetForTesting()
+    {
+        _semaphore.Wait();
+        try
+        {
+            _issueCache.Clear();
+        }
+        finally
+        {
+            _semaphore.Release();
+        }
+    }
 
     /// <summary>
     /// Process-local map of issue title to issue number. Closes the read-after-write gap on GitHub's
@@ -189,18 +219,21 @@ public class GithubService : IGithubService
 
         private readonly Dictionary<string, Entry> _entries = new(StringComparer.Ordinal);
 
-        public bool TryGet(string title, out int issueNumber)
+        public bool TryGet(string title, out int issueNumber, out DateTime cachedAtUtc)
         {
             RemoveExpired();
 
             if (_entries.TryGetValue(title, out var entry))
             {
+                var now = DateTime.UtcNow;
+                _entries[title] = entry with { CachedAtUtc = now };
                 issueNumber = entry.Number;
+                cachedAtUtc = entry.CachedAtUtc;
                 return true;
             }
 
             issueNumber = default;
-
+            cachedAtUtc = default;
             return false;
         }
 

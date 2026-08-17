@@ -33,10 +33,10 @@ public static class ServiceCollectionExtensions
         serviceCollection.AddHttpClient("languageToolApi", c => { c.BaseAddress = new Uri("https://languagetool.org/"); c.Timeout = TimeSpan.FromSeconds(30); });
         serviceCollection.AddHttpClient("yandexSpellerApi", c => { c.BaseAddress = new Uri("https://speller.yandex.net/"); c.Timeout = TimeSpan.FromSeconds(30); });
         serviceCollection.AddHttpClient("sentimApi", c => { c.BaseAddress = new Uri("https://sentim-api.herokuapp.com/"); c.Timeout = TimeSpan.FromSeconds(30); });
-        serviceCollection.AddHttpClient("geminiApi", c => { c.BaseAddress = new Uri("https://generativelanguage.googleapis.com/"); c.Timeout = TimeSpan.FromSeconds(30); });
 
         serviceCollection.AddSingleton<GroqResilienceHolder>();
         serviceCollection.AddSingleton<CerebrasResilienceHolder>();
+        serviceCollection.AddSingleton<GeminiResilienceHolder>();
 
         serviceCollection.AddHttpClient("groqApi", c => { c.BaseAddress = new Uri("https://api.groq.com/"); c.Timeout = TimeSpan.FromSeconds(30); })
             .AddHttpMessageHandler(sp =>
@@ -49,6 +49,13 @@ public static class ServiceCollectionExtensions
             .AddHttpMessageHandler(sp =>
             {
                 var holder = sp.GetRequiredService<CerebrasResilienceHolder>();
+                return new ApiResilienceHandler(holder.Limiter, holder.Pipeline);
+            });
+
+        serviceCollection.AddHttpClient("geminiApi", c => { c.BaseAddress = new Uri("https://generativelanguage.googleapis.com/"); c.Timeout = TimeSpan.FromSeconds(30); })
+            .AddHttpMessageHandler(sp =>
+            {
+                var holder = sp.GetRequiredService<GeminiResilienceHolder>();
                 return new ApiResilienceHandler(holder.Limiter, holder.Pipeline);
             });
 
@@ -73,6 +80,12 @@ public static class ServiceCollectionExtensions
         public ResiliencePipeline<HttpResponseMessage> Pipeline { get; } = CreateApiResiliencePipeline(Defaults.CerebrasMaxRetries);
     }
 
+    internal class GeminiResilienceHolder
+    {
+        public SlidingWindowRateLimiter Limiter { get; } = new(Defaults.GeminiRequestsPerMinute, TimeSpan.FromMinutes(1));
+        public ResiliencePipeline<HttpResponseMessage> Pipeline { get; } = CreateApiResiliencePipeline(Defaults.GeminiMaxRetries);
+    }
+
     internal static ResiliencePipeline<HttpResponseMessage> CreateApiResiliencePipeline(int maxRetries)
     {
         var builder = new ResiliencePipelineBuilder<HttpResponseMessage>();
@@ -83,7 +96,10 @@ public static class ServiceCollectionExtensions
             ShouldHandle = new PredicateBuilder<HttpResponseMessage>()
                 .HandleResult(r => r.StatusCode == HttpStatusCode.ServiceUnavailable
                                 || r.StatusCode == HttpStatusCode.BadGateway
-                                || r.StatusCode == HttpStatusCode.GatewayTimeout),
+                                || r.StatusCode == HttpStatusCode.GatewayTimeout)
+                .Handle<HttpRequestException>(ex => ex.HttpRequestError is HttpRequestError.NameResolutionError
+                                                                      or HttpRequestError.ConnectionError
+                                                                      or HttpRequestError.ResponseEnded),
             MaxRetryAttempts = maxRetries,
             BackoffType = DelayBackoffType.Exponential,
             UseJitter = true,

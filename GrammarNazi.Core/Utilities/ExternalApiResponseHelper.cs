@@ -38,7 +38,9 @@ public static class ExternalApiResponseHelper
 
         if (response.StatusCode == HttpStatusCode.ServiceUnavailable
             || response.StatusCode == HttpStatusCode.BadGateway
-            || response.StatusCode == HttpStatusCode.GatewayTimeout)
+            || response.StatusCode == HttpStatusCode.GatewayTimeout
+            || response.StatusCode == HttpStatusCode.InternalServerError
+            || response.StatusCode == HttpStatusCode.RequestTimeout)
         {
             return new ExternalApiUnavailableException(
                 $"{providerName} API is currently unavailable ({response.StatusCode}).",

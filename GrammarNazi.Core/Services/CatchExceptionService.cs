@@ -36,6 +36,15 @@ namespace GrammarNazi.Core.Services
                 exception = taskFailedException.InnerException;
             }
 
+            if (exception is AggregateException aggregateException)
+            {
+                var flattened = aggregateException.Flatten();
+                if (flattened.InnerExceptions.Count == 1)
+                {
+                    exception = flattened.InnerExceptions[0];
+                }
+            }
+
             if (IsTransientExternalApiFailure(exception))
             {
                 _logger.LogWarning(exception, exception.Message);
@@ -85,13 +94,10 @@ namespace GrammarNazi.Core.Services
         /// <summary>
         /// Transient signals from an external API or from the Polly resilience pipeline guarding it.
         /// These are self-healing and must never open a production bug issue.
-        /// Checked against the whole inner-exception chain because exceptions raised inside the
-        /// HttpClient handler chain may surface wrapped.
         /// </summary>
         private static bool IsTransientExternalApiFailure(Exception exception)
         {
-            return exception is ExternalApiRateLimitException or ExternalApiUnavailableException or BrokenCircuitException
-                || exception.GetInnerExceptions().Any(x => x is ExternalApiRateLimitException or ExternalApiUnavailableException or BrokenCircuitException);
+            return exception is ExternalApiRateLimitException or ExternalApiUnavailableException or BrokenCircuitException;
         }
 
         private void HandleRequestException(RequestException requestException, GithubIssueLabels githubIssueSection)
@@ -145,7 +151,7 @@ namespace GrammarNazi.Core.Services
             if (ExceptionThrottler.ShouldReport(exception.Message, TimeSpan.FromHours(24), threshold: 1))
             {
                 _logger.LogError(exception, exception.Message);
-                _ = _githubService.CreateBugIssue($"External API Failure: {exception.Message}", exception, githubIssueSection)
+                _ = (_githubService.CreateBugIssue($"External API Failure: {exception.Message}", exception, githubIssueSection) ?? Task.CompletedTask)
                     .ContinueWith(t => _logger.LogError(t.Exception, "Failed to create GitHub issue"), TaskContinuationOptions.OnlyOnFaulted);
             }
             else
@@ -177,16 +183,27 @@ namespace GrammarNazi.Core.Services
 
             if (ExceptionThrottler.ShouldReport("SqlConnectivity", TimeSpan.FromMinutes(10), threshold: 10))
             {
-                _ = _githubService.CreateBugIssue($"Transient SQL Exception: {sqlException.Message}", sqlException, githubIssueSection)
+                _ = (_githubService.CreateBugIssue($"Transient SQL Exception: {sqlException.Message}", sqlException, githubIssueSection) ?? Task.CompletedTask)
                     .ContinueWith(t => _logger.LogError(t.Exception, "Failed to create GitHub issue"), TaskContinuationOptions.OnlyOnFaulted);
             }
         }
 
         private void HandleHttpRequestException(HttpRequestException requestException, GithubIssueLabels githubIssueSection)
         {
-            if (requestException.StatusCode == HttpStatusCode.BadGateway)
+            bool isTransientError = requestException.HttpRequestError is HttpRequestError.NameResolutionError
+                                                                       or HttpRequestError.ConnectionError
+                                                                       or HttpRequestError.ResponseEnded;
+
+            bool isTransientStatusCode = requestException.StatusCode is HttpStatusCode.RequestTimeout
+                                                                      or HttpStatusCode.TooManyRequests
+                                                                      or HttpStatusCode.InternalServerError
+                                                                      or HttpStatusCode.BadGateway
+                                                                      or HttpStatusCode.ServiceUnavailable
+                                                                      or HttpStatusCode.GatewayTimeout;
+
+            if (isTransientError || isTransientStatusCode)
             {
-                _logger.LogWarning(requestException, "Bad Gateway");
+                _logger.LogWarning(requestException, requestException.Message);
                 return;
             }
 
@@ -223,7 +240,7 @@ namespace GrammarNazi.Core.Services
             _logger.LogError(exception, message);
 
             // fire and forget
-            _ = _githubService.CreateBugIssue($"Application Exception: {message}", exception, githubIssueSection)
+            _ = (_githubService.CreateBugIssue($"Application Exception: {message}", exception, githubIssueSection) ?? Task.CompletedTask)
                 .ContinueWith(t => _logger.LogError(t.Exception, "Failed to create GitHub issue"), TaskContinuationOptions.OnlyOnFaulted);
         }
     }

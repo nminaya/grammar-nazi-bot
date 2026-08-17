@@ -10,6 +10,10 @@ public class ExceptionThrottler
     private static readonly Dictionary<string, ThrottleState> _states = new(StringComparer.Ordinal);
     private const int MaxEntries = 250;
 
+    /// <summary>
+    /// Determines whether an exception with the given key should be reported based on window and burst threshold.
+    /// Note: Suppression is best-effort once the internal states dictionary reaches maximum capacity (250 entries).
+    /// </summary>
     public static bool ShouldReport(string key, TimeSpan window, int threshold = 1)
     {
         lock (_lock)
@@ -20,7 +24,7 @@ public class ExceptionThrottler
             if (_states.Count >= MaxEntries && !_states.ContainsKey(key))
             {
                 var keysToRemove = _states
-                    .Where(kvp => kvp.Value.RecentOccurrences.All(o => now - o > window))
+                    .Where(kvp => kvp.Value.RecentOccurrences.All(o => now - o > kvp.Value.Window))
                     .Select(kvp => kvp.Key)
                     .ToList();
 
@@ -41,13 +45,17 @@ public class ExceptionThrottler
 
             if (!_states.TryGetValue(key, out var state))
             {
-                state = new ThrottleState();
+                state = new ThrottleState(window);
                 _states[key] = state;
+            }
+            else
+            {
+                state.Window = window;
             }
 
             if (threshold <= 1)
             {
-                state.RecentOccurrences.RemoveAll(x => now - x > window);
+                state.RecentOccurrences.RemoveAll(x => now - x > state.Window);
                 if (state.RecentOccurrences.Count == 0)
                 {
                     state.RecentOccurrences.Add(now);
@@ -58,7 +66,7 @@ public class ExceptionThrottler
             else
             {
                 state.RecentOccurrences.Add(now);
-                state.RecentOccurrences.RemoveAll(x => now - x > window);
+                state.RecentOccurrences.RemoveAll(x => now - x > state.Window);
 
                 if (state.RecentOccurrences.Count >= threshold)
                 {
@@ -78,8 +86,9 @@ public class ExceptionThrottler
         }
     }
 
-    private class ThrottleState
+    private class ThrottleState(TimeSpan window)
     {
+        public TimeSpan Window { get; set; } = window;
         public List<DateTime> RecentOccurrences { get; } = [];
     }
 }

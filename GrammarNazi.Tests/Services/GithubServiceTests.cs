@@ -1,3 +1,4 @@
+using GrammarNazi.Core.Extensions;
 using GrammarNazi.Core.Services;
 using GrammarNazi.Domain.Entities.Settings;
 using GrammarNazi.Domain.Enums;
@@ -70,6 +71,233 @@ public class GithubServiceTests
     }
 
     [Fact]
+    public async Task CreateBugIssue_MatchingOpenIssueOnSecondPage_Should_PerformUpdateNotCreate()
+    {
+        // Arrange
+        var githubClientMock = Substitute.For<IGitHubClient>();
+        var optionsMock = Substitute.For<IOptions<GithubSettings>>();
+        var githubSettings = new GithubSettings { Username = "u", RepositoryName = "r" };
+        optionsMock.Value.Returns(githubSettings);
+
+        var githubService = new GithubService(githubClientMock, optionsMock);
+
+        var issueTitle = "Test Issue Page 2";
+        var issueMock = CreateMockIssue(105, issueTitle, "Exception caught counter: 1.");
+
+        var issues = Enumerable.Range(1, 104)
+            .Select(i => CreateMockIssue(i, $"Other Issue {i}", "body"))
+            .ToList();
+        issues.Add(issueMock);
+
+        githubClientMock.Issue.GetAllForRepository(
+            githubSettings.Username, githubSettings.RepositoryName, Arg.Any<RepositoryIssueRequest>(), Arg.Any<ApiOptions>())
+            .Returns(Task.FromResult((IReadOnlyList<Issue>)issues));
+
+        // Act
+        await githubService.CreateBugIssue(issueTitle, new Exception(), GithubIssueLabels.Telegram);
+
+        // Assert
+        await githubClientMock.Issue.DidNotReceive().Create(githubSettings.Username, githubSettings.RepositoryName, Arg.Any<NewIssue>());
+        await githubClientMock.Issue.Received(1).Update(githubSettings.Username, githubSettings.RepositoryName, 105, Arg.Any<IssueUpdate>());
+    }
+
+    [Fact]
+    public async Task CreateBugIssue_CacheHit_RefreshesLruTimestamp()
+    {
+        // Arrange
+        var githubClientMock = Substitute.For<IGitHubClient>();
+        var optionsMock = Substitute.For<IOptions<GithubSettings>>();
+        var githubSettings = new GithubSettings { Username = "u", RepositoryName = "r" };
+        optionsMock.Value.Returns(githubSettings);
+
+        var githubService = new GithubService(githubClientMock, optionsMock);
+
+        var issueTitle = "Hot Issue";
+        var issueMock = CreateMockIssue(1, issueTitle, "Exception caught counter: 1.");
+
+        githubClientMock.Issue.Get(githubSettings.Username, githubSettings.RepositoryName, 1)
+            .Returns(Task.FromResult(issueMock));
+
+        // Seed cache entry from 5 hours ago
+        GetCache().SetForTesting(issueTitle, 1, DateTime.UtcNow.AddHours(-5));
+
+        // Act 1: Hit cache
+        await githubService.CreateBugIssue(issueTitle, new Exception(), GithubIssueLabels.Telegram);
+
+        // Act 2: Hit cache again
+        await githubService.CreateBugIssue(issueTitle, new Exception(), GithubIssueLabels.Telegram);
+
+        // Assert: Issue.Get called twice, Issue.Create NEVER called
+        await githubClientMock.Issue.DidNotReceive().Create(githubSettings.Username, githubSettings.RepositoryName, Arg.Any<NewIssue>());
+        await githubClientMock.Issue.Received(2).Get(githubSettings.Username, githubSettings.RepositoryName, 1);
+    }
+
+    [Fact]
+    public async Task CreateBugIssue_CachedIssueIsClosed_Should_CreateNewIssue()
+    {
+        // Arrange
+        var githubClientMock = Substitute.For<IGitHubClient>();
+        var optionsMock = Substitute.For<IOptions<GithubSettings>>();
+        var githubSettings = new GithubSettings { Username = "u", RepositoryName = "r" };
+        optionsMock.Value.Returns(githubSettings);
+
+        var githubService = new GithubService(githubClientMock, optionsMock);
+
+        var issueTitle = "Closed Issue Title";
+        var closedIssueMock = CreateMockIssue(1, issueTitle, "Exception caught counter: 1.", ItemState.Closed);
+        var newIssueMock = CreateMockIssue(2, issueTitle, "Exception caught counter: 1.");
+
+        githubClientMock.Issue.Get(githubSettings.Username, githubSettings.RepositoryName, 1)
+            .Returns(Task.FromResult(closedIssueMock));
+
+        githubClientMock.Issue.GetAllForRepository(
+            githubSettings.Username, githubSettings.RepositoryName, Arg.Any<RepositoryIssueRequest>(), Arg.Any<ApiOptions>())
+            .Returns(Task.FromResult((IReadOnlyList<Issue>)new List<Issue>()));
+
+        githubClientMock.Issue.Create(githubSettings.Username, githubSettings.RepositoryName, Arg.Any<NewIssue>())
+            .Returns(Task.FromResult(newIssueMock));
+
+        GetCache().SetForTesting(issueTitle, 1, DateTime.UtcNow);
+
+        // Act
+        await githubService.CreateBugIssue(issueTitle, new Exception(), GithubIssueLabels.Telegram);
+
+        // Assert: Creates new issue 2, closed issue 1 NOT updated
+        await githubClientMock.Issue.Received(1).Create(githubSettings.Username, githubSettings.RepositoryName, Arg.Any<NewIssue>());
+        await githubClientMock.Issue.DidNotReceive().Update(githubSettings.Username, githubSettings.RepositoryName, 1, Arg.Any<IssueUpdate>());
+    }
+
+    [Fact]
+    public async Task CreateBugIssue_CachedIssueWasRenamed_Should_CreateNewIssue()
+    {
+        // Arrange
+        var githubClientMock = Substitute.For<IGitHubClient>();
+        var optionsMock = Substitute.For<IOptions<GithubSettings>>();
+        var githubSettings = new GithubSettings { Username = "u", RepositoryName = "r" };
+        optionsMock.Value.Returns(githubSettings);
+
+        var githubService = new GithubService(githubClientMock, optionsMock);
+
+        var originalTitle = "Title A";
+        var renamedIssueMock = CreateMockIssue(1, "Title B Renamed", "Exception caught counter: 1.");
+        var newIssueMock = CreateMockIssue(2, originalTitle, "Exception caught counter: 1.");
+
+        githubClientMock.Issue.Get(githubSettings.Username, githubSettings.RepositoryName, 1)
+            .Returns(Task.FromResult(renamedIssueMock));
+
+        githubClientMock.Issue.GetAllForRepository(
+            githubSettings.Username, githubSettings.RepositoryName, Arg.Any<RepositoryIssueRequest>(), Arg.Any<ApiOptions>())
+            .Returns(Task.FromResult((IReadOnlyList<Issue>)new List<Issue>()));
+
+        githubClientMock.Issue.Create(githubSettings.Username, githubSettings.RepositoryName, Arg.Any<NewIssue>())
+            .Returns(Task.FromResult(newIssueMock));
+
+        GetCache().SetForTesting(originalTitle, 1, DateTime.UtcNow);
+
+        // Act
+        await githubService.CreateBugIssue(originalTitle, new Exception(), GithubIssueLabels.Telegram);
+
+        // Assert: Creates new issue for Title A, does NOT update renamed issue 1
+        await githubClientMock.Issue.Received(1).Create(githubSettings.Username, githubSettings.RepositoryName, Arg.Any<NewIssue>());
+        await githubClientMock.Issue.DidNotReceive().Update(githubSettings.Username, githubSettings.RepositoryName, 1, Arg.Any<IssueUpdate>());
+    }
+
+    [Fact]
+    public async Task CreateBugIssue_CachedIssueMissingProductionBugLabel_Should_CreateNewIssue()
+    {
+        // Arrange
+        var githubClientMock = Substitute.For<IGitHubClient>();
+        var optionsMock = Substitute.For<IOptions<GithubSettings>>();
+        var githubSettings = new GithubSettings { Username = "u", RepositoryName = "r" };
+        optionsMock.Value.Returns(githubSettings);
+
+        var githubService = new GithubService(githubClientMock, optionsMock);
+
+        var issueTitle = "Unlabeled Issue";
+        var unlabelledIssueMock = CreateMockIssue(1, issueTitle, "Exception caught counter: 1.", ItemState.Open, labels: ["documentation"]);
+        var newIssueMock = CreateMockIssue(2, issueTitle, "Exception caught counter: 1.");
+
+        githubClientMock.Issue.Get(githubSettings.Username, githubSettings.RepositoryName, 1)
+            .Returns(Task.FromResult(unlabelledIssueMock));
+
+        githubClientMock.Issue.GetAllForRepository(
+            githubSettings.Username, githubSettings.RepositoryName, Arg.Any<RepositoryIssueRequest>(), Arg.Any<ApiOptions>())
+            .Returns(Task.FromResult((IReadOnlyList<Issue>)new List<Issue>()));
+
+        githubClientMock.Issue.Create(githubSettings.Username, githubSettings.RepositoryName, Arg.Any<NewIssue>())
+            .Returns(Task.FromResult(newIssueMock));
+
+        GetCache().SetForTesting(issueTitle, 1, DateTime.UtcNow);
+
+        // Act
+        await githubService.CreateBugIssue(issueTitle, new Exception(), GithubIssueLabels.Telegram);
+
+        // Assert: Creates new issue for Title, does NOT update issue 1
+        await githubClientMock.Issue.Received(1).Create(githubSettings.Username, githubSettings.RepositoryName, Arg.Any<NewIssue>());
+        await githubClientMock.Issue.DidNotReceive().Update(githubSettings.Username, githubSettings.RepositoryName, 1, Arg.Any<IssueUpdate>());
+    }
+
+    [Fact]
+    public async Task CreateBugIssue_Fresh404Within60s_Should_TreatAsTransientAndNotCreateDuplicate()
+    {
+        // Arrange
+        var githubClientMock = Substitute.For<IGitHubClient>();
+        var optionsMock = Substitute.For<IOptions<GithubSettings>>();
+        var githubSettings = new GithubSettings { Username = "u", RepositoryName = "r" };
+        optionsMock.Value.Returns(githubSettings);
+
+        var githubService = new GithubService(githubClientMock, optionsMock);
+
+        var issueTitle = "Freshly Created Issue";
+
+        githubClientMock.Issue.Get(githubSettings.Username, githubSettings.RepositoryName, 1)
+            .Returns(Task.FromException<Issue>(new NotFoundException("Lagging indexing", HttpStatusCode.NotFound)));
+
+        GetCache().SetForTesting(issueTitle, 1, DateTime.UtcNow.AddSeconds(-10));
+
+        // Act
+        await githubService.CreateBugIssue(issueTitle, new Exception(), GithubIssueLabels.Telegram);
+
+        // Assert: Treated as transient, NO Issue.Create and NO Issue.GetAllForRepository called!
+        await githubClientMock.Issue.DidNotReceive().Create(githubSettings.Username, githubSettings.RepositoryName, Arg.Any<NewIssue>());
+        await githubClientMock.Issue.DidNotReceive().GetAllForRepository(
+            githubSettings.Username, githubSettings.RepositoryName, Arg.Any<RepositoryIssueRequest>(), Arg.Any<ApiOptions>());
+    }
+
+    [Fact]
+    public async Task CreateBugIssue_Older404Past60s_Should_FallThroughAndCreate()
+    {
+        // Arrange
+        var githubClientMock = Substitute.For<IGitHubClient>();
+        var optionsMock = Substitute.For<IOptions<GithubSettings>>();
+        var githubSettings = new GithubSettings { Username = "u", RepositoryName = "r" };
+        optionsMock.Value.Returns(githubSettings);
+
+        var githubService = new GithubService(githubClientMock, optionsMock);
+
+        var issueTitle = "Old Deleted Issue";
+        var newIssueMock = CreateMockIssue(2, issueTitle, "body");
+
+        githubClientMock.Issue.Get(githubSettings.Username, githubSettings.RepositoryName, 1)
+            .Returns(Task.FromException<Issue>(new NotFoundException("Truly deleted", HttpStatusCode.NotFound)));
+
+        githubClientMock.Issue.GetAllForRepository(
+            githubSettings.Username, githubSettings.RepositoryName, Arg.Any<RepositoryIssueRequest>(), Arg.Any<ApiOptions>())
+            .Returns(Task.FromResult((IReadOnlyList<Issue>)new List<Issue>()));
+
+        githubClientMock.Issue.Create(githubSettings.Username, githubSettings.RepositoryName, Arg.Any<NewIssue>())
+            .Returns(Task.FromResult(newIssueMock));
+
+        GetCache().SetForTesting(issueTitle, 1, DateTime.UtcNow.AddSeconds(-120));
+
+        // Act
+        await githubService.CreateBugIssue(issueTitle, new Exception(), GithubIssueLabels.Telegram);
+
+        // Assert: Falls through to remote lookup and creates new issue
+        await githubClientMock.Issue.Received(1).Create(githubSettings.Username, githubSettings.RepositoryName, Arg.Any<NewIssue>());
+    }
+
+    [Fact]
     public async Task CreateBugIssue_ConcurrentCalls_Should_CreateOneAndUpdateOthers()
     {
         // Arrange
@@ -90,7 +318,6 @@ public class GithubServiceTests
 
         var issueMock = CreateMockIssue(1, issueTitle, "Exception caught counter: 1.");
 
-        // Stale list endpoint always returns empty list
         githubClientMock.Issue.GetAllForRepository(
             githubSettings.Username,
             githubSettings.RepositoryName,
@@ -255,7 +482,9 @@ public class GithubServiceTests
 
         await githubService.CreateBugIssue(issueTitle, new Exception(), GithubIssueLabels.Telegram);
 
-        // Next call: Issue.Get throws NotFoundException (hard-deleted on GitHub)
+        // Next call: Issue.Get throws NotFoundException (hard-deleted on GitHub, entry created >60s ago)
+        GetCache().SetForTesting(issueTitle, 1, DateTime.UtcNow.AddSeconds(-120));
+
         githubClientMock.Issue.Get(githubSettings.Username, githubSettings.RepositoryName, 1)
             .Returns(Task.FromException<Issue>(new NotFoundException("Not found", HttpStatusCode.NotFound)));
 
@@ -290,12 +519,25 @@ public class GithubServiceTests
         return (GithubService.IssueNumberCache)cacheField.GetValue(null);
     }
 
-    private static Issue CreateMockIssue(int number, string title, string body)
+    private static Issue CreateMockIssue(int number, string title, string body, ItemState state = ItemState.Open, IEnumerable<string> labels = null)
     {
         var issue = (Issue)System.Runtime.CompilerServices.RuntimeHelpers.GetUninitializedObject(typeof(Issue));
         typeof(Issue).GetProperty("Number").SetValue(issue, number);
         typeof(Issue).GetProperty("Title").SetValue(issue, title);
         typeof(Issue).GetProperty("Body").SetValue(issue, body);
+        typeof(Issue).GetProperty("State").SetValue(issue, new StringEnum<ItemState>(state));
+
+        var labelList = (labels ?? [GithubIssueLabels.ProductionBug.GetDescription()])
+            .Select(l =>
+            {
+                var lbl = (Label)System.Runtime.CompilerServices.RuntimeHelpers.GetUninitializedObject(typeof(Label));
+                typeof(Label).GetProperty("Name").SetValue(lbl, l);
+                return lbl;
+            })
+            .ToList();
+
+        typeof(Issue).GetProperty("Labels").SetValue(issue, labelList);
+
         return issue;
     }
 }

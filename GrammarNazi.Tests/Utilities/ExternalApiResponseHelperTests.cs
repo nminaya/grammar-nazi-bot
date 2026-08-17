@@ -91,6 +91,8 @@ public class ExternalApiResponseHelperTests
     [InlineData(HttpStatusCode.ServiceUnavailable)]
     [InlineData(HttpStatusCode.BadGateway)]
     [InlineData(HttpStatusCode.GatewayTimeout)]
+    [InlineData(HttpStatusCode.InternalServerError)]
+    [InlineData(HttpStatusCode.RequestTimeout)]
     public void CreateExceptionForErrorResponse_TransientError_ReturnsExternalApiUnavailableException(HttpStatusCode statusCode)
     {
         // Arrange
@@ -121,17 +123,19 @@ public class ExternalApiResponseHelperTests
         Assert.Equal($"TestProvider API rejected model 'test-model' ({statusCode}) — the model may have been retired or the API key may lack access. Retrying will not help.", permanentEx.Message);
     }
 
-    [Fact]
-    public void CreateExceptionForErrorResponse_OtherStatusCode_ReturnsInvalidOperationException()
+    [Theory]
+    [InlineData(HttpStatusCode.MethodNotAllowed)]
+    [InlineData((HttpStatusCode)418)]
+    public void CreateExceptionForErrorResponse_OtherStatusCode_ReturnsInvalidOperationException(HttpStatusCode statusCode)
     {
         // Arrange
-        using var response = new HttpResponseMessage(HttpStatusCode.InternalServerError);
+        using var response = new HttpResponseMessage(statusCode);
 
         // Act
-        var ex = ExternalApiResponseHelper.CreateExceptionForErrorResponse(response, "TestProvider", "test-model", "Internal error");
+        var ex = ExternalApiResponseHelper.CreateExceptionForErrorResponse(response, "TestProvider", "test-model", "Other error");
 
         // Assert
         var invalidOpEx = Assert.IsType<InvalidOperationException>(ex);
-        Assert.Equal("Unsuccessful TestProvider API response InternalServerError", invalidOpEx.Message);
+        Assert.Equal($"Unsuccessful TestProvider API response {statusCode}", invalidOpEx.Message);
     }
 }

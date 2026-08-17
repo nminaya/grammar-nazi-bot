@@ -195,6 +195,8 @@ public class CerebrasApiClientTests
     [InlineData(HttpStatusCode.ServiceUnavailable)]
     [InlineData(HttpStatusCode.BadGateway)]
     [InlineData(HttpStatusCode.GatewayTimeout)]
+    [InlineData(HttpStatusCode.InternalServerError)]
+    [InlineData(HttpStatusCode.RequestTimeout)]
     public async Task GetChatCompletion_TransientErrorResponse_ThrowsExternalApiUnavailableException(HttpStatusCode httpStatusCode)
     {
         // Arrange
@@ -227,8 +229,10 @@ public class CerebrasApiClientTests
         await Assert.ThrowsAsync<ExternalApiUnavailableException>(() => client.GetChatCompletion("system", "user"));
     }
 
-    [Fact]
-    public async Task GetChatCompletion_OtherErrorResponse_ThrowsInvalidOperationException()
+    [Theory]
+    [InlineData(HttpStatusCode.MethodNotAllowed)]
+    [InlineData((HttpStatusCode)418)]
+    public async Task GetChatCompletion_OtherErrorResponse_ThrowsInvalidOperationException(HttpStatusCode httpStatusCode)
     {
         // Arrange
         var httpClientFactoryMock = Substitute.For<IHttpClientFactory>();
@@ -244,8 +248,8 @@ public class CerebrasApiClientTests
         {
             return new HttpResponseMessage
             {
-                StatusCode = HttpStatusCode.InternalServerError,
-                Content = new StringContent("Internal Server Error")
+                StatusCode = httpStatusCode,
+                Content = new StringContent("Unclassified Error")
             };
         }))
         {
@@ -258,7 +262,7 @@ public class CerebrasApiClientTests
 
         // Act & Assert
         var exception = await Assert.ThrowsAsync<InvalidOperationException>(() => client.GetChatCompletion("system", "user"));
-        Assert.Contains("Unsuccessful Cerebras API response InternalServerError", exception.Message);
+        Assert.Contains($"Unsuccessful Cerebras API response {httpStatusCode}", exception.Message);
     }
 
     [Fact]
