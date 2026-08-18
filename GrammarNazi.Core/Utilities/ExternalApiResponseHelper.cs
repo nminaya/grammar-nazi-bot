@@ -28,6 +28,14 @@ public static class ExternalApiResponseHelper
 
     public static Exception CreateExceptionForErrorResponse(HttpResponseMessage response, string providerName, string model, string errorContent)
     {
+        if (response.StatusCode == HttpStatusCode.PaymentRequired
+            || ExternalApiPermanentExceptionHelper.IsQuotaExceeded(errorContent))
+        {
+            return new ExternalApiQuotaExceededException(
+                $"{providerName} API quota exceeded or payment required.",
+                new Exception(errorContent));
+        }
+
         if (response.StatusCode == HttpStatusCode.TooManyRequests)
         {
             return new ExternalApiRateLimitException(

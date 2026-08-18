@@ -86,6 +86,27 @@ namespace GrammarNazi.Tests.Services
         }
 
         [Fact]
+        public void HandleException_ExternalApiQuotaExceededException_Should_LogWarning_And_NotCreateBugIssue()
+        {
+            // Arrange
+            var loggerMock = Substitute.For<ILogger<CatchExceptionService>>();
+            var githubServiceMock = Substitute.For<IGithubService>();
+            var service = new CatchExceptionService(githubServiceMock, loggerMock);
+            var exception = new ExternalApiQuotaExceededException("Cerebras API quota exceeded or payment required.");
+
+            // Act
+            service.HandleException(exception, GithubIssueLabels.ProductionBug);
+
+            // Assert
+            var numberOfCalls = loggerMock.ReceivedCalls()
+                .Select(call => call.GetArguments())
+                .Count(callArguments => ((LogLevel)callArguments[0]).Equals(LogLevel.Warning));
+
+            Assert.Equal(1, numberOfCalls);
+            githubServiceMock.DidNotReceive().CreateBugIssue(Arg.Any<string>(), Arg.Any<Exception>(), Arg.Any<GithubIssueLabels>());
+        }
+
+        [Fact]
         public void HandleHttpRequestException_SecureConnectionError_Should_LogError_And_CreateBugIssue()
         {
             // Arrange

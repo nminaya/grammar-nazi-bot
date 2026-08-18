@@ -71,6 +71,37 @@ public class ExternalApiResponseHelperTests
     }
 
     [Fact]
+    public void CreateExceptionForErrorResponse_PaymentRequired_ReturnsExternalApiQuotaExceededException()
+    {
+        // Arrange
+        using var response = new HttpResponseMessage(HttpStatusCode.PaymentRequired);
+
+        // Act
+        var ex = ExternalApiResponseHelper.CreateExceptionForErrorResponse(response, "TestProvider", "test-model", "Payment required");
+
+        // Assert
+        var quotaEx = Assert.IsType<ExternalApiQuotaExceededException>(ex);
+        Assert.Equal("TestProvider API quota exceeded or payment required.", quotaEx.Message);
+    }
+
+    [Theory]
+    [InlineData(HttpStatusCode.BadRequest, "{\"code\":\"payment_required\",\"message\":\"Payment required to access this resource.\"}")]
+    [InlineData(HttpStatusCode.BadRequest, "{\"code\":\"insufficient_quota\",\"message\":\"You exceeded your current quota.\"}")]
+    [InlineData(HttpStatusCode.TooManyRequests, "{\"code\":\"quota_exceeded\",\"message\":\"Quota exceeded for this account.\"}")]
+    public void CreateExceptionForErrorResponse_QuotaErrorInBody_ReturnsExternalApiQuotaExceededException(HttpStatusCode statusCode, string errorBody)
+    {
+        // Arrange
+        using var response = new HttpResponseMessage(statusCode);
+
+        // Act
+        var ex = ExternalApiResponseHelper.CreateExceptionForErrorResponse(response, "TestProvider", "test-model", errorBody);
+
+        // Assert
+        var quotaEx = Assert.IsType<ExternalApiQuotaExceededException>(ex);
+        Assert.Equal("TestProvider API quota exceeded or payment required.", quotaEx.Message);
+    }
+
+    [Fact]
     public void CreateExceptionForErrorResponse_TooManyRequests_ReturnsExternalApiRateLimitException()
     {
         // Arrange

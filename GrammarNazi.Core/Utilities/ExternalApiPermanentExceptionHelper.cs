@@ -15,6 +15,13 @@ public static class ExternalApiPermanentExceptionHelper
         "PERMISSION_DENIED"
     ];
 
+    private static readonly string[] QuotaExceededKeywords =
+    [
+        "payment_required",
+        "insufficient_quota",
+        "quota_exceeded"
+    ];
+
     public static bool IsPermanentFailure(string errorContent)
     {
         if (string.IsNullOrEmpty(errorContent))
@@ -23,5 +30,15 @@ public static class ExternalApiPermanentExceptionHelper
         }
 
         return PermanentFailureKeywords.Any(keyword => errorContent.Contains(keyword, StringComparison.OrdinalIgnoreCase));
+    }
+
+    public static bool IsQuotaExceeded(string errorContent)
+    {
+        if (string.IsNullOrEmpty(errorContent))
+        {
+            return false;
+        }
+
+        return QuotaExceededKeywords.Any(keyword => errorContent.Contains(keyword, StringComparison.OrdinalIgnoreCase));
     }
 }
