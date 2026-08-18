@@ -1,4 +1,4 @@
-﻿using Discord.Net;
+using Discord.Net;
 using GrammarNazi.Core.Extensions;
 using GrammarNazi.Core.Utilities;
 using GrammarNazi.Domain.Enums;
@@ -6,12 +6,11 @@ using GrammarNazi.Domain.Exceptions;
 using GrammarNazi.Domain.Services;
 using Microsoft.Data.SqlClient;
 using Microsoft.Extensions.Logging;
+using Polly.CircuitBreaker;
 using System;
-using System.Collections.Concurrent;
 using System.Linq;
 using System.Net;
 using System.Net.Http;
-using System.Net.Mail;
 using System.Net.Sockets;
 using System.Threading.Tasks;
 using Telegram.Bot.Exceptions;
@@ -35,6 +34,21 @@ namespace GrammarNazi.Core.Services
             if (exception is TaskFailedException taskFailedException)
             {
                 exception = taskFailedException.InnerException;
+            }
+
+            if (exception is AggregateException aggregateException)
+            {
+                var flattened = aggregateException.Flatten();
+                if (flattened.InnerExceptions.Count == 1)
+                {
+                    exception = flattened.InnerExceptions[0];
+                }
+            }
+
+            if (IsTransientExternalApiFailure(exception))
+            {
+                _logger.LogWarning(exception, exception.Message);
+                return;
             }
 
             switch (exception)
@@ -67,8 +81,6 @@ namespace GrammarNazi.Core.Services
                     HandleExternalApiPermanentFailureException(externalApiPermanentFailureException, githubIssueSection);
                     break;
 
-                case ExternalApiUnavailableException:
-                case GroqRateLimitException:
                 case TaskCanceledException when exception.InnerException is TimeoutException:
                     _logger.LogWarning(exception, exception.Message);
                     break;
@@ -77,6 +89,15 @@ namespace GrammarNazi.Core.Services
                     HandleGeneralException(exception, githubIssueSection);
                     break;
             }
+        }
+
+        /// <summary>
+        /// Transient signals from an external API or from the Polly resilience pipeline guarding it.
+        /// These are self-healing and must never open a production bug issue.
+        /// </summary>
+        private static bool IsTransientExternalApiFailure(Exception exception)
+        {
+            return exception is ExternalApiRateLimitException or ExternalApiUnavailableException or BrokenCircuitException;
         }
 
         private void HandleRequestException(RequestException requestException, GithubIssueLabels githubIssueSection)
@@ -125,35 +146,17 @@ namespace GrammarNazi.Core.Services
             HandleGeneralException(httpException, githubIssueSection);
         }
 
-        private static readonly ConcurrentDictionary<string, RateLimitState> SqlRateLimitStates = new();
-        private static readonly ConcurrentDictionary<string, RateLimitState> ExternalApiPermanentFailureRateLimitStates = new();
-
         private void HandleExternalApiPermanentFailureException(ExternalApiPermanentFailureException exception, GithubIssueLabels githubIssueSection)
         {
-            var state = ExternalApiPermanentFailureRateLimitStates.GetOrAdd(exception.Message, _ => new RateLimitState());
-
-            lock (state)
+            if (ExceptionThrottler.ShouldReport(exception.Message, TimeSpan.FromHours(24), threshold: 1))
             {
-                var now = DateTime.UtcNow;
-                state.RecentOccurrences.RemoveAll(x => x < now.AddDays(-1));
-
-                bool shouldCreateIssue = false;
-
-                if (state.RecentOccurrences.Count == 0)
-                {
-                    shouldCreateIssue = true;
-                    state.RecentOccurrences.Add(now);
-                }
-
-                if (shouldCreateIssue)
-                {
-                    _logger.LogError(exception, exception.Message);
-                    _ = _githubService.CreateBugIssue($"External API Failure: {exception.Message}", exception, githubIssueSection);
-                }
-                else
-                {
-                    _logger.LogWarning(exception, exception.Message);
-                }
+                _logger.LogError(exception, exception.Message);
+                _ = _githubService.CreateBugIssue($"External API Failure: {exception.Message}", exception, githubIssueSection)
+                    .ContinueWith(t => _logger.LogError(t.Exception, "Failed to create GitHub issue"), TaskContinuationOptions.OnlyOnFaulted);
+            }
+            else
+            {
+                _logger.LogWarning(exception, exception.Message);
             }
         }
 
@@ -178,39 +181,29 @@ namespace GrammarNazi.Core.Services
         {
             _logger.LogWarning(sqlException, $"Transient SQL error: {sqlException.Message}");
 
-            var state = SqlRateLimitStates.GetOrAdd("SqlConnectivity", _ => new RateLimitState());
-
-            lock (state)
+            if (ExceptionThrottler.ShouldReport("SqlConnectivity", TimeSpan.FromMinutes(10), threshold: 10))
             {
-                var now = DateTime.UtcNow;
-                state.RecentOccurrences.Add(now);
-                state.RecentOccurrences.RemoveAll(x => x < now.AddMinutes(-10));
-
-                bool shouldCreateIssue = false;
-
-                if (state.RecentOccurrences.Count >= 10)
-                {
-                    shouldCreateIssue = true;
-                    state.RecentOccurrences.Clear(); // Reset burst count after escalating
-                }
-
-                if (shouldCreateIssue)
-                {
-                    _ = _githubService.CreateBugIssue($"Transient SQL Exception: {sqlException.Message}", sqlException, githubIssueSection);
-                }
+                _ = _githubService.CreateBugIssue($"Transient SQL Exception: {sqlException.Message}", sqlException, githubIssueSection)
+                    .ContinueWith(t => _logger.LogError(t.Exception, "Failed to create GitHub issue"), TaskContinuationOptions.OnlyOnFaulted);
             }
-        }
-
-        private class RateLimitState
-        {
-            public System.Collections.Generic.List<DateTime> RecentOccurrences { get; } = new();
         }
 
         private void HandleHttpRequestException(HttpRequestException requestException, GithubIssueLabels githubIssueSection)
         {
-            if (requestException.StatusCode == HttpStatusCode.BadGateway)
+            bool isTransientError = requestException.HttpRequestError is HttpRequestError.NameResolutionError
+                                                                       or HttpRequestError.ConnectionError
+                                                                       or HttpRequestError.ResponseEnded;
+
+            bool isTransientStatusCode = requestException.StatusCode is HttpStatusCode.RequestTimeout
+                                                                      or HttpStatusCode.TooManyRequests
+                                                                      or HttpStatusCode.InternalServerError
+                                                                      or HttpStatusCode.BadGateway
+                                                                      or HttpStatusCode.ServiceUnavailable
+                                                                      or HttpStatusCode.GatewayTimeout;
+
+            if (isTransientError || isTransientStatusCode)
             {
-                _logger.LogWarning(requestException, "Bad Gateway");
+                _logger.LogWarning(requestException, requestException.Message);
                 return;
             }
 
@@ -247,7 +240,8 @@ namespace GrammarNazi.Core.Services
             _logger.LogError(exception, message);
 
             // fire and forget
-            _ = _githubService.CreateBugIssue($"Application Exception: {message}", exception, githubIssueSection);
+            _ = _githubService.CreateBugIssue($"Application Exception: {message}", exception, githubIssueSection)
+                .ContinueWith(t => _logger.LogError(t.Exception, "Failed to create GitHub issue"), TaskContinuationOptions.OnlyOnFaulted);
         }
     }
 }

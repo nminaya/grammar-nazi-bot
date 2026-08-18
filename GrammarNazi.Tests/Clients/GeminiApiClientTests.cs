@@ -14,6 +14,43 @@ namespace GrammarNazi.Tests.Clients;
 
 public class GeminiApiClientTests
 {
+    [Fact]
+    public async Task GenerateContent_RateLimitResponse_ThrowsExternalApiRateLimitExceptionWithRetryAfter()
+    {
+        // Arrange
+        var httpClientFactoryMock = Substitute.For<IHttpClientFactory>();
+        var optionsMock = Substitute.For<IOptions<GeminiApiSettings>>();
+
+        optionsMock.Value.Returns(new GeminiApiSettings
+        {
+            ModelVersion = "test-model-version",
+            ApiKey = "test-key"
+        });
+
+        var httpClient = new HttpClient(new MockHttpMessageHandler(async (request, cancellationToken) =>
+        {
+            var response = new HttpResponseMessage
+            {
+                StatusCode = HttpStatusCode.TooManyRequests,
+                Content = new StringContent("{\"error\":{\"message\":\"Rate limit reached\"}}")
+            };
+            response.Headers.RetryAfter = new System.Net.Http.Headers.RetryConditionHeaderValue(TimeSpan.FromSeconds(15));
+            return response;
+        }))
+        {
+            BaseAddress = new Uri("https://generativelanguage.googleapis.com/")
+        };
+
+        httpClientFactoryMock.CreateClient("geminiApi").Returns(httpClient);
+
+        var client = new GeminiApiClient(httpClientFactoryMock, optionsMock);
+
+        // Act & Assert
+        var ex = await Assert.ThrowsAsync<ExternalApiRateLimitException>(() => client.GenerateContent("prompt"));
+        Assert.NotNull(ex.RetryAfter);
+        Assert.Equal(TimeSpan.FromSeconds(15), ex.RetryAfter.Value);
+    }
+
     [Theory]
     [InlineData(HttpStatusCode.NotFound)]
     [InlineData(HttpStatusCode.Unauthorized)]
@@ -61,6 +98,8 @@ public class GeminiApiClientTests
     [InlineData(HttpStatusCode.ServiceUnavailable)]
     [InlineData(HttpStatusCode.BadGateway)]
     [InlineData(HttpStatusCode.GatewayTimeout)]
+    [InlineData(HttpStatusCode.InternalServerError)]
+    [InlineData(HttpStatusCode.RequestTimeout)]
     public async Task GenerateContent_TransientErrorResponse_ThrowsExternalApiUnavailableException(HttpStatusCode httpStatusCode)
     {
         // Arrange
@@ -93,8 +132,10 @@ public class GeminiApiClientTests
         await Assert.ThrowsAsync<ExternalApiUnavailableException>(() => client.GenerateContent("prompt"));
     }
 
-    [Fact]
-    public async Task GenerateContent_OtherErrorResponse_ThrowsInvalidOperationException()
+    [Theory]
+    [InlineData(HttpStatusCode.MethodNotAllowed)]
+    [InlineData((HttpStatusCode)418)]
+    public async Task GenerateContent_OtherErrorResponse_ThrowsInvalidOperationException(HttpStatusCode httpStatusCode)
     {
         // Arrange
         var httpClientFactoryMock = Substitute.For<IHttpClientFactory>();
@@ -110,8 +151,8 @@ public class GeminiApiClientTests
         {
             return new HttpResponseMessage
             {
-                StatusCode = HttpStatusCode.InternalServerError,
-                Content = new StringContent("Internal Server Error")
+                StatusCode = httpStatusCode,
+                Content = new StringContent("Unclassified Error")
             };
         }))
         {
@@ -124,7 +165,7 @@ public class GeminiApiClientTests
 
         // Act & Assert
         var exception = await Assert.ThrowsAsync<InvalidOperationException>(() => client.GenerateContent("prompt"));
-        Assert.Contains("Unsuccessful Gemini API response InternalServerError", exception.Message);
+        Assert.Contains($"Unsuccessful Gemini API response {httpStatusCode}", exception.Message);
     }
 
     [Fact]
