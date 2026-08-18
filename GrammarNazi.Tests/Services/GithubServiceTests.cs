@@ -2,6 +2,7 @@ using GrammarNazi.Core.Extensions;
 using GrammarNazi.Core.Services;
 using GrammarNazi.Domain.Entities.Settings;
 using GrammarNazi.Domain.Enums;
+using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using NSubstitute;
 using Octokit;
@@ -29,6 +30,7 @@ public class GithubServiceTests
         // Arrange
         var githubClientMock = Substitute.For<IGitHubClient>();
         var optionsMock = Substitute.For<IOptions<GithubSettings>>();
+        var loggerMock = Substitute.For<ILogger<GithubService>>();
         var githubSettings = new GithubSettings
         {
             Username = "test-user",
@@ -36,7 +38,7 @@ public class GithubServiceTests
         };
         optionsMock.Value.Returns(githubSettings);
 
-        var githubService = new GithubService(githubClientMock, optionsMock);
+        var githubService = new GithubService(githubClientMock, optionsMock, loggerMock);
 
         var issueTitle = "Test Issue Stale Read";
         var exception = new Exception("Test Exception");
@@ -71,32 +73,34 @@ public class GithubServiceTests
     }
 
     [Fact]
-    public async Task CreateBugIssue_MatchingOpenIssueOnSecondPage_Should_PerformUpdateNotCreate()
+    public async Task CreateBugIssue_RemoteLookup_Should_RequestAllPages()
     {
         // Arrange
         var githubClientMock = Substitute.For<IGitHubClient>();
         var optionsMock = Substitute.For<IOptions<GithubSettings>>();
+        var loggerMock = Substitute.For<ILogger<GithubService>>();
         var githubSettings = new GithubSettings { Username = "u", RepositoryName = "r" };
         optionsMock.Value.Returns(githubSettings);
 
-        var githubService = new GithubService(githubClientMock, optionsMock);
+        var githubService = new GithubService(githubClientMock, optionsMock, loggerMock);
 
         var issueTitle = "Test Issue Page 2";
         var issueMock = CreateMockIssue(105, issueTitle, "Exception caught counter: 1.");
 
-        var issues = Enumerable.Range(1, 104)
-            .Select(i => CreateMockIssue(i, $"Other Issue {i}", "body"))
-            .ToList();
-        issues.Add(issueMock);
+        ApiOptions passedOptions = null;
 
         githubClientMock.Issue.GetAllForRepository(
-            githubSettings.Username, githubSettings.RepositoryName, Arg.Any<RepositoryIssueRequest>(), Arg.Any<ApiOptions>())
-            .Returns(Task.FromResult((IReadOnlyList<Issue>)issues));
+            githubSettings.Username, githubSettings.RepositoryName, Arg.Any<RepositoryIssueRequest>(), Arg.Do<ApiOptions>(opt => passedOptions = opt))
+            .Returns(Task.FromResult((IReadOnlyList<Issue>)new List<Issue> { issueMock }));
 
         // Act
         await githubService.CreateBugIssue(issueTitle, new Exception(), GithubIssueLabels.Telegram);
 
-        // Assert
+        // Assert: ApiOptions specifies PageSize = 100 and PageCount == null (all pages)
+        Assert.NotNull(passedOptions);
+        Assert.Equal(100, passedOptions.PageSize);
+        Assert.Null(passedOptions.PageCount);
+
         await githubClientMock.Issue.DidNotReceive().Create(githubSettings.Username, githubSettings.RepositoryName, Arg.Any<NewIssue>());
         await githubClientMock.Issue.Received(1).Update(githubSettings.Username, githubSettings.RepositoryName, 105, Arg.Any<IssueUpdate>());
     }
@@ -107,10 +111,11 @@ public class GithubServiceTests
         // Arrange
         var githubClientMock = Substitute.For<IGitHubClient>();
         var optionsMock = Substitute.For<IOptions<GithubSettings>>();
+        var loggerMock = Substitute.For<ILogger<GithubService>>();
         var githubSettings = new GithubSettings { Username = "u", RepositoryName = "r" };
         optionsMock.Value.Returns(githubSettings);
 
-        var githubService = new GithubService(githubClientMock, optionsMock);
+        var githubService = new GithubService(githubClientMock, optionsMock, loggerMock);
 
         var issueTitle = "Hot Issue";
         var issueMock = CreateMockIssue(1, issueTitle, "Exception caught counter: 1.");
@@ -118,7 +123,7 @@ public class GithubServiceTests
         githubClientMock.Issue.Get(githubSettings.Username, githubSettings.RepositoryName, 1)
             .Returns(Task.FromResult(issueMock));
 
-        // Seed cache entry from 5 hours ago
+        // Seed cache entry created 5 hours ago
         GetCache().SetForTesting(issueTitle, 1, DateTime.UtcNow.AddHours(-5));
 
         // Act 1: Hit cache
@@ -133,15 +138,52 @@ public class GithubServiceTests
     }
 
     [Fact]
+    public async Task CreateBugIssue_Cumulative404sPast60sFromCreation_Should_InvalidateCacheAndCreateReplacementIssue()
+    {
+        // Arrange
+        var githubClientMock = Substitute.For<IGitHubClient>();
+        var optionsMock = Substitute.For<IOptions<GithubSettings>>();
+        var loggerMock = Substitute.For<ILogger<GithubService>>();
+        var githubSettings = new GithubSettings { Username = "u", RepositoryName = "r" };
+        optionsMock.Value.Returns(githubSettings);
+
+        var githubService = new GithubService(githubClientMock, optionsMock, loggerMock);
+
+        var issueTitle = "Recurring Exception Issue";
+        var newReplacementIssue = CreateMockIssue(2, issueTitle, "Exception caught counter: 1.");
+
+        githubClientMock.Issue.Get(githubSettings.Username, githubSettings.RepositoryName, 1)
+            .Returns(Task.FromException<Issue>(new NotFoundException("Hard deleted", HttpStatusCode.NotFound)));
+
+        githubClientMock.Issue.GetAllForRepository(
+            githubSettings.Username, githubSettings.RepositoryName, Arg.Any<RepositoryIssueRequest>(), Arg.Any<ApiOptions>())
+            .Returns(Task.FromResult((IReadOnlyList<Issue>)new List<Issue>()));
+
+        githubClientMock.Issue.Create(githubSettings.Username, githubSettings.RepositoryName, Arg.Any<NewIssue>())
+            .Returns(Task.FromResult(newReplacementIssue));
+
+        // Plant an entry created 65 seconds ago
+        var creationTime = DateTime.UtcNow.AddSeconds(-65);
+        GetCache().SetForTesting(issueTitle, 1, creationTime);
+
+        // Act: Exception recurs
+        await githubService.CreateBugIssue(issueTitle, new Exception(), GithubIssueLabels.Telegram);
+
+        // Assert: Age > 60s past creation/verification causes cache invalidation and replacement issue creation
+        await githubClientMock.Issue.Received(1).Create(githubSettings.Username, githubSettings.RepositoryName, Arg.Any<NewIssue>());
+    }
+
+    [Fact]
     public async Task CreateBugIssue_CachedIssueIsClosed_Should_CreateNewIssue()
     {
         // Arrange
         var githubClientMock = Substitute.For<IGitHubClient>();
         var optionsMock = Substitute.For<IOptions<GithubSettings>>();
+        var loggerMock = Substitute.For<ILogger<GithubService>>();
         var githubSettings = new GithubSettings { Username = "u", RepositoryName = "r" };
         optionsMock.Value.Returns(githubSettings);
 
-        var githubService = new GithubService(githubClientMock, optionsMock);
+        var githubService = new GithubService(githubClientMock, optionsMock, loggerMock);
 
         var issueTitle = "Closed Issue Title";
         var closedIssueMock = CreateMockIssue(1, issueTitle, "Exception caught counter: 1.", ItemState.Closed);
@@ -173,10 +215,11 @@ public class GithubServiceTests
         // Arrange
         var githubClientMock = Substitute.For<IGitHubClient>();
         var optionsMock = Substitute.For<IOptions<GithubSettings>>();
+        var loggerMock = Substitute.For<ILogger<GithubService>>();
         var githubSettings = new GithubSettings { Username = "u", RepositoryName = "r" };
         optionsMock.Value.Returns(githubSettings);
 
-        var githubService = new GithubService(githubClientMock, optionsMock);
+        var githubService = new GithubService(githubClientMock, optionsMock, loggerMock);
 
         var originalTitle = "Title A";
         var renamedIssueMock = CreateMockIssue(1, "Title B Renamed", "Exception caught counter: 1.");
@@ -208,10 +251,11 @@ public class GithubServiceTests
         // Arrange
         var githubClientMock = Substitute.For<IGitHubClient>();
         var optionsMock = Substitute.For<IOptions<GithubSettings>>();
+        var loggerMock = Substitute.For<ILogger<GithubService>>();
         var githubSettings = new GithubSettings { Username = "u", RepositoryName = "r" };
         optionsMock.Value.Returns(githubSettings);
 
-        var githubService = new GithubService(githubClientMock, optionsMock);
+        var githubService = new GithubService(githubClientMock, optionsMock, loggerMock);
 
         var issueTitle = "Unlabeled Issue";
         var unlabelledIssueMock = CreateMockIssue(1, issueTitle, "Exception caught counter: 1.", ItemState.Open, labels: ["documentation"]);
@@ -243,10 +287,11 @@ public class GithubServiceTests
         // Arrange
         var githubClientMock = Substitute.For<IGitHubClient>();
         var optionsMock = Substitute.For<IOptions<GithubSettings>>();
+        var loggerMock = Substitute.For<ILogger<GithubService>>();
         var githubSettings = new GithubSettings { Username = "u", RepositoryName = "r" };
         optionsMock.Value.Returns(githubSettings);
 
-        var githubService = new GithubService(githubClientMock, optionsMock);
+        var githubService = new GithubService(githubClientMock, optionsMock, loggerMock);
 
         var issueTitle = "Freshly Created Issue";
 
@@ -270,10 +315,11 @@ public class GithubServiceTests
         // Arrange
         var githubClientMock = Substitute.For<IGitHubClient>();
         var optionsMock = Substitute.For<IOptions<GithubSettings>>();
+        var loggerMock = Substitute.For<ILogger<GithubService>>();
         var githubSettings = new GithubSettings { Username = "u", RepositoryName = "r" };
         optionsMock.Value.Returns(githubSettings);
 
-        var githubService = new GithubService(githubClientMock, optionsMock);
+        var githubService = new GithubService(githubClientMock, optionsMock, loggerMock);
 
         var issueTitle = "Old Deleted Issue";
         var newIssueMock = CreateMockIssue(2, issueTitle, "body");
@@ -303,6 +349,7 @@ public class GithubServiceTests
         // Arrange
         var githubClientMock = Substitute.For<IGitHubClient>();
         var optionsMock = Substitute.For<IOptions<GithubSettings>>();
+        var loggerMock = Substitute.For<ILogger<GithubService>>();
         var githubSettings = new GithubSettings
         {
             Username = "test-user",
@@ -310,7 +357,7 @@ public class GithubServiceTests
         };
         optionsMock.Value.Returns(githubSettings);
 
-        var githubService = new GithubService(githubClientMock, optionsMock);
+        var githubService = new GithubService(githubClientMock, optionsMock, loggerMock);
 
         var issueTitle = "Test Issue Concurrent";
         var exception = new Exception("Test Exception");
@@ -346,6 +393,7 @@ public class GithubServiceTests
         // Arrange
         var githubClientMock = Substitute.For<IGitHubClient>();
         var optionsMock = Substitute.For<IOptions<GithubSettings>>();
+        var loggerMock = Substitute.For<ILogger<GithubService>>();
         var githubSettings = new GithubSettings
         {
             Username = "test-user",
@@ -353,7 +401,7 @@ public class GithubServiceTests
         };
         optionsMock.Value.Returns(githubSettings);
 
-        var githubService = new GithubService(githubClientMock, optionsMock);
+        var githubService = new GithubService(githubClientMock, optionsMock, loggerMock);
 
         githubClientMock.Issue.GetAllForRepository(
             githubSettings.Username,
@@ -384,6 +432,7 @@ public class GithubServiceTests
         // Arrange
         var githubClientMock = Substitute.For<IGitHubClient>();
         var optionsMock = Substitute.For<IOptions<GithubSettings>>();
+        var loggerMock = Substitute.For<ILogger<GithubService>>();
         var githubSettings = new GithubSettings
         {
             Username = "test-user",
@@ -391,7 +440,7 @@ public class GithubServiceTests
         };
         optionsMock.Value.Returns(githubSettings);
 
-        var githubService = new GithubService(githubClientMock, optionsMock);
+        var githubService = new GithubService(githubClientMock, optionsMock, loggerMock);
 
         var issueTitle = "Test Issue Expiry";
         var issueMock = CreateMockIssue(1, issueTitle, "Exception caught counter: 1.");
@@ -435,10 +484,11 @@ public class GithubServiceTests
         // Arrange
         var githubClientMock = Substitute.For<IGitHubClient>();
         var optionsMock = Substitute.For<IOptions<GithubSettings>>();
+        var loggerMock = Substitute.For<ILogger<GithubService>>();
         var githubSettings = new GithubSettings { Username = "u", RepositoryName = "r" };
         optionsMock.Value.Returns(githubSettings);
 
-        var githubService = new GithubService(githubClientMock, optionsMock);
+        var githubService = new GithubService(githubClientMock, optionsMock, loggerMock);
 
         githubClientMock.Issue.GetAllForRepository(
             githubSettings.Username, githubSettings.RepositoryName, Arg.Any<RepositoryIssueRequest>(), Arg.Any<ApiOptions>())
@@ -464,10 +514,11 @@ public class GithubServiceTests
         // Arrange
         var githubClientMock = Substitute.For<IGitHubClient>();
         var optionsMock = Substitute.For<IOptions<GithubSettings>>();
+        var loggerMock = Substitute.For<ILogger<GithubService>>();
         var githubSettings = new GithubSettings { Username = "u", RepositoryName = "r" };
         optionsMock.Value.Returns(githubSettings);
 
-        var githubService = new GithubService(githubClientMock, optionsMock);
+        var githubService = new GithubService(githubClientMock, optionsMock, loggerMock);
 
         var issueTitle = "Deleted Issue Title";
         var issueMock = CreateMockIssue(1, issueTitle, "Exception caught counter: 1.");

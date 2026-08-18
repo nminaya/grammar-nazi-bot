@@ -151,7 +151,7 @@ namespace GrammarNazi.Core.Services
             if (ExceptionThrottler.ShouldReport(exception.Message, TimeSpan.FromHours(24), threshold: 1))
             {
                 _logger.LogError(exception, exception.Message);
-                _ = (_githubService.CreateBugIssue($"External API Failure: {exception.Message}", exception, githubIssueSection) ?? Task.CompletedTask)
+                _ = _githubService.CreateBugIssue($"External API Failure: {exception.Message}", exception, githubIssueSection)
                     .ContinueWith(t => _logger.LogError(t.Exception, "Failed to create GitHub issue"), TaskContinuationOptions.OnlyOnFaulted);
             }
             else
@@ -183,7 +183,7 @@ namespace GrammarNazi.Core.Services
 
             if (ExceptionThrottler.ShouldReport("SqlConnectivity", TimeSpan.FromMinutes(10), threshold: 10))
             {
-                _ = (_githubService.CreateBugIssue($"Transient SQL Exception: {sqlException.Message}", sqlException, githubIssueSection) ?? Task.CompletedTask)
+                _ = _githubService.CreateBugIssue($"Transient SQL Exception: {sqlException.Message}", sqlException, githubIssueSection)
                     .ContinueWith(t => _logger.LogError(t.Exception, "Failed to create GitHub issue"), TaskContinuationOptions.OnlyOnFaulted);
             }
         }
@@ -240,7 +240,7 @@ namespace GrammarNazi.Core.Services
             _logger.LogError(exception, message);
 
             // fire and forget
-            _ = (_githubService.CreateBugIssue($"Application Exception: {message}", exception, githubIssueSection) ?? Task.CompletedTask)
+            _ = _githubService.CreateBugIssue($"Application Exception: {message}", exception, githubIssueSection)
                 .ContinueWith(t => _logger.LogError(t.Exception, "Failed to create GitHub issue"), TaskContinuationOptions.OnlyOnFaulted);
         }
     }

@@ -3,6 +3,7 @@ using GrammarNazi.Domain.Constants;
 using GrammarNazi.Domain.Entities.Settings;
 using GrammarNazi.Domain.Enums;
 using GrammarNazi.Domain.Services;
+using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using Octokit;
 using System;
@@ -24,11 +25,13 @@ public class GithubService : IGithubService
 
     private readonly IGitHubClient _githubClient;
     private readonly GithubSettings _githubSettings;
+    private readonly ILogger<GithubService> _logger;
 
-    public GithubService(IGitHubClient githubClient, IOptions<GithubSettings> options)
+    public GithubService(IGitHubClient githubClient, IOptions<GithubSettings> options, ILogger<GithubService> logger)
     {
         _githubClient = githubClient;
         _githubSettings = options.Value;
+        _logger = logger;
     }
 
     public async Task CreateBugIssue(string title, Exception exception, GithubIssueLabels githubIssueSection)
@@ -39,14 +42,15 @@ public class GithubService : IGithubService
         {
             var issueTitle = GetTrimmedTitle(title);
 
-            if (_issueCache.TryGet(issueTitle, out var cachedIssueNumber, out var cachedAtUtc))
+            if (_issueCache.TryGet(issueTitle, out var cachedIssueNumber, out var createdOrVerifiedAtUtc))
             {
-                if (await TryIncrementCounter(cachedIssueNumber, issueTitle, cachedAtUtc))
+                if (await TryIncrementCounter(cachedIssueNumber, issueTitle, createdOrVerifiedAtUtc))
                 {
                     return;
                 }
 
-                // Issue no longer matches open state/title on GitHub. Drop the stale entry and fall back to a remote lookup.
+                // Issue no longer matches open state/title on GitHub or transient 404 window expired.
+                // Drop the stale entry and fall back to a remote lookup.
                 _issueCache.Remove(issueTitle);
             }
 
@@ -76,7 +80,7 @@ public class GithubService : IGithubService
     /// Returns false when the issue no longer exists or is closed, so the caller can fall back to a remote lookup or fresh creation.
     /// Policy: A recurrence of an exception after its GitHub issue is closed files a new issue rather than reopening the old one.
     /// </summary>
-    private async Task<bool> TryIncrementCounter(int issueNumber, string expectedTitle, DateTime cachedAtUtc)
+    private async Task<bool> TryIncrementCounter(int issueNumber, string expectedTitle, DateTime createdOrVerifiedAtUtc)
     {
         try
         {
@@ -92,14 +96,18 @@ public class GithubService : IGithubService
             }
 
             await UpdateCounter(issue);
+            _issueCache.UpdateVerifiedAt(expectedTitle, DateTime.UtcNow);
             return true;
         }
         catch (NotFoundException)
         {
+            var age = DateTime.UtcNow - createdOrVerifiedAtUtc;
+
             // GitHub's single-issue GET may lag momentarily after creation. If the cached entry was created within the last 60s,
             // treat 404 as transient to avoid filing a duplicate.
-            if (DateTime.UtcNow - cachedAtUtc <= TimeSpan.FromSeconds(60))
+            if (age <= TimeSpan.FromSeconds(60))
             {
+                _logger.LogWarning("Issue #{IssueNumber} returned 404 but was created/verified {AgeTotalSeconds:F1}s ago (within 60s grace window). Treating as transient replication lag.", issueNumber, age.TotalSeconds);
                 return true;
             }
 
@@ -219,21 +227,21 @@ public class GithubService : IGithubService
 
         private readonly Dictionary<string, Entry> _entries = new(StringComparer.Ordinal);
 
-        public bool TryGet(string title, out int issueNumber, out DateTime cachedAtUtc)
+        public bool TryGet(string title, out int issueNumber, out DateTime createdOrVerifiedAtUtc)
         {
             RemoveExpired();
 
             if (_entries.TryGetValue(title, out var entry))
             {
                 var now = DateTime.UtcNow;
-                _entries[title] = entry with { CachedAtUtc = now };
+                _entries[title] = entry with { LastAccessUtc = now };
                 issueNumber = entry.Number;
-                cachedAtUtc = entry.CachedAtUtc;
+                createdOrVerifiedAtUtc = entry.CreatedOrVerifiedAtUtc;
                 return true;
             }
 
             issueNumber = default;
-            cachedAtUtc = default;
+            createdOrVerifiedAtUtc = default;
             return false;
         }
 
@@ -242,7 +250,16 @@ public class GithubService : IGithubService
             RemoveExpired();
             EvictOldestIfFull();
 
-            _entries[title] = new Entry(issueNumber, DateTime.UtcNow);
+            var now = DateTime.UtcNow;
+            _entries[title] = new Entry(issueNumber, now, now);
+        }
+
+        public void UpdateVerifiedAt(string title, DateTime verifiedAtUtc)
+        {
+            if (_entries.TryGetValue(title, out var entry))
+            {
+                _entries[title] = entry with { CreatedOrVerifiedAtUtc = verifiedAtUtc };
+            }
         }
 
         public void Remove(string title) => _entries.Remove(title);
@@ -256,7 +273,7 @@ public class GithubService : IGithubService
 
             var now = DateTime.UtcNow;
 
-            var expired = _entries.Where(x => now - x.Value.CachedAtUtc > Ttl)
+            var expired = _entries.Where(x => now - x.Value.LastAccessUtc > Ttl)
                                   .Select(x => x.Key)
                                   .ToList();
 
@@ -275,7 +292,7 @@ public class GithubService : IGithubService
 
             var target = (int)(MaxEntries * EvictionTargetRatio);
 
-            var toEvict = _entries.OrderBy(x => x.Value.CachedAtUtc)
+            var toEvict = _entries.OrderBy(x => x.Value.LastAccessUtc)
                                   .Take(_entries.Count - target)
                                   .Select(x => x.Key)
                                   .ToList();
@@ -291,10 +308,10 @@ public class GithubService : IGithubService
 
         internal void Clear() => _entries.Clear();
 
-        /// <summary>Inserts an entry with an explicit timestamp so expiry can be tested without waiting.</summary>
-        internal void SetForTesting(string title, int issueNumber, DateTime cachedAtUtc)
-            => _entries[title] = new Entry(issueNumber, cachedAtUtc);
+        /// <summary>Inserts an entry with explicit timestamps so expiry and grace periods can be tested without waiting.</summary>
+        internal void SetForTesting(string title, int issueNumber, DateTime createdOrVerifiedAtUtc, DateTime? lastAccessUtc = null)
+            => _entries[title] = new Entry(issueNumber, createdOrVerifiedAtUtc, lastAccessUtc ?? createdOrVerifiedAtUtc);
 
-        private sealed record Entry(int Number, DateTime CachedAtUtc);
+        private sealed record Entry(int Number, DateTime CreatedOrVerifiedAtUtc, DateTime LastAccessUtc);
     }
 }
