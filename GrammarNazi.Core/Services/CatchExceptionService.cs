@@ -45,7 +45,7 @@ namespace GrammarNazi.Core.Services
                 }
             }
 
-            if (IsTransientExternalApiFailure(exception))
+            if (IsNonBugExternalApiFailure(exception))
             {
                 _logger.LogWarning(exception, exception.Message);
                 return;
@@ -92,12 +92,15 @@ namespace GrammarNazi.Core.Services
         }
 
         /// <summary>
-        /// Transient signals from an external API or from the Polly resilience pipeline guarding it.
-        /// These are self-healing and must never open a production bug issue.
+        /// External API failures that are transient, rate-limited, circuit-broken, or due to account quota limits.
+        /// These operational/external issues are not code defects and must never open a production bug issue.
         /// </summary>
-        private static bool IsTransientExternalApiFailure(Exception exception)
+        private static bool IsNonBugExternalApiFailure(Exception exception)
         {
-            return exception is ExternalApiRateLimitException or ExternalApiUnavailableException or BrokenCircuitException;
+            return exception is ExternalApiRateLimitException
+                or ExternalApiUnavailableException
+                or ExternalApiQuotaExceededException
+                or BrokenCircuitException;
         }
 
         private void HandleRequestException(RequestException requestException, GithubIssueLabels githubIssueSection)
