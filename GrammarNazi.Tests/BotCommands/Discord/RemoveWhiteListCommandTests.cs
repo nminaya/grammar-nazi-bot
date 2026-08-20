@@ -4,7 +4,6 @@ using GrammarNazi.Domain.Constants;
 using GrammarNazi.Domain.Entities;
 using GrammarNazi.Domain.Services;
 using NSubstitute;
-using System.Threading.Tasks;
 using Xunit;
 
 namespace GrammarNazi.Tests.BotCommands.Discord;

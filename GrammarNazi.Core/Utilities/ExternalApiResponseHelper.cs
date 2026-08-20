@@ -1,7 +1,5 @@
 using GrammarNazi.Domain.Exceptions;
-using System;
 using System.Net;
-using System.Net.Http;
 
 namespace GrammarNazi.Core.Utilities;
 

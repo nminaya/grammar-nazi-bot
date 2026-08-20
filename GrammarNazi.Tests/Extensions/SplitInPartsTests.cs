@@ -1,6 +1,4 @@
 ﻿using GrammarNazi.Core.Extensions;
-using System;
-using System.Linq;
 using Xunit;
 
 namespace GrammarNazi.Tests.Extensions;

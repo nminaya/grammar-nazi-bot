@@ -1,74 +1,78 @@
-﻿using GrammarNazi.Domain.Attributes;
+using GrammarNazi.Domain.Attributes;
 using GrammarNazi.Domain.Entities;
 using GrammarNazi.Domain.Enums;
-using System;
 using System.ComponentModel;
-using System.Linq;
 
 namespace GrammarNazi.Core.Extensions;
 
 public static class EnumExtensions
 {
-    public static string GetDescription<T>(this T @enum)
-        where T : Enum
+    extension<T>(T @enum) where T : Enum
     {
-        var attributes = @enum
-            .GetType()
-            .GetField(@enum.ToString())
-            .GetCustomAttributes(typeof(DescriptionAttribute), false)
-            .Cast<DescriptionAttribute>()
-            .ToArray();
-
-        return attributes.Length > 0 ? attributes[0].Description : string.Empty;
-    }
-
-    public static bool IsDisabled<T>(this T @enum)
-        where T : Enum
-    {
-        var attributes = @enum
-            .GetType()
-            .GetField(@enum.ToString())
-            .GetCustomAttributes(typeof(DisabledAttribute), false);
-
-        return attributes.Length > 0;
-    }
-
-    public static LanguageInformation GetLanguageInformation(this SupportedLanguages language)
-    {
-        if (language == SupportedLanguages.Auto)
+        public string Description
         {
-            return default;
+            get
+            {
+                var attributes = @enum
+                    .GetType()
+                    .GetField(@enum.ToString())
+                    .GetCustomAttributes(typeof(DescriptionAttribute), false)
+                    .Cast<DescriptionAttribute>()
+                    .ToArray();
+
+                return attributes.Length > 0 ? attributes[0].Description : string.Empty;
+            }
         }
 
-        var langInfo = language
-            .GetType()
-            .GetField(language.ToString())
-            .GetCustomAttributes(typeof(LanguageInformationAttribute), false)
-            .Cast<LanguageInformationAttribute>()
-            .FirstOrDefault();
-
-        if (langInfo == default)
-        {
-            throw new InvalidOperationException(
-                $"SupportedLanguages.{language} does not have LanguageInformation attribute");
-        }
-
-        return new()
-        {
-            TwoLetterISOLanguageName = langInfo.TwoLetterISOLanguageName,
-            ThreeLetterISOLanguageName = langInfo.ThreeLetterISOLanguageName
-        };
+        public bool IsDisabled =>
+            @enum.GetType()
+                 .GetField(@enum.ToString())
+                 .GetCustomAttributes(typeof(DisabledAttribute), false)
+                 .Length > 0;
     }
 
-    public static bool IsLanguageSupported(this GrammarAlgorithms algorithm, SupportedLanguages language)
+    extension(GrammarAlgorithms algorithm)
     {
-        return algorithm switch
+        public bool IsLanguageSupported(SupportedLanguages language)
         {
-            GrammarAlgorithms.InternalAlgorithm => true,
-            GrammarAlgorithms.LanguageToolApi => true,
-            GrammarAlgorithms.DatamuseApi => new[] { SupportedLanguages.English, SupportedLanguages.Spanish }.Contains(language),
-            GrammarAlgorithms.YandexSpellerApi => new[] { SupportedLanguages.English, SupportedLanguages.Spanish }.Contains(language),
-            _ => true,
-        };
+            return algorithm switch
+            {
+                GrammarAlgorithms.InternalAlgorithm => true,
+                GrammarAlgorithms.LanguageToolApi => true,
+                GrammarAlgorithms.DatamuseApi => language is SupportedLanguages.English or SupportedLanguages.Spanish,
+                GrammarAlgorithms.YandexSpellerApi => language is SupportedLanguages.English or SupportedLanguages.Spanish,
+                _ => true,
+            };
+        }
+    }
+
+    extension(SupportedLanguages language)
+    {
+        public LanguageInformation GetLanguageInformation()
+        {
+            if (language == SupportedLanguages.Auto)
+            {
+                return default;
+            }
+
+            var langInfo = language
+                .GetType()
+                .GetField(language.ToString())
+                .GetCustomAttributes(typeof(LanguageInformationAttribute), false)
+                .Cast<LanguageInformationAttribute>()
+                .FirstOrDefault();
+
+            if (langInfo == default)
+            {
+                throw new InvalidOperationException(
+                    $"SupportedLanguages.{language} does not have LanguageInformation attribute");
+            }
+
+            return new()
+            {
+                TwoLetterISOLanguageName = langInfo.TwoLetterISOLanguageName,
+                ThreeLetterISOLanguageName = langInfo.ThreeLetterISOLanguageName
+            };
+        }
     }
 }

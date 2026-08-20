@@ -1,8 +1,5 @@
 ﻿using GrammarNazi.Core.Extensions;
 using GrammarNazi.Domain.Enums;
-using System;
-using System.Collections.Generic;
-using System.Linq;
 
 namespace GrammarNazi.Core.Services;
 

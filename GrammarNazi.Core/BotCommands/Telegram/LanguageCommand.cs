@@ -1,27 +1,18 @@
-﻿using GrammarNazi.Core.Extensions;
+using GrammarNazi.Core.Extensions;
 using GrammarNazi.Domain.BotCommands;
 using GrammarNazi.Domain.Constants;
 using GrammarNazi.Domain.Enums;
 using GrammarNazi.Domain.Services;
 using GrammarNazi.Domain.Utilities;
 using System.Text;
-using System.Threading.Tasks;
 using Telegram.Bot.Types;
 
 namespace GrammarNazi.Core.BotCommands.Telegram;
 
-public class LanguageCommand : BaseTelegramCommand, ITelegramBotCommand
+public class LanguageCommand(IChatConfigurationService chatConfigurationService, ITelegramBotClientWrapper telegramBotClient)
+    : BaseTelegramCommand(telegramBotClient), ITelegramBotCommand
 {
-    private readonly IChatConfigurationService _chatConfigurationService;
-
     public string Command => TelegramBotCommands.Language;
-
-    public LanguageCommand(IChatConfigurationService chatConfigurationService,
-        ITelegramBotClientWrapper telegramBotClient)
-        : base(telegramBotClient)
-    {
-        _chatConfigurationService = chatConfigurationService;
-    }
 
     public async Task Handle(Message message)
     {
@@ -48,10 +39,10 @@ public class LanguageCommand : BaseTelegramCommand, ITelegramBotCommand
 
             if (parsedOk && language.IsAssignableToEnum<SupportedLanguages>())
             {
-                var chatConfig = await _chatConfigurationService.GetConfigurationByChatId(message.Chat.Id);
+                var chatConfig = await chatConfigurationService.GetConfigurationByChatId(message.Chat.Id);
                 chatConfig.SelectedLanguage = (SupportedLanguages)language;
 
-                await _chatConfigurationService.Update(chatConfig);
+                await chatConfigurationService.Update(chatConfig);
 
                 await Client.SendTextMessageAsync(message.Chat.Id, "Language updated.");
 

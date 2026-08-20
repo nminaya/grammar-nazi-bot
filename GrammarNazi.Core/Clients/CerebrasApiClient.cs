@@ -4,11 +4,8 @@ using GrammarNazi.Domain.Entities.OpenAiAPI;
 using GrammarNazi.Domain.Entities.Settings;
 using Microsoft.Extensions.Options;
 using Newtonsoft.Json;
-using System;
 using System.Net;
-using System.Net.Http;
 using System.Net.Http.Json;
-using System.Threading.Tasks;
 
 namespace GrammarNazi.Core.Clients;
 

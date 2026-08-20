@@ -7,12 +7,8 @@ using GrammarNazi.Domain.Services;
 using Microsoft.Data.SqlClient;
 using Microsoft.Extensions.Logging;
 using Polly.CircuitBreaker;
-using System;
-using System.Linq;
 using System.Net;
-using System.Net.Http;
 using System.Net.Sockets;
-using System.Threading.Tasks;
 using Telegram.Bot.Exceptions;
 using Tweetinvi.Exceptions;
 

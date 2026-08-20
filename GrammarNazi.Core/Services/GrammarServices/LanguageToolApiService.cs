@@ -6,9 +6,6 @@ using GrammarNazi.Domain.Entities;
 using GrammarNazi.Domain.Entities.LanguageToolAPI;
 using GrammarNazi.Domain.Enums;
 using GrammarNazi.Domain.Services;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
 
 namespace GrammarNazi.Core.Services;
 

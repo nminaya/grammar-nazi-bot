@@ -1,5 +1,4 @@
 ﻿using GrammarNazi.Domain.Enums;
-using System.Collections.Generic;
 
 namespace GrammarNazi.Domain.Entities;
 

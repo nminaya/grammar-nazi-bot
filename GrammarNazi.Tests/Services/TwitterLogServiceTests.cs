@@ -2,9 +2,7 @@
 using GrammarNazi.Domain.Entities;
 using GrammarNazi.Domain.Repositories;
 using NSubstitute;
-using System;
 using System.Linq.Expressions;
-using System.Threading.Tasks;
 using Xunit;
 
 namespace GrammarNazi.Tests.Services;

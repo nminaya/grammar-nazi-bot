@@ -1,32 +1,23 @@
-﻿using GrammarNazi.Core.Extensions;
+using GrammarNazi.Core.Extensions;
 using GrammarNazi.Domain.BotCommands;
 using GrammarNazi.Domain.Constants;
 using GrammarNazi.Domain.Services;
 using GrammarNazi.Domain.Utilities;
 using System.Text;
-using System.Threading.Tasks;
 using Telegram.Bot.Types;
 
 namespace GrammarNazi.Core.BotCommands.Telegram;
 
-public class SettingsCommand : BaseTelegramCommand, ITelegramBotCommand
+public class SettingsCommand(IChatConfigurationService chatConfigurationService, ITelegramBotClientWrapper telegramBotClient)
+    : BaseTelegramCommand(telegramBotClient), ITelegramBotCommand
 {
-    private readonly IChatConfigurationService _chatConfigurationService;
-
     public string Command => TelegramBotCommands.Settings;
-
-    public SettingsCommand(IChatConfigurationService chatConfigurationService,
-        ITelegramBotClientWrapper telegramBotClient)
-        : base(telegramBotClient)
-    {
-        _chatConfigurationService = chatConfigurationService;
-    }
 
     public async Task Handle(Message message)
     {
         await SendTypingNotification(message);
 
-        var chatConfig = await _chatConfigurationService.GetConfigurationByChatId(message.Chat.Id);
+        var chatConfig = await chatConfigurationService.GetConfigurationByChatId(message.Chat.Id);
 
         var messageBuilder = new StringBuilder();
         messageBuilder.AppendLine("Algorithms Available:");
@@ -36,7 +27,7 @@ public class SettingsCommand : BaseTelegramCommand, ITelegramBotCommand
 
         var showCorrectionDetailsIcon = chatConfig.HideCorrectionDetails ? "❌" : "✅";
         messageBuilder.AppendLine($"Show correction details {showCorrectionDetailsIcon}").AppendLine();
-        messageBuilder.AppendLine("Strictness level:").AppendLine($"{chatConfig.CorrectionStrictnessLevel.GetDescription()} ✅").AppendLine();
+        messageBuilder.AppendLine("Strictness level:").AppendLine($"{chatConfig.CorrectionStrictnessLevel.Description} ✅").AppendLine();
 
         messageBuilder.AppendLine($"Whitelist Words:").AppendLine($"Type {TelegramBotCommands.WhiteList} to see Whitelist words configured.").AppendLine();
 

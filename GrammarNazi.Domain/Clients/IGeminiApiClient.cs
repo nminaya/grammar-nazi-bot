@@ -1,5 +1,4 @@
 ﻿using GrammarNazi.Domain.Entities.GeminiAPI;
-using System.Threading.Tasks;
 
 namespace GrammarNazi.Domain.Clients;
 

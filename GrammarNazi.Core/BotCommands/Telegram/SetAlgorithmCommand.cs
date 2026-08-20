@@ -1,27 +1,18 @@
-﻿using GrammarNazi.Core.Extensions;
+using GrammarNazi.Core.Extensions;
 using GrammarNazi.Domain.BotCommands;
 using GrammarNazi.Domain.Constants;
 using GrammarNazi.Domain.Enums;
 using GrammarNazi.Domain.Services;
 using GrammarNazi.Domain.Utilities;
 using System.Text;
-using System.Threading.Tasks;
 using Telegram.Bot.Types;
 
 namespace GrammarNazi.Core.BotCommands.Telegram;
 
-public class SetAlgorithmCommand : BaseTelegramCommand, ITelegramBotCommand
+public class SetAlgorithmCommand(IChatConfigurationService chatConfigurationService, ITelegramBotClientWrapper telegramBotClient)
+    : BaseTelegramCommand(telegramBotClient), ITelegramBotCommand
 {
-    private readonly IChatConfigurationService _chatConfigurationService;
-
     public string Command => TelegramBotCommands.SetAlgorithm;
-
-    public SetAlgorithmCommand(IChatConfigurationService chatConfigurationService,
-        ITelegramBotClientWrapper telegramBotClient)
-        : base(telegramBotClient)
-    {
-        _chatConfigurationService = chatConfigurationService;
-    }
 
     public async Task Handle(Message message)
     {
@@ -45,12 +36,12 @@ public class SetAlgorithmCommand : BaseTelegramCommand, ITelegramBotCommand
         {
             bool parsedOk = int.TryParse(parameters[1], out int algorithm);
 
-            if (parsedOk && algorithm.IsAssignableToEnum<GrammarAlgorithms>() && !((GrammarAlgorithms)algorithm).IsDisabled())
+            if (parsedOk && algorithm.IsAssignableToEnum<GrammarAlgorithms>() && !((GrammarAlgorithms)algorithm).IsDisabled)
             {
-                var chatConfig = await _chatConfigurationService.GetConfigurationByChatId(message.Chat.Id);
+                var chatConfig = await chatConfigurationService.GetConfigurationByChatId(message.Chat.Id);
                 chatConfig.GrammarAlgorithm = (GrammarAlgorithms)algorithm;
 
-                await _chatConfigurationService.Update(chatConfig);
+                await chatConfigurationService.Update(chatConfig);
 
                 await Client.SendTextMessageAsync(message.Chat.Id, "Algorithm updated.");
                 await SendWarningMessageIfLanguageNotSupported(message, chatConfig.SelectedLanguage, chatConfig.GrammarAlgorithm);

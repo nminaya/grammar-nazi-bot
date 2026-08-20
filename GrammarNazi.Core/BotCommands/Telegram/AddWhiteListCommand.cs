@@ -1,26 +1,15 @@
-﻿using GrammarNazi.Core.Utilities;
 using GrammarNazi.Domain.BotCommands;
 using GrammarNazi.Domain.Constants;
 using GrammarNazi.Domain.Services;
 using GrammarNazi.Domain.Utilities;
-using System.Linq;
-using System.Threading.Tasks;
 using Telegram.Bot.Types;
 
 namespace GrammarNazi.Core.BotCommands.Telegram;
 
-public class AddWhiteListCommand : BaseTelegramCommand, ITelegramBotCommand
+public class AddWhiteListCommand(IChatConfigurationService chatConfigurationService, ITelegramBotClientWrapper telegramBotClient)
+    : BaseTelegramCommand(telegramBotClient), ITelegramBotCommand
 {
-    private readonly IChatConfigurationService _chatConfigurationService;
-
     public string Command => TelegramBotCommands.AddWhiteList;
-
-    public AddWhiteListCommand(IChatConfigurationService chatConfigurationService,
-        ITelegramBotClientWrapper telegramBotClient)
-        : base(telegramBotClient)
-    {
-        _chatConfigurationService = chatConfigurationService;
-    }
 
     public async Task Handle(Message message)
     {
@@ -40,11 +29,11 @@ public class AddWhiteListCommand : BaseTelegramCommand, ITelegramBotCommand
         }
         else
         {
-            var chatConfig = await _chatConfigurationService.GetConfigurationByChatId(message.Chat.Id);
+            var chatConfig = await chatConfigurationService.GetConfigurationByChatId(message.Chat.Id);
 
             var word = parameters[1].Trim();
 
-            if (chatConfig.WhiteListWords.Contains(word, new CaseInsensitiveEqualityComparer()))
+            if (chatConfig.WhiteListWords.Contains(word, StringComparer.OrdinalIgnoreCase))
             {
                 await Client.SendTextMessageAsync(message.Chat.Id, $"The word '{word}' is already on the WhiteList");
                 return;
@@ -52,7 +41,7 @@ public class AddWhiteListCommand : BaseTelegramCommand, ITelegramBotCommand
 
             chatConfig.WhiteListWords.Add(word);
 
-            await _chatConfigurationService.Update(chatConfig);
+            await chatConfigurationService.Update(chatConfig);
 
             await Client.SendTextMessageAsync(message.Chat.Id, $"Word '{word}' added to the WhiteList.");
         }

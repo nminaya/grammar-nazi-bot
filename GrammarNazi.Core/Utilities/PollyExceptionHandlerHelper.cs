@@ -1,9 +1,6 @@
 ﻿using GrammarNazi.Domain.Exceptions;
 using Microsoft.Extensions.Logging;
 using Polly;
-using System;
-using System.Threading;
-using System.Threading.Tasks;
 
 namespace GrammarNazi.Core.Utilities;
 

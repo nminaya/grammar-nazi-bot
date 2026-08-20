@@ -1,31 +1,19 @@
-﻿using GrammarNazi.Domain.Clients;
+using GrammarNazi.Domain.Clients;
 using GrammarNazi.Domain.Constants;
 using GrammarNazi.Domain.Entities.LanguageToolAPI;
 using Microsoft.Extensions.Logging;
 using Newtonsoft.Json;
-using System.Net.Http;
-using System.Threading.Tasks;
 using System.Web;
 
 namespace GrammarNazi.Core.Clients;
 
-public class LanguageToolApiClient : ILanguageToolApiClient
+public class LanguageToolApiClient(IHttpClientFactory httpClientFactory, ILogger<LanguageToolApiClient> logger) : ILanguageToolApiClient
 {
-    private readonly IHttpClientFactory _httpClientFactory;
-    private readonly ILogger<LanguageToolApiClient> _logger;
-
-    public LanguageToolApiClient(IHttpClientFactory httpClientFactory,
-        ILogger<LanguageToolApiClient> logger)
-    {
-        _httpClientFactory = httpClientFactory;
-        _logger = logger;
-    }
-
     public async Task<LanguageToolCheckResult> Check(string text, string languageCode)
     {
         try
         {
-            var httpClient = _httpClientFactory.CreateClient("languageToolApi");
+            var httpClient = httpClientFactory.CreateClient("languageToolApi");
 
             var request = new HttpRequestMessage(HttpMethod.Post, $"api/v2/check?text={HttpUtility.UrlEncode(text)}&language={languageCode}");
 
@@ -35,12 +23,12 @@ public class LanguageToolApiClient : ILanguageToolApiClient
         }
         catch (JsonReaderException ex)
         {
-            _logger.LogWarning(ex, ex.ToString());
+            logger.LogWarning(ex, ex.ToString());
 
             // return empty result
             return new()
             {
-                Matches = new(),
+                Matches = [],
                 Language = new() { Code = Defaults.LanguageCode }
             };
         }

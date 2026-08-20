@@ -1,7 +1,6 @@
 using GrammarNazi.Core.Extensions;
 using GrammarNazi.Core.Utilities;
 using GrammarNazi.Domain.Enums;
-using System.Linq;
 using Xunit;
 
 namespace GrammarNazi.Tests.Extensions;
@@ -14,7 +13,7 @@ public class EnumExtensionsTests
     public void IsDisabled_DisabledAlgorithm_Should_ReturnTrue(GrammarAlgorithms algorithm)
     {
         // Act
-        var result = algorithm.IsDisabled();
+        var result = algorithm.IsDisabled;
 
         // Assert
         Assert.True(result);
@@ -28,7 +27,7 @@ public class EnumExtensionsTests
     public void IsDisabled_EnabledAlgorithm_Should_ReturnFalse(GrammarAlgorithms algorithm)
     {
         // Act
-        var result = algorithm.IsDisabled();
+        var result = algorithm.IsDisabled;
 
         // Assert
         Assert.False(result);

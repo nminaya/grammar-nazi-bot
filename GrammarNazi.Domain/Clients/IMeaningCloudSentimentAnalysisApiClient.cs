@@ -1,5 +1,4 @@
 ﻿using GrammarNazi.Domain.Entities.MeaningCloudAPI;
-using System.Threading.Tasks;
 
 namespace GrammarNazi.Domain.Clients;
 

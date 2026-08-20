@@ -2,8 +2,6 @@
 using GrammarNazi.Domain.Entities;
 using GrammarNazi.Domain.Services;
 using NTextCat;
-using System;
-using System.Linq;
 
 namespace GrammarNazi.Core.Services;
 

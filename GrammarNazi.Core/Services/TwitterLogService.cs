@@ -1,8 +1,6 @@
 ﻿using GrammarNazi.Domain.Entities;
 using GrammarNazi.Domain.Repositories;
 using GrammarNazi.Domain.Services;
-using System;
-using System.Threading.Tasks;
 
 namespace GrammarNazi.Core.Services;
 

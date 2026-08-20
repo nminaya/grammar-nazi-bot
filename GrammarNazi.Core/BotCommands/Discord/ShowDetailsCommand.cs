@@ -1,21 +1,13 @@
-﻿using Discord;
+using Discord;
 using GrammarNazi.Domain.BotCommands;
 using GrammarNazi.Domain.Constants;
 using GrammarNazi.Domain.Services;
-using System.Threading.Tasks;
 
 namespace GrammarNazi.Core.BotCommands.Discord;
 
-public class ShowDetailsCommand : BaseDiscordCommand, IDiscordBotCommand
+public class ShowDetailsCommand(IDiscordChannelConfigService channelConfigService) : BaseDiscordCommand, IDiscordBotCommand
 {
-    private readonly IDiscordChannelConfigService _channelConfigService;
-
     public string Command => DiscordBotCommands.ShowDetails;
-
-    public ShowDetailsCommand(IDiscordChannelConfigService discordChannelConfigService)
-    {
-        _channelConfigService = discordChannelConfigService;
-    }
 
     public async Task Handle(IMessage message)
     {
@@ -25,11 +17,11 @@ public class ShowDetailsCommand : BaseDiscordCommand, IDiscordBotCommand
             return;
         }
 
-        var channelConfig = await _channelConfigService.GetConfigurationByChannelId(message.Channel.Id);
+        var channelConfig = await channelConfigService.GetConfigurationByChannelId(message.Channel.Id);
 
         channelConfig.HideCorrectionDetails = false;
 
-        await _channelConfigService.Update(channelConfig);
+        await channelConfigService.Update(channelConfig);
 
         await SendMessage(message, "Show correction details ✅", DiscordBotCommands.ShowDetails);
     }

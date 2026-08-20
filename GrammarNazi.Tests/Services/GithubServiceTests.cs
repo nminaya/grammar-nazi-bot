@@ -6,12 +6,8 @@ using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using NSubstitute;
 using Octokit;
-using System;
-using System.Collections.Generic;
-using System.Linq;
 using System.Net;
 using System.Reflection;
-using System.Threading.Tasks;
 using Xunit;
 
 namespace GrammarNazi.Tests.Services;
@@ -578,7 +574,7 @@ public class GithubServiceTests
         typeof(Issue).GetProperty("Body").SetValue(issue, body);
         typeof(Issue).GetProperty("State").SetValue(issue, new StringEnum<ItemState>(state));
 
-        var labelList = (labels ?? [GithubIssueLabels.ProductionBug.GetDescription()])
+        var labelList = (labels ?? [GithubIssueLabels.ProductionBug.Description])
             .Select(l =>
             {
                 var lbl = (Label)System.Runtime.CompilerServices.RuntimeHelpers.GetUninitializedObject(typeof(Label));

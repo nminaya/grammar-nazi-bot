@@ -1,29 +1,19 @@
-﻿using GrammarNazi.Core.Extensions;
+using GrammarNazi.Core.Extensions;
 using GrammarNazi.Domain.Clients;
 using GrammarNazi.Domain.Entities.DatamuseAPI;
 using GrammarNazi.Domain.Enums;
 using Newtonsoft.Json;
-using System.Collections.Generic;
-using System.Net.Http;
-using System.Threading.Tasks;
 using System.Web;
 
 namespace GrammarNazi.Core.Clients;
 
-public class DatamuseApiClient : IDatamuseApiClient
+public class DatamuseApiClient(IHttpClientFactory httpClientFactory) : IDatamuseApiClient
 {
-    private readonly IHttpClientFactory _httpClientFactory;
-
-    public DatamuseApiClient(IHttpClientFactory httpClientFactory)
-    {
-        _httpClientFactory = httpClientFactory;
-    }
-
     public async Task<WordCheckResult> CheckWord(string word, string language)
     {
         string languageParam = language == SupportedLanguages.Spanish.GetLanguageInformation().TwoLetterISOLanguageName ? "&v=es" : "";
 
-        var httpClient = _httpClientFactory.CreateClient("datamuseApi");
+        var httpClient = httpClientFactory.CreateClient("datamuseApi");
 
         var request = new HttpRequestMessage(HttpMethod.Get, $"words?sp={HttpUtility.UrlEncode(word)}{languageParam}");
 

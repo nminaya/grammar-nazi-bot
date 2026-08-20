@@ -4,9 +4,6 @@ using GrammarNazi.Domain.Entities;
 using GrammarNazi.Domain.Enums;
 using GrammarNazi.Domain.Services;
 using Newtonsoft.Json;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
 
 namespace GrammarNazi.Core.Services.GrammarServices;
 
@@ -50,7 +47,7 @@ public class CerebrasApiService(ICerebrasApiClient cerebrasApiClient) : BaseGram
     {
         var languageSection = SelectedLanguage == SupportedLanguages.Auto
             ? "Auto detect the language"
-            : $"The language is {SelectedLanguage.GetDescription()}";
+            : $"The language is {SelectedLanguage.Description}";
 
         return @$"You are a grammar checker. Analyze the text for any grammar, spelling, or orthographic errors. For each mistake, provide the result in the JSON format below. {languageSection}.
 Build the results in that same language. Only provide a RFC8259 compliant JSON response without deviation. Do not include any explanation, only the JSON array.
