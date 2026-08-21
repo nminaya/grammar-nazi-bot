@@ -32,7 +32,7 @@ public class TelegramBotClientWrapper(ITelegramBotClient client) : ITelegramBotC
     }
 
     public Task<Message> SendTextMessageAsync(ChatId chatId, string text, ParseMode parseMode = default,
-        IEnumerable<MessageEntity> entities = null, bool? linkPreviewOptions = null, bool disableNotification = false,
+        IEnumerable<MessageEntity> entities = null, LinkPreviewOptions linkPreviewOptions = null, bool disableNotification = false,
         bool protectContent = false, int? replyParameters = null, ReplyMarkup replyMarkup = null,
         CancellationToken cancellationToken = default)
     {
