@@ -1,4 +1,4 @@
-﻿using Discord;
+using Discord;
 using GrammarNazi.Core.BotCommands.Discord;
 using GrammarNazi.Domain.Constants;
 using GrammarNazi.Domain.Entities;
@@ -78,6 +78,39 @@ public class AddWhiteListCommandTests
 
         // Verify SendMessageAsync was called with the reply message "is already on the WhiteList"
         await channelMock.Received().SendMessageAsync(null, false, Arg.Is<Embed>(e => e.Description.Contains(replyMessage)), null, null, null, null, null, null, MessageFlags.None);
+        Assert.Single(chatConfig.WhiteListWords);
+    }
+
+    [Fact]
+    public async Task Add_ExistingWordDifferentCase_Should_NotAdd_And_NotCallUpdate()
+    {
+        // Arrange
+        var channelConfigurationServiceMock = Substitute.For<IDiscordChannelConfigService>();
+        var command = new AddWhiteListCommand(channelConfigurationServiceMock);
+        const string replyMessage = "is already on the WhiteList";
+
+        var chatConfig = new DiscordChannelConfig
+        {
+            WhiteListWords = new() { "word" }
+        };
+
+        var channelMock = Substitute.For<IMessageChannel>();
+        var user = Substitute.For<IGuildUser>();
+        user.GuildPermissions.Returns(GuildPermissions.All);
+        var message = Substitute.For<IMessage>();
+        message.Content.Returns($"{DiscordBotCommands.AddWhiteList} Word");
+        message.Author.Returns(user);
+        message.Channel.Returns(channelMock);
+
+        channelConfigurationServiceMock.GetConfigurationByChannelId(message.Channel.Id)
+            .Returns(chatConfig);
+
+        // Act
+        await command.Handle(message);
+
+        // Assert
+        await channelMock.Received().SendMessageAsync(null, false, Arg.Is<Embed>(e => e.Description.Contains(replyMessage)), null, null, null, null, null, null, MessageFlags.None);
+        await channelConfigurationServiceMock.DidNotReceive().Update(Arg.Any<DiscordChannelConfig>());
         Assert.Single(chatConfig.WhiteListWords);
     }
 

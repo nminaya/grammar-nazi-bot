@@ -1,4 +1,4 @@
-﻿using Discord;
+using Discord;
 using Discord.WebSocket;
 using Firebase.Database;
 using GrammarNazi.App.HostedServices;
@@ -28,9 +28,14 @@ using Tweetinvi;
 
 namespace GrammarNazi.App;
 
-public class Startup(IConfiguration configuration)
+public class Startup
 {
-    public IConfiguration Configuration { get; } = configuration;
+    public IConfiguration Configuration { get; }
+
+    public Startup(IConfiguration configuration)
+    {
+        Configuration = configuration;
+    }
 
     public void ConfigureServices(IServiceCollection services)
     {

@@ -2,14 +2,10 @@
 using GrammarNazi.Domain.Entities;
 using GrammarNazi.Domain.Enums;
 using GrammarNazi.Domain.Services;
+using Microsoft.Data.SqlClient;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
-using System;
-using System.Collections.Generic;
-using System.Linq;
 using System.Text;
-using System.Threading;
-using System.Threading.Tasks;
 using Telegram.Bot;
 using Telegram.Bot.Polling;
 using Telegram.Bot.Types;
@@ -17,17 +13,22 @@ using Telegram.Bot.Types.Enums;
 
 namespace GrammarNazi.Core.Utilities;
 
-public partial class TelegramUpdateHandler(IServiceScopeFactory serviceScopeFactory, ICatchExceptionService catchExceptionService, ILogger<TelegramUpdateHandler> logger) : IUpdateHandler
+public class TelegramUpdateHandler : IUpdateHandler
 {
-    [LoggerMessage(Level = LogLevel.Information, Message = "Message received from chat id: {ChatId}")]
-    private static partial void LogMessageReceived(ILogger logger, long chatId);
+    private readonly ILogger<TelegramUpdateHandler> _logger;
+    private readonly ICatchExceptionService _catchExceptionService;
+    private readonly IServiceScopeFactory _serviceScopeFactory;
 
-    [LoggerMessage(Level = LogLevel.Information, Message = "Unknown update type received: {UpdateType}")]
-    private static partial void LogUnknownUpdateTypeReceived(ILogger logger, UpdateType updateType);
+    public TelegramUpdateHandler(IServiceScopeFactory serviceScopeFactory, ICatchExceptionService catchExceptionService, ILogger<TelegramUpdateHandler> logger)
+    {
+        _serviceScopeFactory = serviceScopeFactory;
+        _catchExceptionService = catchExceptionService;
+        _logger = logger;
+    }
 
     public Task HandleErrorAsync(ITelegramBotClient botClient, Exception exception, HandleErrorSource source, CancellationToken cancellationToken)
     {
-        catchExceptionService.HandleException(exception, GithubIssueLabels.Telegram);
+        _catchExceptionService.HandleException(exception, GithubIssueLabels.Telegram);
 
         return Task.CompletedTask;
     }
@@ -51,7 +52,7 @@ public partial class TelegramUpdateHandler(IServiceScopeFactory serviceScopeFact
 
     private async Task BotOnMessageReceived(ITelegramBotClient client, Message message)
     {
-        using var scope = serviceScopeFactory.CreateScope();
+        using var scope = _serviceScopeFactory.CreateScope();
         var serviceProvider = scope.ServiceProvider;
 
         if (message.Type != MessageType.Text)
@@ -60,7 +61,7 @@ public partial class TelegramUpdateHandler(IServiceScopeFactory serviceScopeFact
             return;
         }
 
-        LogMessageReceived(logger, message.Chat.Id);
+        _logger.LogInformation($"Message received from chat id: {message.Chat.Id}");
 
         var chatConfig = await GetChatConfiguration(message.Chat.Id, serviceProvider, client);
 
@@ -108,7 +109,7 @@ public partial class TelegramUpdateHandler(IServiceScopeFactory serviceScopeFact
 
     private async Task BotOnCallbackQueryReceived(CallbackQuery callbackQuery)
     {
-        using var scope = serviceScopeFactory.CreateScope();
+        using var scope = _serviceScopeFactory.CreateScope();
         var telegramCommandHandlerService = scope.ServiceProvider.GetService<ITelegramCommandHandlerService>();
 
         await telegramCommandHandlerService.HandleCallBackQuery(callbackQuery);
@@ -116,7 +117,7 @@ public partial class TelegramUpdateHandler(IServiceScopeFactory serviceScopeFact
 
     private Task UnknownUpdateHandlerAsync(Update update)
     {
-        LogUnknownUpdateTypeReceived(logger, update.Type);
+        _logger.LogInformation($"Unknown update type received: {update.Type}");
         return Task.CompletedTask;
     }
 
@@ -131,12 +132,11 @@ public partial class TelegramUpdateHandler(IServiceScopeFactory serviceScopeFact
             return chatConfig;
         }
 
-        var welcomeMessage = $"""
-            Hi, I'm GrammarNazi.
-            I'm currently working and correcting all spelling errors in this channel.
-            Type {TelegramBotCommands.Help} to get useful commands.
+        var messageBuilder = new StringBuilder();
 
-            """;
+        messageBuilder.AppendLine("Hi, I'm GrammarNazi.");
+        messageBuilder.AppendLine("I'm currently working and correcting all spelling errors in this chat.");
+        messageBuilder.AppendLine($"Type {TelegramBotCommands.Help} to get useful commands.");
 
         var chatConfiguration = new ChatConfiguration
         {
@@ -146,7 +146,7 @@ public partial class TelegramUpdateHandler(IServiceScopeFactory serviceScopeFact
         };
 
         await chatConfigurationService.AddConfiguration(chatConfiguration);
-        await client.SendMessage(chatId, welcomeMessage);
+        await client.SendMessage(chatId, messageBuilder.ToString());
 
         return chatConfiguration;
     }
@@ -182,7 +182,7 @@ public partial class TelegramUpdateHandler(IServiceScopeFactory serviceScopeFact
 
             foreach (var entity in entities)
             {
-                var mention = message.Text[entity.Offset..(entity.Offset + entity.Length)];
+                var mention = message.Text.Substring(entity.Offset, entity.Length);
 
                 // Remove mention from messageText
                 messageText = messageText.Replace(mention, "");

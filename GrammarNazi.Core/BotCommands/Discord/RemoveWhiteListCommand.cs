@@ -1,8 +1,8 @@
-﻿using Discord;
-using GrammarNazi.Core.Utilities;
+using Discord;
 using GrammarNazi.Domain.BotCommands;
 using GrammarNazi.Domain.Constants;
 using GrammarNazi.Domain.Services;
+using System;
 
 namespace GrammarNazi.Core.BotCommands.Discord;
 
@@ -30,7 +30,7 @@ public class RemoveWhiteListCommand(IDiscordChannelConfigService channelConfigSe
 
         var word = parameters[1].Trim();
 
-        if (!channelConfig.WhiteListWords.Contains(word, new CaseInsensitiveEqualityComparer()))
+        if (!channelConfig.WhiteListWords.Contains(word, StringComparer.OrdinalIgnoreCase))
         {
             await SendMessage(message, $"The word '{word}' is not in the WhiteList.", DiscordBotCommands.RemoveWhiteList);
             return;

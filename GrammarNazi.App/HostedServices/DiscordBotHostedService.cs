@@ -11,37 +11,43 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
-using System;
-using System.Collections.Generic;
-using System.Linq;
 using System.Text;
-using System.Threading;
 using System.Threading.Channels;
-using System.Threading.Tasks;
 
 namespace GrammarNazi.App.HostedServices;
 
-public partial class DiscordBotHostedService(BaseSocketClient baseSocketClient,
-    IOptions<DiscordSettings> options,
-    ILogger<DiscordBotHostedService> logger,
-    IServiceScopeFactory serviceScopeFactory,
-    ICatchExceptionService catchExceptionService) : BackgroundService
+public class DiscordBotHostedService : BackgroundService
 {
-    private readonly DiscordSettings _discordSettings = options.Value;
-    private readonly Channel<SocketMessage> _messageChannel = Channel.CreateUnbounded<SocketMessage>();
+    private readonly BaseSocketClient _client;
+    private readonly DiscordSettings _discordSettings;
+    private readonly ILogger<DiscordBotHostedService> _logger;
+    private readonly IServiceScopeFactory _serviceScopeFactory;
+    private readonly ICatchExceptionService _catchExceptionService;
+    private readonly Channel<SocketMessage> _messageChannel;
 
     private const int MaxWorkers = 5;
 
-    [LoggerMessage(Level = LogLevel.Information, Message = "Message received from channel id: {ChannelId}")]
-    private static partial void LogMessageReceived(ILogger logger, ulong channelId);
+    public DiscordBotHostedService(BaseSocketClient baseSocketClient,
+        IOptions<DiscordSettings> options,
+        ILogger<DiscordBotHostedService> logger,
+        IServiceScopeFactory serviceScopeFactory,
+        ICatchExceptionService catchExceptionService)
+    {
+        _client = baseSocketClient;
+        _discordSettings = options.Value;
+        _logger = logger;
+        _serviceScopeFactory = serviceScopeFactory;
+        _catchExceptionService = catchExceptionService;
+        _messageChannel = Channel.CreateUnbounded<SocketMessage>();
+    }
 
     protected override async Task ExecuteAsync(CancellationToken stoppingToken)
     {
-        logger.LogInformation("Discord Bot Hosted Service started");
+        _logger.LogInformation("Discord Bot Hosted Service started");
 
-        await baseSocketClient.LoginAsync(TokenType.Bot, _discordSettings.Token);
+        await _client.LoginAsync(TokenType.Bot, _discordSettings.Token);
 
-        await baseSocketClient.StartAsync();
+        await _client.StartAsync();
 
         Task OnMessageReceivedEvent(SocketMessage eventArgs)
         {
@@ -49,7 +55,7 @@ public partial class DiscordBotHostedService(BaseSocketClient baseSocketClient,
             return Task.CompletedTask;
         }
 
-        baseSocketClient.MessageReceived += OnMessageReceivedEvent;
+        _client.MessageReceived += OnMessageReceivedEvent;
 
         try
         {
@@ -61,7 +67,7 @@ public partial class DiscordBotHostedService(BaseSocketClient baseSocketClient,
         }
         finally
         {
-            baseSocketClient.MessageReceived -= OnMessageReceivedEvent;
+            _client.MessageReceived -= OnMessageReceivedEvent;
         }
     }
 
@@ -77,7 +83,7 @@ public partial class DiscordBotHostedService(BaseSocketClient baseSocketClient,
                 }
                 catch (Exception ex)
                 {
-                    catchExceptionService.HandleException(ex, GithubIssueLabels.Discord);
+                    _catchExceptionService.HandleException(ex, GithubIssueLabels.Discord);
                 }
             }
         }
@@ -93,10 +99,10 @@ public partial class DiscordBotHostedService(BaseSocketClient baseSocketClient,
             return;
         }
 
-        using var scope = serviceScopeFactory.CreateScope();
+        using var scope = _serviceScopeFactory.CreateScope();
         var serviceProvider = scope.ServiceProvider;
 
-        LogMessageReceived(logger, message.Channel.Id);
+        _logger.LogInformation($"Message received from channel id: {message.Channel.Id}");
 
         var channelConfig = await GetChatConfiguration(message, serviceProvider);
 
@@ -160,7 +166,7 @@ public partial class DiscordBotHostedService(BaseSocketClient baseSocketClient,
         await message.Channel.SendMessageAsync(replyMessage, messageReference: new MessageReference(message.Id));
     }
 
-    private static IGrammarService GetConfiguredGrammarService(DiscordChannelConfig channelConfig,
+    private IGrammarService GetConfiguredGrammarService(DiscordChannelConfig channelConfig,
         IServiceProvider serviceProvider)
     {
         var grammarServices = serviceProvider.GetService<IEnumerable<IGrammarService>>();
@@ -178,7 +184,7 @@ public partial class DiscordBotHostedService(BaseSocketClient baseSocketClient,
         return StringUtils.MarkDownToPlainText(StringUtils.RemoveCodeBlocks(text));
     }
 
-    private static async Task<DiscordChannelConfig> GetChatConfiguration(SocketUserMessage message,
+    private async Task<DiscordChannelConfig> GetChatConfiguration(SocketUserMessage message,
         IServiceProvider serviceProvider)
     {
         var channelConfigService = serviceProvider.GetService<IDiscordChannelConfigService>();
@@ -190,12 +196,10 @@ public partial class DiscordBotHostedService(BaseSocketClient baseSocketClient,
             return channelConfig;
         }
 
-        var welcomeMessage = $"""
-            Hi, I'm GrammarNazi.
-            I'm currently working and correcting all spelling errors in this channel.
-            Type `{DiscordBotCommands.Help}` to get useful commands.
-
-            """;
+        var messageBuilder = new StringBuilder();
+        messageBuilder.AppendLine("Hi, I'm GrammarNazi.");
+        messageBuilder.AppendLine("I'm currently working and correcting all spelling errors in this channel.");
+        messageBuilder.AppendLine($"Type `{DiscordBotCommands.Help}` to get useful commands.");
 
         ulong guild = message.Channel switch
         {
@@ -214,7 +218,7 @@ public partial class DiscordBotHostedService(BaseSocketClient baseSocketClient,
 
         await channelConfigService.AddConfiguration(channelConfiguration);
 
-        await message.Channel.SendMessageAsync(welcomeMessage);
+        await message.Channel.SendMessageAsync(messageBuilder.ToString());
 
         return channelConfiguration;
     }

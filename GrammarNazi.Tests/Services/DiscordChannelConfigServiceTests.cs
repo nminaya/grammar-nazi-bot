@@ -1,4 +1,4 @@
-﻿using GrammarNazi.Core.Services;
+using GrammarNazi.Core.Services;
 using GrammarNazi.Domain.Entities;
 using GrammarNazi.Domain.Repositories;
 using Microsoft.Extensions.Caching.Memory;

@@ -1,4 +1,4 @@
-﻿using GrammarNazi.Core.BotCommands.Telegram;
+using GrammarNazi.Core.BotCommands.Telegram;
 using GrammarNazi.Domain.Constants;
 using GrammarNazi.Domain.Entities;
 using GrammarNazi.Domain.Services;
@@ -93,6 +93,46 @@ public class AddWhiteListCommandTests
 
         // Assert
         await telegramBotClientMock.Received().SendTextMessageAsync(message.Chat.Id, Arg.Is<string>(s => s.Contains(replyMessage)), default, default, default, default, default, default, default);
+    }
+
+    [Fact]
+    public async Task Add_ExistingWordDifferentCase_Should_NotAdd_And_NotCallUpdate()
+    {
+        // Arrange
+        var chatConfigurationServiceMock = Substitute.For<IChatConfigurationService>();
+        var telegramBotClientMock = Substitute.For<ITelegramBotClientWrapper>();
+        var command = new AddWhiteListCommand(chatConfigurationServiceMock, telegramBotClientMock);
+        const string replyMessage = "is already on the WhiteList";
+
+        var chatConfig = new ChatConfiguration
+        {
+            WhiteListWords = new() { "word" }
+        };
+
+        var message = new Message
+        {
+            Text = $"{TelegramBotCommands.AddWhiteList} Word",
+            From = new User { Id = 2 },
+            Chat = new Chat
+            {
+                Id = 1,
+                Type = ChatType.Group
+            }
+        };
+
+        telegramBotClientMock.GetChatAdministratorsAsync(message.Chat.Id, default)
+            .Returns(new[] { new ChatMemberMember { User = new() { Id = message.From.Id } } });
+
+        chatConfigurationServiceMock.GetConfigurationByChatId(message.Chat.Id)
+            .Returns(chatConfig);
+
+        // Act
+        await command.Handle(message);
+
+        // Assert
+        await telegramBotClientMock.Received().SendTextMessageAsync(message.Chat.Id, Arg.Is<string>(s => s.Contains(replyMessage)), default, default, default, default, default, default, default);
+        await chatConfigurationServiceMock.DidNotReceive().Update(Arg.Any<ChatConfiguration>());
+        Assert.Single(chatConfig.WhiteListWords);
     }
 
     [Fact]

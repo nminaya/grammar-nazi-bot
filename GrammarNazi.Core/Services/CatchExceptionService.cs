@@ -1,4 +1,4 @@
-﻿using Discord.Net;
+using Discord.Net;
 using GrammarNazi.Core.Extensions;
 using GrammarNazi.Core.Utilities;
 using GrammarNazi.Domain.Enums;

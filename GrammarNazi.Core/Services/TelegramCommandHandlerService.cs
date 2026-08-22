@@ -1,4 +1,4 @@
-﻿using GrammarNazi.Core.Extensions;
+using GrammarNazi.Core.Extensions;
 using GrammarNazi.Core.Utilities;
 using GrammarNazi.Domain.BotCommands;
 using GrammarNazi.Domain.Constants;
@@ -49,8 +49,7 @@ public class TelegramCommandHandlerService(IChatConfigurationService chatConfigu
         {
             var languageSelectedString = callbackQuery.Data.Split(".")[1];
 
-            if (!Enum.TryParse<SupportedLanguages>(languageSelectedString, out var languageSelected)
-                || !Enum.IsDefined(languageSelected))
+            if (!Enum.TryParse<SupportedLanguages>(languageSelectedString, out var languageSelected))
             {
                 return;
             }
@@ -63,8 +62,7 @@ public class TelegramCommandHandlerService(IChatConfigurationService chatConfigu
         {
             var algorithmSelectedString = callbackQuery.Data.Split(".")[1];
 
-            if (!Enum.TryParse<GrammarAlgorithms>(algorithmSelectedString, out var algorithmSelected)
-                || !Enum.IsDefined(algorithmSelected))
+            if (!Enum.TryParse<GrammarAlgorithms>(algorithmSelectedString, out var algorithmSelected))
             {
                 return;
             }

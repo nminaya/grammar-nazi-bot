@@ -1,4 +1,4 @@
-﻿
+
 namespace GrammarNazi.Domain.Attributes;
 
 /// <summary>

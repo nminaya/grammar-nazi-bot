@@ -1,4 +1,4 @@
-﻿
+
 namespace GrammarNazi.Domain.Exceptions;
 
 public class ExternalApiRateLimitException : Exception

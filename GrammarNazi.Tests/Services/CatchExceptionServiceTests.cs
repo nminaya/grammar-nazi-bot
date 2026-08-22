@@ -1,4 +1,4 @@
-﻿using GrammarNazi.Core.Services;
+using GrammarNazi.Core.Services;
 using GrammarNazi.Core.Utilities;
 using GrammarNazi.Domain.Enums;
 using GrammarNazi.Domain.Services;

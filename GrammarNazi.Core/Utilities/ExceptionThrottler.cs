@@ -1,4 +1,4 @@
-﻿
+
 namespace GrammarNazi.Core.Utilities;
 
 public class ExceptionThrottler

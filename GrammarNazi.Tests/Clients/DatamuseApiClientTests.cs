@@ -1,4 +1,4 @@
-﻿using GrammarNazi.Core.Clients;
+using GrammarNazi.Core.Clients;
 using NSubstitute;
 using System.Net;
 using Xunit;
