@@ -1,10 +1,12 @@
 root = true
 
+# No charset rule: this repository has a mix of BOM and BOM-less .cs files.
+# A single charset value cannot express "preserve each file's existing encoding",
+# so encoding is deliberately not enforced here. Normalizing it is a separate change.
 [*]
 indent_style = space
 indent_size = 4
 end_of_line = crlf
-charset = utf-8-bom
 trim_trailing_whitespace = true
 insert_final_newline = true
 

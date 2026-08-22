@@ -49,7 +49,7 @@ public class TelegramCommandHandlerService(IChatConfigurationService chatConfigu
         {
             var languageSelectedString = callbackQuery.Data.Split(".")[1];
 
-            if (!Enum.TryParse<SupportedLanguages>(languageSelectedString, out var languageSelected))
+            if (!Enum.TryParse<SupportedLanguages>(languageSelectedString, out var languageSelected) || !Enum.IsDefined(languageSelected))
             {
                 return;
             }
@@ -62,7 +62,7 @@ public class TelegramCommandHandlerService(IChatConfigurationService chatConfigu
         {
             var algorithmSelectedString = callbackQuery.Data.Split(".")[1];
 
-            if (!Enum.TryParse<GrammarAlgorithms>(algorithmSelectedString, out var algorithmSelected))
+            if (!Enum.TryParse<GrammarAlgorithms>(algorithmSelectedString, out var algorithmSelected) || !Enum.IsDefined(algorithmSelected))
             {
                 return;
             }
