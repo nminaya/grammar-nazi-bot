@@ -1,4 +1,4 @@
-using GrammarNazi.Core.Clients;
+﻿using GrammarNazi.Core.Clients;
 using GrammarNazi.Core.Extensions;
 using GrammarNazi.Domain.Entities.Settings;
 using GrammarNazi.Domain.Exceptions;

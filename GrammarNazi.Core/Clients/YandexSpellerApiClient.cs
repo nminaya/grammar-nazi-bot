@@ -1,4 +1,4 @@
-using GrammarNazi.Domain.Clients;
+﻿using GrammarNazi.Domain.Clients;
 using GrammarNazi.Domain.Entities.YandexSpellerAPI;
 using Microsoft.Extensions.Logging;
 using Newtonsoft.Json;

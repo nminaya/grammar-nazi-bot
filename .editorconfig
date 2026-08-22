@@ -3,16 +3,16 @@ root = true
 [*]
 indent_style = space
 indent_size = 4
-end_of_line = lf
-charset = utf-8
+end_of_line = crlf
+charset = utf-8-bom
 trim_trailing_whitespace = true
 insert_final_newline = true
 
 [*.cs]
 # C# Coding Conventions
 csharp_style_namespace_declarations = file_scoped:suggestion
-csharp_style_primary_constructor = true:suggestion
-csharp_style_prefer_collection_expression = true:suggestion
+csharp_style_prefer_primary_constructors = true:suggestion
+dotnet_style_prefer_collection_expression = true:suggestion
 csharp_style_prefer_pattern_matching = true:suggestion
 csharp_style_var_for_built_in_types = true:suggestion
 csharp_style_var_when_type_is_apparent = true:suggestion

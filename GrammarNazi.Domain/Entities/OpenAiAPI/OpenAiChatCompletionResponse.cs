@@ -1,4 +1,4 @@
-
+﻿
 namespace GrammarNazi.Domain.Entities.OpenAiAPI;
 
 public class OpenAiChatCompletionResponse

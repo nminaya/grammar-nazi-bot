@@ -1,4 +1,4 @@
-using GrammarNazi.Domain.Clients;
+﻿using GrammarNazi.Domain.Clients;
 using GrammarNazi.Domain.Entities.SentimAPI;
 using Newtonsoft.Json;
 using System.Net.Http.Json;

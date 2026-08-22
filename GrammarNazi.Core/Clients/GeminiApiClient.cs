@@ -1,4 +1,4 @@
-using GrammarNazi.Core.Utilities;
+﻿using GrammarNazi.Core.Utilities;
 using GrammarNazi.Domain.Clients;
 using GrammarNazi.Domain.Entities.GeminiAPI;
 using GrammarNazi.Domain.Entities.Settings;

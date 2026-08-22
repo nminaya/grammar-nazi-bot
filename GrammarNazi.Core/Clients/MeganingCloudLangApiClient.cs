@@ -1,4 +1,4 @@
-using GrammarNazi.Domain.Clients;
+﻿using GrammarNazi.Domain.Clients;
 using GrammarNazi.Domain.Entities.MeaningCloudAPI;
 using GrammarNazi.Domain.Entities.Settings;
 using Microsoft.Extensions.Options;

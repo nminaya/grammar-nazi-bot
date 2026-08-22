@@ -11,13 +11,13 @@ public class GenerateContentRequest
     {
         return new()
         {
-            Contents = 
+            Contents =
             [
-                new() 
+                new()
                 {
-                    Parts = 
+                    Parts =
                     [
-                        new() 
+                        new()
                         {
                             Text = promt
                         }

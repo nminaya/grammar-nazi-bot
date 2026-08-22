@@ -1,4 +1,4 @@
-using Discord.Net;
+﻿using Discord.Net;
 using GrammarNazi.Core.Extensions;
 using GrammarNazi.Core.Utilities;
 using GrammarNazi.Domain.Enums;
@@ -126,7 +126,7 @@ namespace GrammarNazi.Core.Services
 
         private void HandleHttpException(HttpException httpException, GithubIssueLabels githubIssueSection)
         {
-            if (httpException.Message.ContainsAny("50013", "50001", "Forbidden", "160002") 
+            if (httpException.Message.ContainsAny("50013", "50001", "Forbidden", "160002")
                 || httpException.HttpCode == HttpStatusCode.BadRequest)
             {
                 _logger.LogWarning(httpException, httpException.Message);
@@ -218,7 +218,7 @@ namespace GrammarNazi.Core.Services
                 _logger.LogWarning(apiRequestException.Message);
                 return;
             }
-         
+
             _logger.LogError(apiRequestException, apiRequestException.Message);
         }
 

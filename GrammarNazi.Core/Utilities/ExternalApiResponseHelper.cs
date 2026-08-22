@@ -1,4 +1,4 @@
-using GrammarNazi.Domain.Exceptions;
+﻿using GrammarNazi.Domain.Exceptions;
 using System.Net;
 
 namespace GrammarNazi.Core.Utilities;

@@ -1,4 +1,4 @@
-using Discord;
+﻿using Discord;
 using GrammarNazi.Core.Extensions;
 using GrammarNazi.Domain.BotCommands;
 using GrammarNazi.Domain.Constants;

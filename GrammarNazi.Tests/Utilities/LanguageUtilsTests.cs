@@ -1,4 +1,4 @@
-using GrammarNazi.Core.Utilities;
+﻿using GrammarNazi.Core.Utilities;
 using Xunit;
 
 namespace GrammarNazi.Tests.Utilities;

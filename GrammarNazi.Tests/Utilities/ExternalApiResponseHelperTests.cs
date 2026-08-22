@@ -1,4 +1,4 @@
-using GrammarNazi.Core.Utilities;
+﻿using GrammarNazi.Core.Utilities;
 using GrammarNazi.Domain.Exceptions;
 using System.Net;
 using System.Net.Http.Headers;

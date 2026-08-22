@@ -1,4 +1,4 @@
-
+﻿
 namespace GrammarNazi.Core.Extensions;
 
 public static class BuiltInTypesExtensions

@@ -1,4 +1,4 @@
-using GrammarNazi.Domain.BotCommands;
+﻿using GrammarNazi.Domain.BotCommands;
 using GrammarNazi.Domain.Constants;
 using GrammarNazi.Domain.Services;
 using GrammarNazi.Domain.Utilities;

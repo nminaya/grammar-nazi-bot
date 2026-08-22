@@ -1,4 +1,4 @@
-using GrammarNazi.Domain.Clients;
+﻿using GrammarNazi.Domain.Clients;
 using GrammarNazi.Domain.Constants;
 using GrammarNazi.Domain.Entities.LanguageToolAPI;
 using Microsoft.Extensions.Logging;

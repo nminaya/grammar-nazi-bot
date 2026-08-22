@@ -1,4 +1,4 @@
-using GrammarNazi.Domain.Attributes;
+﻿using GrammarNazi.Domain.Attributes;
 using GrammarNazi.Domain.Entities;
 using GrammarNazi.Domain.Enums;
 using System.ComponentModel;

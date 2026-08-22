@@ -1,4 +1,4 @@
-namespace GrammarNazi.Domain.Entities.Settings;
+﻿namespace GrammarNazi.Domain.Entities.Settings;
 
 public class GroqApiSettings
 {

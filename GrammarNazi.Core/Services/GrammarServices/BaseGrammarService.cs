@@ -40,7 +40,7 @@ public abstract class BaseGrammarService
         {
             return $"The word \"{word}\" doesn't exist or isn't in the dictionary.";
         }
-        
+
         if (language == SupportedLanguages.Spanish.GetLanguageInformation().TwoLetterISOLanguageName)
         {
             return $"La palabra \"{word}\" no existe o no está en el diccionario.";

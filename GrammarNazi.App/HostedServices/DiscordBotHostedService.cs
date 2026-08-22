@@ -11,43 +11,37 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
+using System;
+using System.Collections.Generic;
+using System.Linq;
 using System.Text;
+using System.Threading;
 using System.Threading.Channels;
+using System.Threading.Tasks;
 
 namespace GrammarNazi.App.HostedServices;
 
-public class DiscordBotHostedService : BackgroundService
+public partial class DiscordBotHostedService(BaseSocketClient baseSocketClient,
+    IOptions<DiscordSettings> options,
+    ILogger<DiscordBotHostedService> logger,
+    IServiceScopeFactory serviceScopeFactory,
+    ICatchExceptionService catchExceptionService) : BackgroundService
 {
-    private readonly BaseSocketClient _client;
-    private readonly DiscordSettings _discordSettings;
-    private readonly ILogger<DiscordBotHostedService> _logger;
-    private readonly IServiceScopeFactory _serviceScopeFactory;
-    private readonly ICatchExceptionService _catchExceptionService;
-    private readonly Channel<SocketMessage> _messageChannel;
+    private readonly DiscordSettings _discordSettings = options.Value;
+    private readonly Channel<SocketMessage> _messageChannel = Channel.CreateUnbounded<SocketMessage>();
 
     private const int MaxWorkers = 5;
 
-    public DiscordBotHostedService(BaseSocketClient baseSocketClient,
-        IOptions<DiscordSettings> options,
-        ILogger<DiscordBotHostedService> logger,
-        IServiceScopeFactory serviceScopeFactory,
-        ICatchExceptionService catchExceptionService)
-    {
-        _client = baseSocketClient;
-        _discordSettings = options.Value;
-        _logger = logger;
-        _serviceScopeFactory = serviceScopeFactory;
-        _catchExceptionService = catchExceptionService;
-        _messageChannel = Channel.CreateUnbounded<SocketMessage>();
-    }
+    [LoggerMessage(Level = LogLevel.Information, Message = "Message received from channel id: {ChannelId}")]
+    private static partial void LogMessageReceived(ILogger logger, ulong channelId);
 
     protected override async Task ExecuteAsync(CancellationToken stoppingToken)
     {
-        _logger.LogInformation("Discord Bot Hosted Service started");
+        logger.LogInformation("Discord Bot Hosted Service started");
 
-        await _client.LoginAsync(TokenType.Bot, _discordSettings.Token);
+        await baseSocketClient.LoginAsync(TokenType.Bot, _discordSettings.Token);
 
-        await _client.StartAsync();
+        await baseSocketClient.StartAsync();
 
         Task OnMessageReceivedEvent(SocketMessage eventArgs)
         {
@@ -55,7 +49,7 @@ public class DiscordBotHostedService : BackgroundService
             return Task.CompletedTask;
         }
 
-        _client.MessageReceived += OnMessageReceivedEvent;
+        baseSocketClient.MessageReceived += OnMessageReceivedEvent;
 
         try
         {
@@ -67,7 +61,7 @@ public class DiscordBotHostedService : BackgroundService
         }
         finally
         {
-            _client.MessageReceived -= OnMessageReceivedEvent;
+            baseSocketClient.MessageReceived -= OnMessageReceivedEvent;
         }
     }
 
@@ -83,7 +77,7 @@ public class DiscordBotHostedService : BackgroundService
                 }
                 catch (Exception ex)
                 {
-                    _catchExceptionService.HandleException(ex, GithubIssueLabels.Discord);
+                    catchExceptionService.HandleException(ex, GithubIssueLabels.Discord);
                 }
             }
         }
@@ -91,18 +85,18 @@ public class DiscordBotHostedService : BackgroundService
 
     private async Task OnMessageReceived(SocketMessage socketMessage)
     {
-        if (socketMessage is not SocketUserMessage message 
-            || message.Author.IsBot 
+        if (socketMessage is not SocketUserMessage message
+            || message.Author.IsBot
             || message.Author.IsWebhook
             || string.IsNullOrWhiteSpace(message.Content))
         {
             return;
         }
 
-        using var scope = _serviceScopeFactory.CreateScope();
+        using var scope = serviceScopeFactory.CreateScope();
         var serviceProvider = scope.ServiceProvider;
 
-        _logger.LogInformation($"Message received from channel id: {message.Channel.Id}");
+        LogMessageReceived(logger, message.Channel.Id);
 
         var channelConfig = await GetChatConfiguration(message, serviceProvider);
 
@@ -166,7 +160,7 @@ public class DiscordBotHostedService : BackgroundService
         await message.Channel.SendMessageAsync(replyMessage, messageReference: new MessageReference(message.Id));
     }
 
-    private IGrammarService GetConfiguredGrammarService(DiscordChannelConfig channelConfig,
+    private static IGrammarService GetConfiguredGrammarService(DiscordChannelConfig channelConfig,
         IServiceProvider serviceProvider)
     {
         var grammarServices = serviceProvider.GetService<IEnumerable<IGrammarService>>();
@@ -184,7 +178,7 @@ public class DiscordBotHostedService : BackgroundService
         return StringUtils.MarkDownToPlainText(StringUtils.RemoveCodeBlocks(text));
     }
 
-    private async Task<DiscordChannelConfig> GetChatConfiguration(SocketUserMessage message,
+    private static async Task<DiscordChannelConfig> GetChatConfiguration(SocketUserMessage message,
         IServiceProvider serviceProvider)
     {
         var channelConfigService = serviceProvider.GetService<IDiscordChannelConfigService>();
@@ -196,10 +190,12 @@ public class DiscordBotHostedService : BackgroundService
             return channelConfig;
         }
 
-        var messageBuilder = new StringBuilder();
-        messageBuilder.AppendLine("Hi, I'm GrammarNazi.");
-        messageBuilder.AppendLine("I'm currently working and correcting all spelling errors in this channel.");
-        messageBuilder.AppendLine($"Type `{DiscordBotCommands.Help}` to get useful commands.");
+        var welcomeMessage = $"""
+            Hi, I'm GrammarNazi.
+            I'm currently working and correcting all spelling errors in this channel.
+            Type `{DiscordBotCommands.Help}` to get useful commands.
+
+            """;
 
         ulong guild = message.Channel switch
         {
@@ -218,7 +214,7 @@ public class DiscordBotHostedService : BackgroundService
 
         await channelConfigService.AddConfiguration(channelConfiguration);
 
-        await message.Channel.SendMessageAsync(messageBuilder.ToString());
+        await message.Channel.SendMessageAsync(welcomeMessage);
 
         return channelConfiguration;
     }

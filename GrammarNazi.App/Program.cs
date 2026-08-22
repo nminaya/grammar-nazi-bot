@@ -1,4 +1,4 @@
-using GrammarNazi.App;
+﻿using GrammarNazi.App;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.Extensions.Hosting;
 
