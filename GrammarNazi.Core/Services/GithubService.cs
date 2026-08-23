@@ -6,13 +6,8 @@ using GrammarNazi.Domain.Services;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using Octokit;
-using System;
-using System.Collections.Generic;
-using System.Linq;
 using System.Text;
 using System.Text.RegularExpressions;
-using System.Threading;
-using System.Threading.Tasks;
 
 namespace GrammarNazi.Core.Services;
 
@@ -88,7 +83,7 @@ public class GithubService : IGithubService
 
             bool isOpen = issue.State.StringValue != null && issue.State.Value == ItemState.Open;
             bool titleMatches = string.Equals(issue.Title, expectedTitle, StringComparison.Ordinal);
-            bool hasProductionBugLabel = issue.Labels != null && issue.Labels.Any(l => l?.Name != null && string.Equals(l.Name, GithubIssueLabels.ProductionBug.GetDescription(), StringComparison.Ordinal));
+            bool hasProductionBugLabel = issue.Labels != null && issue.Labels.Any(l => l?.Name != null && string.Equals(l.Name, GithubIssueLabels.ProductionBug.Description, StringComparison.Ordinal));
 
             if (!isOpen || !titleMatches || !hasProductionBugLabel)
             {
@@ -136,7 +131,7 @@ public class GithubService : IGithubService
             SortProperty = IssueSort.Created,
             SortDirection = SortDirection.Descending
         };
-        request.Labels.Add(GithubIssueLabels.ProductionBug.GetDescription());
+        request.Labels.Add(GithubIssueLabels.ProductionBug.Description);
 
         var options = new ApiOptions { PageSize = 100 };
 
@@ -153,8 +148,8 @@ public class GithubService : IGithubService
             Body = BuildIssueBody(exception)
         };
 
-        newIssue.Labels.Add(GithubIssueLabels.ProductionBug.GetDescription());
-        newIssue.Labels.Add(githubIssueSection.GetDescription());
+        newIssue.Labels.Add(GithubIssueLabels.ProductionBug.Description);
+        newIssue.Labels.Add(githubIssueSection.Description);
 
         return _githubClient.Issue.Create(_githubSettings.Username, _githubSettings.RepositoryName, newIssue);
     }

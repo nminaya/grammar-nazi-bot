@@ -11,13 +11,8 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
-using System;
-using System.Collections.Generic;
-using System.Linq;
 using System.Text;
-using System.Threading;
 using System.Threading.Channels;
-using System.Threading.Tasks;
 
 namespace GrammarNazi.App.HostedServices;
 
@@ -96,8 +91,8 @@ public class DiscordBotHostedService : BackgroundService
 
     private async Task OnMessageReceived(SocketMessage socketMessage)
     {
-        if (socketMessage is not SocketUserMessage message 
-            || message.Author.IsBot 
+        if (socketMessage is not SocketUserMessage message
+            || message.Author.IsBot
             || message.Author.IsWebhook
             || string.IsNullOrWhiteSpace(message.Content))
         {

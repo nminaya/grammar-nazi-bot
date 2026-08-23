@@ -1,24 +1,14 @@
 ﻿using Discord;
-using GrammarNazi.Core.Utilities;
 using GrammarNazi.Domain.BotCommands;
 using GrammarNazi.Domain.Constants;
 using GrammarNazi.Domain.Services;
 using System;
-using System.Linq;
-using System.Threading.Tasks;
 
 namespace GrammarNazi.Core.BotCommands.Discord;
 
-public class RemoveWhiteListCommand : BaseDiscordCommand, IDiscordBotCommand
+public class RemoveWhiteListCommand(IDiscordChannelConfigService channelConfigService) : BaseDiscordCommand, IDiscordBotCommand
 {
-    private readonly IDiscordChannelConfigService _channelConfigService;
-
     public string Command => DiscordBotCommands.RemoveWhiteList;
-
-    public RemoveWhiteListCommand(IDiscordChannelConfigService discordChannelConfigService)
-    {
-        _channelConfigService = discordChannelConfigService;
-    }
 
     public async Task Handle(IMessage message)
     {
@@ -36,11 +26,11 @@ public class RemoveWhiteListCommand : BaseDiscordCommand, IDiscordBotCommand
             return;
         }
 
-        var channelConfig = await _channelConfigService.GetConfigurationByChannelId(message.Channel.Id);
+        var channelConfig = await channelConfigService.GetConfigurationByChannelId(message.Channel.Id);
 
         var word = parameters[1].Trim();
 
-        if (!channelConfig.WhiteListWords.Contains(word, new CaseInsensitiveEqualityComparer()))
+        if (!channelConfig.WhiteListWords.Contains(word, StringComparer.OrdinalIgnoreCase))
         {
             await SendMessage(message, $"The word '{word}' is not in the WhiteList.", DiscordBotCommands.RemoveWhiteList);
             return;
@@ -48,7 +38,7 @@ public class RemoveWhiteListCommand : BaseDiscordCommand, IDiscordBotCommand
 
         channelConfig.WhiteListWords.RemoveAll(v => v.Equals(word, StringComparison.OrdinalIgnoreCase));
 
-        await _channelConfigService.Update(channelConfig);
+        await channelConfigService.Update(channelConfig);
 
         await SendMessage(message, $"Word '{word}' removed from the WhiteList.", DiscordBotCommands.RemoveWhiteList);
     }

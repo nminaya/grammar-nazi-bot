@@ -3,7 +3,6 @@ using GrammarNazi.Core.Extensions;
 using GrammarNazi.Core.Utilities;
 using GrammarNazi.Domain.Enums;
 using System;
-using System.Text;
 using System.Threading.Tasks;
 
 namespace GrammarNazi.Core.BotCommands.Discord;
@@ -33,19 +32,9 @@ public abstract class BaseDiscordCommand
         await socketUserMessage.Channel.SendMessageAsync(embed: embed.Build());
     }
 
-    protected string GetAvailableOptions<T>(T selectedOption) where T : Enum
+    protected string GetAvailableOptions<T>(T selectedOption) where T : struct, Enum
     {
-        var options = EnumUtils.GetEnabledValues<T>();
-
-        var messageBuilder = new StringBuilder();
-
-        foreach (var item in options)
-        {
-            var selected = item.Equals(selectedOption) ? "✅" : "";
-            messageBuilder.AppendLine($"{Convert.ToInt32(item)} - {item.GetDescription()} {selected}");
-        }
-
-        return messageBuilder.ToString();
+        return EnumUtils.GetAvailableOptions(selectedOption);
     }
 
     protected async Task SendWarningMessageIfLanguageNotSupported(IMessage message, string command, SupportedLanguages language, GrammarAlgorithms algorithm)
@@ -60,6 +49,6 @@ public abstract class BaseDiscordCommand
             return;
         }
 
-        await SendMessage(message, $"WARNING: The selected language ({language.GetDescription()}) is not supported by the selected algorithm ({algorithm.GetDescription()}).", command);
+        await SendMessage(message, EnumUtils.GetUnsupportedLanguageWarning(language, algorithm), command);
     }
 }

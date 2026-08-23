@@ -2,20 +2,12 @@
 using GrammarNazi.Domain.BotCommands;
 using GrammarNazi.Domain.Constants;
 using GrammarNazi.Domain.Services;
-using System.Threading.Tasks;
 
 namespace GrammarNazi.Core.BotCommands.Discord;
 
-public class StopCommand : BaseDiscordCommand, IDiscordBotCommand
+public class StopCommand(IDiscordChannelConfigService channelConfigService) : BaseDiscordCommand, IDiscordBotCommand
 {
-    private readonly IDiscordChannelConfigService _channelConfigService;
-
     public string Command => DiscordBotCommands.Stop;
-
-    public StopCommand(IDiscordChannelConfigService discordChannelConfigService)
-    {
-        _channelConfigService = discordChannelConfigService;
-    }
 
     public async Task Handle(IMessage message)
     {
@@ -25,11 +17,11 @@ public class StopCommand : BaseDiscordCommand, IDiscordBotCommand
             return;
         }
 
-        var channelConfig = await _channelConfigService.GetConfigurationByChannelId(message.Channel.Id);
+        var channelConfig = await channelConfigService.GetConfigurationByChannelId(message.Channel.Id);
 
         channelConfig.IsBotStopped = true;
 
-        await _channelConfigService.Update(channelConfig);
+        await channelConfigService.Update(channelConfig);
 
         await SendMessage(message, "Bot stopped", DiscordBotCommands.Stop);
     }

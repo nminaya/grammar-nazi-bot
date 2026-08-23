@@ -3,11 +3,7 @@ using GrammarNazi.Domain.Entities.Settings;
 using GrammarNazi.Domain.Exceptions;
 using Microsoft.Extensions.Options;
 using NSubstitute;
-using System;
 using System.Net;
-using System.Net.Http;
-using System.Threading;
-using System.Threading.Tasks;
 using Xunit;
 
 namespace GrammarNazi.Tests.Clients;

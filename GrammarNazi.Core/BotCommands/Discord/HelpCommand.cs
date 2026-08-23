@@ -4,7 +4,6 @@ using GrammarNazi.Domain.BotCommands;
 using GrammarNazi.Domain.Constants;
 using GrammarNazi.Domain.Enums;
 using System.Text;
-using System.Threading.Tasks;
 
 namespace GrammarNazi.Core.BotCommands.Discord;
 
@@ -26,8 +25,8 @@ public class HelpCommand : BaseDiscordCommand, IDiscordBotCommand
         messageBuilder.AppendLine($"`{DiscordBotCommands.WhiteList}` See list of ignored words.");
         messageBuilder.AppendLine($"`{DiscordBotCommands.AddWhiteList}` <word> to add a Whitelist word.");
         messageBuilder.AppendLine($"`{DiscordBotCommands.RemoveWhiteList}` <word> to remove a Whitelist word.");
-        messageBuilder.AppendLine($"`{DiscordBotCommands.Tolerant}` Set strictness level to {CorrectionStrictnessLevels.Tolerant.GetDescription()}");
-        messageBuilder.AppendLine($"`{DiscordBotCommands.Intolerant}` Set strictness level to {CorrectionStrictnessLevels.Intolerant.GetDescription()}");
+        messageBuilder.AppendLine($"`{DiscordBotCommands.Tolerant}` Set strictness level to {CorrectionStrictnessLevels.Tolerant.Description}");
+        messageBuilder.AppendLine($"`{DiscordBotCommands.Intolerant}` Set strictness level to {CorrectionStrictnessLevels.Intolerant.Description}");
 
         await SendMessage(message, messageBuilder.ToString(), DiscordBotCommands.Help);
     }

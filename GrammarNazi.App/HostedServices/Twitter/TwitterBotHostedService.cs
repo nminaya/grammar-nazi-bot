@@ -6,12 +6,7 @@ using GrammarNazi.Domain.Enums;
 using GrammarNazi.Domain.Services;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
-using System;
-using System.Collections.Generic;
-using System.Linq;
 using System.Text;
-using System.Threading;
-using System.Threading.Tasks;
 using Tweetinvi;
 using Tweetinvi.Exceptions;
 using Tweetinvi.Models;
@@ -124,7 +119,7 @@ public class TwitterBotHostedService : BaseTwitterHostedService
                     {
                         var replyTweets = correctionString.SplitInParts(Defaults.TwitterTextMaxLength);
 
-                        foreach (var (reply, index) in replyTweets.WithIndex())
+                        foreach (var (index, reply) in replyTweets.Index())
                         {
                             var correctionStringSplitted = index == 0 ? reply : $"@{tweet.CreatedBy.ScreenName} {mentionedUsers} {reply}";
 

@@ -1,9 +1,5 @@
 ﻿using GrammarNazi.Domain.Repositories;
-using System;
-using System.Collections.Generic;
-using System.Linq;
 using System.Linq.Expressions;
-using System.Threading.Tasks;
 
 namespace GrammarNazi.Core.Repositories;
 
@@ -19,8 +15,8 @@ public class InMemoryRepository<T> : IRepository<T> where T : class
 
     public Task<bool> Any(Expression<Func<T, bool>> filter = default)
     {
-        return filter == default 
-            ? Task.FromResult(_list.Count > 0) 
+        return filter == default
+            ? Task.FromResult(_list.Count > 0)
             : Task.FromResult(_list.Any(filter.Compile()));
     }
 

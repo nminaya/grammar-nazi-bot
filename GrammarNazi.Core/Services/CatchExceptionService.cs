@@ -7,12 +7,8 @@ using GrammarNazi.Domain.Services;
 using Microsoft.Data.SqlClient;
 using Microsoft.Extensions.Logging;
 using Polly.CircuitBreaker;
-using System;
-using System.Linq;
 using System.Net;
-using System.Net.Http;
 using System.Net.Sockets;
-using System.Threading.Tasks;
 using Telegram.Bot.Exceptions;
 using Tweetinvi.Exceptions;
 
@@ -130,7 +126,7 @@ namespace GrammarNazi.Core.Services
 
         private void HandleHttpException(HttpException httpException, GithubIssueLabels githubIssueSection)
         {
-            if (httpException.Message.ContainsAny("50013", "50001", "Forbidden", "160002") 
+            if (httpException.Message.ContainsAny("50013", "50001", "Forbidden", "160002")
                 || httpException.HttpCode == HttpStatusCode.BadRequest)
             {
                 _logger.LogWarning(httpException, httpException.Message);
@@ -222,7 +218,7 @@ namespace GrammarNazi.Core.Services
                 _logger.LogWarning(apiRequestException.Message);
                 return;
             }
-         
+
             _logger.LogError(apiRequestException, apiRequestException.Message);
         }
 

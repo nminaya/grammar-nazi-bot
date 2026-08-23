@@ -1,4 +1,5 @@
 using GrammarNazi.Core.Extensions;
+using GrammarNazi.Core.Utilities;
 using GrammarNazi.Domain.BotCommands;
 using GrammarNazi.Domain.Constants;
 using GrammarNazi.Domain.Enums;
@@ -14,24 +15,13 @@ using static GrammarNazi.Core.Utilities.TelegramBotHelper;
 
 namespace GrammarNazi.Core.Services;
 
-public class TelegramCommandHandlerService : ITelegramCommandHandlerService
+public class TelegramCommandHandlerService(IChatConfigurationService chatConfigurationService,
+    ITelegramBotClientWrapper telegramBotClient,
+    IEnumerable<ITelegramBotCommand> botCommands) : ITelegramCommandHandlerService
 {
-    private readonly IChatConfigurationService _chatConfigurationService;
-    private readonly ITelegramBotClientWrapper _client;
-    private readonly IEnumerable<ITelegramBotCommand> _botCommands;
-
-    public TelegramCommandHandlerService(IChatConfigurationService chatConfigurationService,
-        ITelegramBotClientWrapper telegramBotClient,
-        IEnumerable<ITelegramBotCommand> botCommands)
-    {
-        _chatConfigurationService = chatConfigurationService;
-        _client = telegramBotClient;
-        _botCommands = botCommands;
-    }
-
     public async Task HandleCommand(Message message)
     {
-        var command = _botCommands.FirstOrDefault(v => IsCommand(v.Command, message.Text));
+        var command = botCommands.FirstOrDefault(v => IsCommand(v.Command, message.Text));
 
         if (command != null)
         {
@@ -43,15 +33,15 @@ public class TelegramCommandHandlerService : ITelegramCommandHandlerService
     {
         var message = callbackQuery.Message;
 
-        if (!await IsUserAdmin(_client, callbackQuery.Message, callbackQuery.From))
+        if (!await IsUserAdmin(telegramBotClient, callbackQuery.Message, callbackQuery.From))
         {
             var userMention = $"[{callbackQuery.From.FirstName} {callbackQuery.From.LastName}](tg://user?id={callbackQuery.From.Id})";
 
-            await _client.SendTextMessageAsync(message.Chat.Id, $"{userMention} Only admins can use this command.", ParseMode.Markdown);
+            await telegramBotClient.SendTextMessageAsync(message.Chat.Id, $"{userMention} Only admins can use this command.", ParseMode.Markdown);
             return;
         }
 
-        var chatConfig = await _chatConfigurationService.GetConfigurationByChatId(message.Chat.Id);
+        var chatConfig = await chatConfigurationService.GetConfigurationByChatId(message.Chat.Id);
 
         var enumTypeString = callbackQuery.Data.Split(".")[0];
 
@@ -59,28 +49,34 @@ public class TelegramCommandHandlerService : ITelegramCommandHandlerService
         {
             var languageSelectedString = callbackQuery.Data.Split(".")[1];
 
-            var languageSelected = Enum.GetValues(typeof(SupportedLanguages)).Cast<SupportedLanguages>().First(v => v.ToString() == languageSelectedString);
+            if (!Enum.TryParse<SupportedLanguages>(languageSelectedString, out var languageSelected) || !Enum.IsDefined(languageSelected))
+            {
+                return;
+            }
 
             chatConfig.SelectedLanguage = languageSelected;
 
-            await _client.SendTextMessageAsync(message.Chat.Id, $"Language updated: {languageSelected.GetDescription()}");
+            await telegramBotClient.SendTextMessageAsync(message.Chat.Id, $"Language updated: {languageSelected.Description}");
         }
         else
         {
             var algorithmSelectedString = callbackQuery.Data.Split(".")[1];
 
-            var algorithmSelected = Enum.GetValues(typeof(GrammarAlgorithms)).Cast<GrammarAlgorithms>().First(v => v.ToString() == algorithmSelectedString);
+            if (!Enum.TryParse<GrammarAlgorithms>(algorithmSelectedString, out var algorithmSelected) || !Enum.IsDefined(algorithmSelected))
+            {
+                return;
+            }
 
             chatConfig.GrammarAlgorithm = algorithmSelected;
 
-            await _client.SendTextMessageAsync(message.Chat.Id, $"Algorithm updated: {algorithmSelected.GetDescription()}");
+            await telegramBotClient.SendTextMessageAsync(message.Chat.Id, $"Algorithm updated: {algorithmSelected.Description}");
         }
 
-        await _chatConfigurationService.Update(chatConfig);
+        await chatConfigurationService.Update(chatConfig);
         await SendWarningMessageIfLanguageNotSupported(message, chatConfig.SelectedLanguage, chatConfig.GrammarAlgorithm);
 
         // Fire and forget
-        _ = _client.DeleteMessageAsync(callbackQuery.Message.Chat.Id, callbackQuery.Message.MessageId);
+        _ = telegramBotClient.DeleteMessageAsync(callbackQuery.Message.Chat.Id, callbackQuery.Message.MessageId);
     }
 
     private async Task SendWarningMessageIfLanguageNotSupported(Message message, SupportedLanguages language, GrammarAlgorithms algorithm)
@@ -95,7 +91,7 @@ public class TelegramCommandHandlerService : ITelegramCommandHandlerService
             return;
         }
 
-        await _client.SendTextMessageAsync(message.Chat.Id, $"WARNING: The selected language ({language.GetDescription()}) is not supported by the selected algorithm ({algorithm.GetDescription()}).");
+        await telegramBotClient.SendTextMessageAsync(message.Chat.Id, EnumUtils.GetUnsupportedLanguageWarning(language, algorithm));
     }
 
     private static bool IsCommand(string expected, string actual)

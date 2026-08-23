@@ -1,6 +1,4 @@
 ﻿using GrammarNazi.Domain.Utilities;
-using System.Linq;
-using System.Threading.Tasks;
 using Telegram.Bot.Types;
 using Telegram.Bot.Types.Enums;
 

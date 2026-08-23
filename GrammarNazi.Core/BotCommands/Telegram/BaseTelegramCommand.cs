@@ -4,7 +4,6 @@ using GrammarNazi.Domain.Enums;
 using GrammarNazi.Domain.Utilities;
 using System;
 using System.Linq;
-using System.Text;
 using System.Threading.Tasks;
 using Telegram.Bot.Types;
 using Telegram.Bot.Types.Enums;
@@ -12,21 +11,16 @@ using Telegram.Bot.Types.ReplyMarkups;
 
 namespace GrammarNazi.Core.BotCommands.Telegram;
 
-public abstract class BaseTelegramCommand
+public abstract class BaseTelegramCommand(ITelegramBotClientWrapper telegramBotClient)
 {
-    protected readonly ITelegramBotClientWrapper Client;
+    protected readonly ITelegramBotClientWrapper Client = telegramBotClient;
 
-    protected BaseTelegramCommand(ITelegramBotClientWrapper telegramBotClient)
-    {
-        Client = telegramBotClient;
-    }
-
-    protected async Task ShowOptions<T>(Message message, string messageTitle) where T : Enum
+    protected async Task ShowOptions<T>(Message message, string messageTitle) where T : struct, Enum
     {
         var enumType = typeof(T);
 
         var options = EnumUtils.GetEnabledValues<T>()
-                        .Select(v => new[] { InlineKeyboardButton.WithCallbackData($"{Convert.ToInt32(v)} - {v.GetDescription()}", $"{enumType.Name}.{v}") });
+                        .Select(v => new[] { InlineKeyboardButton.WithCallbackData($"{Convert.ToInt32(v)} - {v.Description}", $"{enumType.Name}.{v}") });
 
         var inlineOptions = new InlineKeyboardMarkup(options);
 
@@ -76,21 +70,11 @@ public abstract class BaseTelegramCommand
             return;
         }
 
-        await Client.SendTextMessageAsync(message.Chat.Id, $"WARNING: The selected language ({language.GetDescription()}) is not supported by the selected algorithm ({algorithm.GetDescription()}).");
+        await Client.SendTextMessageAsync(message.Chat.Id, EnumUtils.GetUnsupportedLanguageWarning(language, algorithm));
     }
 
-    protected static string GetAvailableOptions<T>(T selectedOption) where T : Enum
+    protected static string GetAvailableOptions<T>(T selectedOption) where T : struct, Enum
     {
-        var options = EnumUtils.GetEnabledValues<T>();
-
-        var messageBuilder = new StringBuilder();
-
-        foreach (var item in options)
-        {
-            var selected = item.Equals(selectedOption) ? "✅" : "";
-            messageBuilder.AppendLine($"{Convert.ToInt32(item)} - {item.GetDescription()} {selected}");
-        }
-
-        return messageBuilder.ToString();
+        return EnumUtils.GetAvailableOptions(selectedOption);
     }
 }

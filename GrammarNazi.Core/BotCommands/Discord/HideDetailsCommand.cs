@@ -2,20 +2,12 @@
 using GrammarNazi.Domain.BotCommands;
 using GrammarNazi.Domain.Constants;
 using GrammarNazi.Domain.Services;
-using System.Threading.Tasks;
 
 namespace GrammarNazi.Core.BotCommands.Discord;
 
-public class HideDetailsCommand : BaseDiscordCommand, IDiscordBotCommand
+public class HideDetailsCommand(IDiscordChannelConfigService channelConfigService) : BaseDiscordCommand, IDiscordBotCommand
 {
-    private readonly IDiscordChannelConfigService _channelConfigService;
-
     public string Command => DiscordBotCommands.HideDetails;
-
-    public HideDetailsCommand(IDiscordChannelConfigService discordChannelConfigService)
-    {
-        _channelConfigService = discordChannelConfigService;
-    }
 
     public async Task Handle(IMessage message)
     {
@@ -25,11 +17,11 @@ public class HideDetailsCommand : BaseDiscordCommand, IDiscordBotCommand
             return;
         }
 
-        var channelConfig = await _channelConfigService.GetConfigurationByChannelId(message.Channel.Id);
+        var channelConfig = await channelConfigService.GetConfigurationByChannelId(message.Channel.Id);
 
         channelConfig.HideCorrectionDetails = true;
 
-        await _channelConfigService.Update(channelConfig);
+        await channelConfigService.Update(channelConfig);
 
         await SendMessage(message, "Correction details hidden ✅", DiscordBotCommands.HideDetails);
     }

@@ -1,10 +1,6 @@
 using GrammarNazi.Core.Extensions;
 using GrammarNazi.Domain.Exceptions;
-using System;
 using System.Net;
-using System.Net.Http;
-using System.Threading;
-using System.Threading.Tasks;
 using Xunit;
 
 namespace GrammarNazi.Tests.Resilience;

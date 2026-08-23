@@ -3,23 +3,14 @@ using GrammarNazi.Domain.Constants;
 using GrammarNazi.Domain.Enums;
 using GrammarNazi.Domain.Services;
 using GrammarNazi.Domain.Utilities;
-using System.Threading.Tasks;
 using Telegram.Bot.Types;
 
 namespace GrammarNazi.Core.BotCommands.Telegram;
 
-public class TolerantCommand : BaseTelegramCommand, ITelegramBotCommand
+public class TolerantCommand(IChatConfigurationService chatConfigurationService, ITelegramBotClientWrapper telegramBotClient)
+    : BaseTelegramCommand(telegramBotClient), ITelegramBotCommand
 {
-    private readonly IChatConfigurationService _chatConfigurationService;
-
     public string Command => TelegramBotCommands.Tolerant;
-
-    public TolerantCommand(IChatConfigurationService chatConfigurationService,
-        ITelegramBotClientWrapper telegramBotClient)
-        : base(telegramBotClient)
-    {
-        _chatConfigurationService = chatConfigurationService;
-    }
 
     public async Task Handle(Message message)
     {
@@ -31,11 +22,11 @@ public class TolerantCommand : BaseTelegramCommand, ITelegramBotCommand
             return;
         }
 
-        var chatConfig = await _chatConfigurationService.GetConfigurationByChatId(message.Chat.Id);
+        var chatConfig = await chatConfigurationService.GetConfigurationByChatId(message.Chat.Id);
 
         chatConfig.CorrectionStrictnessLevel = CorrectionStrictnessLevels.Tolerant;
 
-        await _chatConfigurationService.Update(chatConfig);
+        await chatConfigurationService.Update(chatConfig);
 
         await Client.SendTextMessageAsync(message.Chat.Id, "Tolerant ✅");
 

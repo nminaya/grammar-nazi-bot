@@ -5,11 +5,7 @@ using GrammarNazi.Domain.Enums;
 using GrammarNazi.Domain.Services;
 using GrammarNazi.Domain.Utilities;
 using NSubstitute;
-using System;
-using System.Collections.Generic;
-using System.Linq;
 using System.Reflection;
-using System.Threading.Tasks;
 using Telegram.Bot.Types;
 using Telegram.Bot.Types.Enums;
 using Xunit;
@@ -108,6 +104,52 @@ public class TelegramCommandHandlerServiceTests
 
         // Assert
         Assert.Equal(grammarAlgorithm, chatConfig.GrammarAlgorithm);
+    }
+
+    [Theory]
+    [InlineData("SupportedLanguages.999")]
+    [InlineData("GrammarAlgorithms.999")]
+    public async Task HandleCallBackQuery_UndefinedEnumValue_Should_ReturnWithoutSendingMessage(string callBackQueryData)
+    {
+        // Arrange
+        var chatConfigurationServiceMock = Substitute.For<IChatConfigurationService>();
+        var telegramBotClientMock = Substitute.For<ITelegramBotClientWrapper>();
+        var botCommandsMock = Substitute.For<IEnumerable<ITelegramBotCommand>>();
+        var service = new TelegramCommandHandlerService(chatConfigurationServiceMock, telegramBotClientMock, botCommandsMock);
+
+        var chatConfig = new ChatConfiguration
+        {
+            SelectedLanguage = SupportedLanguages.Auto,
+            GrammarAlgorithm = GrammarAlgorithms.InternalAlgorithm
+        };
+
+        var message = new Message
+        {
+            From = new User { Id = 2 },
+            Chat = new Chat
+            {
+                Id = 1,
+                Type = ChatType.Group
+            }
+        };
+
+        var callbackQuery = new CallbackQuery { Message = message, From = message.From, Data = callBackQueryData };
+
+        telegramBotClientMock.GetChatAdministratorsAsync(message.Chat.Id, default)
+            .Returns(new[] { new ChatMemberMember { User = new() { Id = message.From.Id } } });
+
+        telegramBotClientMock.GetMeAsync(default)
+            .Returns(new User { Id = 123456 });
+
+        chatConfigurationServiceMock.GetConfigurationByChatId(message.Chat.Id)
+            .Returns(chatConfig);
+
+        // Act
+        await service.HandleCallBackQuery(callbackQuery);
+
+        // Assert
+        await chatConfigurationServiceMock.DidNotReceive().Update(Arg.Any<ChatConfiguration>());
+        await telegramBotClientMock.DidNotReceive().SendTextMessageAsync(message.Chat.Id, Arg.Any<string>(), default, default, default, default, default, default, default, default);
     }
 
     [Fact]

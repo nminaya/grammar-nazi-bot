@@ -22,7 +22,6 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Options;
 using Octokit;
-using System;
 using Telegram.Bot;
 using Telegram.Bot.Polling;
 using Tweetinvi;

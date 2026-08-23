@@ -6,7 +6,6 @@ using GrammarNazi.Domain.Enums;
 using GrammarNazi.Domain.Services;
 using GrammarNazi.Domain.Utilities;
 using NSubstitute;
-using System.Threading.Tasks;
 using Telegram.Bot.Types;
 using Telegram.Bot.Types.Enums;
 using Xunit;
@@ -187,7 +186,7 @@ public class LanguageCommandTests
         Assert.Equal(SupportedLanguages.French, chatConfig.SelectedLanguage);
         await telegramBotClientMock.Received().SendTextMessageAsync(message.Chat.Id, Arg.Is<string>(s => s.Contains("Language updated")), default, default, default, default, default, default, default, default);
 
-        var warningMessage = $"WARNING: The selected language ({SupportedLanguages.French.GetDescription()}) is not supported by the selected algorithm ({GrammarAlgorithms.YandexSpellerApi.GetDescription()}).";
+        var warningMessage = $"WARNING: The selected language ({SupportedLanguages.French.Description}) is not supported by the selected algorithm ({GrammarAlgorithms.YandexSpellerApi.Description}).";
 
         await telegramBotClientMock.Received().SendTextMessageAsync(message.Chat.Id, Arg.Is<string>(s => s.Contains(warningMessage)), default, default, default, default, default, default, default, default);
     }

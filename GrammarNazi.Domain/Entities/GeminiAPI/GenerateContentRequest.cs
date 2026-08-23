@@ -1,5 +1,4 @@
 ﻿using Newtonsoft.Json;
-using System.Collections.Generic;
 
 namespace GrammarNazi.Domain.Entities.GeminiAPI;
 
@@ -12,13 +11,13 @@ public class GenerateContentRequest
     {
         return new()
         {
-            Contents = 
+            Contents =
             [
-                new() 
+                new()
                 {
-                    Parts = 
+                    Parts =
                     [
-                        new() 
+                        new()
                         {
                             Text = promt
                         }

@@ -1,6 +1,4 @@
 ﻿using GrammarNazi.Domain.Entities.YandexSpellerAPI;
-using System.Collections.Generic;
-using System.Threading.Tasks;
 
 namespace GrammarNazi.Domain.Clients;
 

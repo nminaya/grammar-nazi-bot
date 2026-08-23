@@ -1,7 +1,5 @@
 ﻿using GrammarNazi.Domain.Entities;
 using GrammarNazi.Domain.Enums;
-using System.Collections.Generic;
-using System.Threading.Tasks;
 
 namespace GrammarNazi.Domain.Services;
 

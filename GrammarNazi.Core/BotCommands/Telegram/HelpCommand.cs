@@ -4,18 +4,14 @@ using GrammarNazi.Domain.Constants;
 using GrammarNazi.Domain.Enums;
 using GrammarNazi.Domain.Utilities;
 using System.Text;
-using System.Threading.Tasks;
 using Telegram.Bot.Types;
 
 namespace GrammarNazi.Core.BotCommands.Telegram;
 
-public class HelpCommand : BaseTelegramCommand, ITelegramBotCommand
+public class HelpCommand(ITelegramBotClientWrapper telegramBotClient)
+    : BaseTelegramCommand(telegramBotClient), ITelegramBotCommand
 {
     public string Command => TelegramBotCommands.Help;
-
-    public HelpCommand(ITelegramBotClientWrapper telegramBotClient)
-        : base(telegramBotClient)
-    { }
 
     public async Task Handle(Message message)
     {
@@ -34,8 +30,8 @@ public class HelpCommand : BaseTelegramCommand, ITelegramBotCommand
         messageBuilder.AppendLine($"{TelegramBotCommands.WhiteList} See list of ignored words.");
         messageBuilder.AppendLine($"{TelegramBotCommands.AddWhiteList} <word> to add a Whitelist word.");
         messageBuilder.AppendLine($"{TelegramBotCommands.RemoveWhiteList} <word> to remove a Whitelist word.");
-        messageBuilder.AppendLine($"{TelegramBotCommands.Tolerant} Set strictness level to {CorrectionStrictnessLevels.Tolerant.GetDescription()}");
-        messageBuilder.AppendLine($"{TelegramBotCommands.Intolerant} Set strictness level to {CorrectionStrictnessLevels.Intolerant.GetDescription()}");
+        messageBuilder.AppendLine($"{TelegramBotCommands.Tolerant} Set strictness level to {CorrectionStrictnessLevels.Tolerant.Description}");
+        messageBuilder.AppendLine($"{TelegramBotCommands.Intolerant} Set strictness level to {CorrectionStrictnessLevels.Intolerant.Description}");
 
         await Client.SendTextMessageAsync(message.Chat.Id, messageBuilder.ToString());
         await NotifyIfBotIsNotAdmin(message);

@@ -2,7 +2,6 @@
 using GrammarNazi.Domain.BotCommands;
 using GrammarNazi.Domain.Utilities;
 using NSubstitute;
-using System.Threading.Tasks;
 using Telegram.Bot.Types;
 using Telegram.Bot.Types.Enums;
 
@@ -55,6 +54,6 @@ public static class TestUtilities
         await command.Handle(message);
 
         // Assert
-        await telegramBotClientMock.Received().SendTextMessageAsync(message.Chat.Id, Arg.Is<string>(s => s.Contains(replyMessage)), default, default, default, default, default, message.MessageId, default, default);  
+        await telegramBotClientMock.Received().SendTextMessageAsync(message.Chat.Id, Arg.Is<string>(s => s.Contains(replyMessage)), default, default, default, default, default, message.MessageId, default, default);
     }
 }

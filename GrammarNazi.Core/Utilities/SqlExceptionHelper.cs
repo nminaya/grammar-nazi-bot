@@ -1,6 +1,4 @@
 using Microsoft.Data.SqlClient;
-using System;
-using System.Linq;
 
 namespace GrammarNazi.Core.Utilities;
 

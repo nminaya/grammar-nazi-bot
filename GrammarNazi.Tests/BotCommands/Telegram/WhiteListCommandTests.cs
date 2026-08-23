@@ -4,7 +4,6 @@ using GrammarNazi.Domain.Entities;
 using GrammarNazi.Domain.Services;
 using GrammarNazi.Domain.Utilities;
 using NSubstitute;
-using System.Threading.Tasks;
 using Telegram.Bot.Types;
 using Telegram.Bot.Types.Enums;
 using Xunit;

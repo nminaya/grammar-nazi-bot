@@ -1,13 +1,8 @@
 using GrammarNazi.Core.Clients;
 using NSubstitute;
 using System.Net;
-using System.Net.Http;
-using System.Threading;
-using System.Threading.Tasks;
 using Xunit;
 using Newtonsoft.Json;
-using System;
-using System.Linq;
 
 namespace GrammarNazi.Tests.Clients;
 

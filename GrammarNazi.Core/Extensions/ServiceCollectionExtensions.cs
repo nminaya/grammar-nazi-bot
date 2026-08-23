@@ -9,82 +9,106 @@ using NTextCat;
 using Polly;
 using Polly.CircuitBreaker;
 using Polly.Retry;
-using System;
-using System.Collections.Generic;
-using System.Linq;
 using System.Net;
-using System.Net.Http;
 using System.Reflection;
-using System.Threading;
-using System.Threading.Tasks;
 
 namespace GrammarNazi.Core.Extensions;
 
 public static class ServiceCollectionExtensions
 {
-    public static IServiceCollection AddNTextCatLanguageService(this IServiceCollection serviceCollection)
+    extension(IServiceCollection serviceCollection)
     {
-        return serviceCollection.AddTransient<BasicProfileFactoryBase<RankedLanguageIdentifier>, RankedLanguageIdentifierFactory>();
+        public IServiceCollection AddNTextCatLanguageService()
+        {
+            return serviceCollection.AddTransient<BasicProfileFactoryBase<RankedLanguageIdentifier>, RankedLanguageIdentifierFactory>();
+        }
+
+        public IServiceCollection AddNamedHttpClients()
+        {
+            serviceCollection.AddHttpClient("datamuseApi", c => { c.BaseAddress = new Uri("https://api.datamuse.com/"); c.Timeout = TimeSpan.FromSeconds(30); });
+            serviceCollection.AddHttpClient("languageToolApi", c => { c.BaseAddress = new Uri("https://languagetool.org/"); c.Timeout = TimeSpan.FromSeconds(30); });
+            serviceCollection.AddHttpClient("yandexSpellerApi", c => { c.BaseAddress = new Uri("https://speller.yandex.net/"); c.Timeout = TimeSpan.FromSeconds(30); });
+            serviceCollection.AddHttpClient("sentimApi", c => { c.BaseAddress = new Uri("https://sentim-api.herokuapp.com/"); c.Timeout = TimeSpan.FromSeconds(30); });
+
+            serviceCollection.AddSingleton<GroqResilienceHolder>();
+            serviceCollection.AddSingleton<CerebrasResilienceHolder>();
+            serviceCollection.AddSingleton<GeminiResilienceHolder>();
+
+            serviceCollection.AddHttpClient("groqApi", c => { c.BaseAddress = new Uri("https://api.groq.com/"); c.Timeout = TimeSpan.FromSeconds(30); })
+                .AddHttpMessageHandler(sp =>
+                {
+                    var holder = sp.GetRequiredService<GroqResilienceHolder>();
+                    return new ApiResilienceHandler(holder.Limiter, holder.Pipeline);
+                });
+
+            serviceCollection.AddHttpClient("cerebrasApi", c => { c.BaseAddress = new Uri("https://api.cerebras.ai/"); c.Timeout = TimeSpan.FromSeconds(30); })
+                .AddHttpMessageHandler(sp =>
+                {
+                    var holder = sp.GetRequiredService<CerebrasResilienceHolder>();
+                    return new ApiResilienceHandler(holder.Limiter, holder.Pipeline);
+                });
+
+            serviceCollection.AddHttpClient("geminiApi", c => { c.BaseAddress = new Uri("https://generativelanguage.googleapis.com/"); c.Timeout = TimeSpan.FromSeconds(30); })
+                .AddHttpMessageHandler(sp =>
+                {
+                    var holder = sp.GetRequiredService<GeminiResilienceHolder>();
+                    return new ApiResilienceHandler(holder.Limiter, holder.Pipeline);
+                });
+
+            var provider = serviceCollection.BuildServiceProvider();
+            var meaningCloudSettings = provider.GetService<IOptions<MeaningCloudSettings>>().Value;
+
+            serviceCollection.AddHttpClient("meaninCloudSentimentAnalysisApi", c => { c.BaseAddress = new Uri(meaningCloudSettings.MeaningCloudSentimentHostUrl); c.Timeout = TimeSpan.FromSeconds(30); });
+            serviceCollection.AddHttpClient("meaninCloudLanguageApi", c => { c.BaseAddress = new Uri(meaningCloudSettings.MeaningCloudLanguageHostUrl); c.Timeout = TimeSpan.FromSeconds(30); });
+
+            return serviceCollection;
+        }
+
+        public IServiceCollection AddSqliteDbContext(string connectionString)
+        {
+            serviceCollection.AddDbContext<GrammarNaziContext>(options => options.UseSqlite(connectionString));
+            serviceCollection.AddTransient<DbContext, GrammarNaziContext>();
+
+            return serviceCollection;
+        }
+
+        public IServiceCollection AddSqlServerDbContext(string connectionString)
+        {
+            serviceCollection.AddDbContext<GrammarNaziContext>(options => options.UseSqlServer(connectionString));
+            serviceCollection.AddTransient<DbContext, GrammarNaziContext>();
+
+            return serviceCollection;
+        }
+
+        public void EnsureDatabaseCreated()
+        {
+            using var scope = serviceCollection.BuildServiceProvider().CreateScope();
+            var context = scope.ServiceProvider.GetService<DbContext>();
+            context.Database.EnsureCreated();
+        }
+
+        public IServiceCollection AddDiscordBotCommands()
+        {
+            // All IDiscordBotCommand classes in the current Assembly
+            return AddTransientInstancesOf<IDiscordBotCommand>(serviceCollection);
+        }
+
+        public IServiceCollection AddTelegramBotCommands()
+        {
+            // All ITelegramBotCommand classes in the current Assembly
+            return AddTransientInstancesOf<ITelegramBotCommand>(serviceCollection);
+        }
     }
 
-    public static IServiceCollection AddNamedHttpClients(this IServiceCollection serviceCollection)
+    internal class ApiResilienceHolder(int requestsPerMinute, int maxRetries)
     {
-        serviceCollection.AddHttpClient("datamuseApi", c => { c.BaseAddress = new Uri("https://api.datamuse.com/"); c.Timeout = TimeSpan.FromSeconds(30); });
-        serviceCollection.AddHttpClient("languageToolApi", c => { c.BaseAddress = new Uri("https://languagetool.org/"); c.Timeout = TimeSpan.FromSeconds(30); });
-        serviceCollection.AddHttpClient("yandexSpellerApi", c => { c.BaseAddress = new Uri("https://speller.yandex.net/"); c.Timeout = TimeSpan.FromSeconds(30); });
-        serviceCollection.AddHttpClient("sentimApi", c => { c.BaseAddress = new Uri("https://sentim-api.herokuapp.com/"); c.Timeout = TimeSpan.FromSeconds(30); });
-
-        serviceCollection.AddSingleton<GroqResilienceHolder>();
-        serviceCollection.AddSingleton<CerebrasResilienceHolder>();
-        serviceCollection.AddSingleton<GeminiResilienceHolder>();
-
-        serviceCollection.AddHttpClient("groqApi", c => { c.BaseAddress = new Uri("https://api.groq.com/"); c.Timeout = TimeSpan.FromSeconds(30); })
-            .AddHttpMessageHandler(sp =>
-            {
-                var holder = sp.GetRequiredService<GroqResilienceHolder>();
-                return new ApiResilienceHandler(holder.Limiter, holder.Pipeline);
-            });
-
-        serviceCollection.AddHttpClient("cerebrasApi", c => { c.BaseAddress = new Uri("https://api.cerebras.ai/"); c.Timeout = TimeSpan.FromSeconds(30); })
-            .AddHttpMessageHandler(sp =>
-            {
-                var holder = sp.GetRequiredService<CerebrasResilienceHolder>();
-                return new ApiResilienceHandler(holder.Limiter, holder.Pipeline);
-            });
-
-        serviceCollection.AddHttpClient("geminiApi", c => { c.BaseAddress = new Uri("https://generativelanguage.googleapis.com/"); c.Timeout = TimeSpan.FromSeconds(30); })
-            .AddHttpMessageHandler(sp =>
-            {
-                var holder = sp.GetRequiredService<GeminiResilienceHolder>();
-                return new ApiResilienceHandler(holder.Limiter, holder.Pipeline);
-            });
-
-        var provider = serviceCollection.BuildServiceProvider();
-        var meaningCloudSettings = provider.GetService<IOptions<MeaningCloudSettings>>().Value;
-
-        serviceCollection.AddHttpClient("meaninCloudSentimentAnalysisApi", c => { c.BaseAddress = new Uri(meaningCloudSettings.MeaningCloudSentimentHostUrl); c.Timeout = TimeSpan.FromSeconds(30); });
-        serviceCollection.AddHttpClient("meaninCloudLanguageApi", c => { c.BaseAddress = new Uri(meaningCloudSettings.MeaningCloudLanguageHostUrl); c.Timeout = TimeSpan.FromSeconds(30); });
-
-        return serviceCollection;
+        public SlidingWindowRateLimiter Limiter { get; } = new(requestsPerMinute, TimeSpan.FromMinutes(1));
+        public ResiliencePipeline<HttpResponseMessage> Pipeline { get; } = CreateApiResiliencePipeline(maxRetries);
     }
 
-    internal class GroqResilienceHolder
-    {
-        public SlidingWindowRateLimiter Limiter { get; } = new(Defaults.GroqRequestsPerMinute, TimeSpan.FromMinutes(1));
-        public ResiliencePipeline<HttpResponseMessage> Pipeline { get; } = CreateApiResiliencePipeline(Defaults.GroqMaxRetries);
-    }
-
-    internal class CerebrasResilienceHolder
-    {
-        public SlidingWindowRateLimiter Limiter { get; } = new(Defaults.CerebrasRequestsPerMinute, TimeSpan.FromMinutes(1));
-        public ResiliencePipeline<HttpResponseMessage> Pipeline { get; } = CreateApiResiliencePipeline(Defaults.CerebrasMaxRetries);
-    }
-
-    internal class GeminiResilienceHolder
-    {
-        public SlidingWindowRateLimiter Limiter { get; } = new(Defaults.GeminiRequestsPerMinute, TimeSpan.FromMinutes(1));
-        public ResiliencePipeline<HttpResponseMessage> Pipeline { get; } = CreateApiResiliencePipeline(Defaults.GeminiMaxRetries);
-    }
+    internal class GroqResilienceHolder() : ApiResilienceHolder(Defaults.GroqRequestsPerMinute, Defaults.GroqMaxRetries);
+    internal class CerebrasResilienceHolder() : ApiResilienceHolder(Defaults.CerebrasRequestsPerMinute, Defaults.CerebrasMaxRetries);
+    internal class GeminiResilienceHolder() : ApiResilienceHolder(Defaults.GeminiRequestsPerMinute, Defaults.GeminiMaxRetries);
 
     internal static ResiliencePipeline<HttpResponseMessage> CreateApiResiliencePipeline(int maxRetries)
     {
@@ -94,9 +118,9 @@ public static class ServiceCollectionExtensions
         builder.AddRetry(new RetryStrategyOptions<HttpResponseMessage>
         {
             ShouldHandle = new PredicateBuilder<HttpResponseMessage>()
-                .HandleResult(r => r.StatusCode == HttpStatusCode.ServiceUnavailable
-                                || r.StatusCode == HttpStatusCode.BadGateway
-                                || r.StatusCode == HttpStatusCode.GatewayTimeout)
+                .HandleResult(r => r.StatusCode is HttpStatusCode.ServiceUnavailable
+                                               or HttpStatusCode.BadGateway
+                                               or HttpStatusCode.GatewayTimeout)
                 .Handle<HttpRequestException>(ex => ex.HttpRequestError is HttpRequestError.NameResolutionError
                                                                       or HttpRequestError.ConnectionError
                                                                       or HttpRequestError.ResponseEnded),
@@ -140,7 +164,7 @@ public static class ServiceCollectionExtensions
     internal class SlidingWindowRateLimiter(int permitLimit, TimeSpan window)
     {
         private readonly object _lock = new();
-        private readonly Queue<DateTime> _timestamps = new();
+        private readonly Queue<DateTime> _timestamps = [];
         private readonly int _permitLimit = permitLimit > 0 ? permitLimit : 25;
 
         public bool TryAcquire()
@@ -162,41 +186,6 @@ public static class ServiceCollectionExtensions
                 return true;
             }
         }
-    }
-
-    public static IServiceCollection AddSqliteDbContext(this IServiceCollection serviceCollection, string connectionString)
-    {
-        serviceCollection.AddDbContext<GrammarNaziContext>(options => options.UseSqlite(connectionString));
-        serviceCollection.AddTransient<DbContext, GrammarNaziContext>();
-
-        return serviceCollection;
-    }
-
-    public static IServiceCollection AddSqlServerDbContext(this IServiceCollection serviceCollection, string connectionString)
-    {
-        serviceCollection.AddDbContext<GrammarNaziContext>(options => options.UseSqlServer(connectionString));
-        serviceCollection.AddTransient<DbContext, GrammarNaziContext>();
-
-        return serviceCollection;
-    }
-
-    public static void EnsureDatabaseCreated(this IServiceCollection serviceCollection)
-    {
-        using var scope = serviceCollection.BuildServiceProvider().CreateScope();
-        var context = scope.ServiceProvider.GetService<DbContext>();
-        context.Database.EnsureCreated();
-    }
-
-    public static IServiceCollection AddDiscordBotCommands(this IServiceCollection serviceCollection)
-    {
-        // All IDiscordBotCommand classes in the current Assembly
-        return AddTransientInstancesOf<IDiscordBotCommand>(serviceCollection);
-    }
-
-    public static IServiceCollection AddTelegramBotCommands(this IServiceCollection serviceCollection)
-    {
-        // All ITelegramBotCommand classes in the current Assembly
-        return AddTransientInstancesOf<ITelegramBotCommand>(serviceCollection);
     }
 
     private static IServiceCollection AddTransientInstancesOf<T>(IServiceCollection serviceCollection)

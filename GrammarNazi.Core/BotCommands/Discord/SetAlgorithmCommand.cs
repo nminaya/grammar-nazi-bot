@@ -5,20 +5,12 @@ using GrammarNazi.Domain.Constants;
 using GrammarNazi.Domain.Enums;
 using GrammarNazi.Domain.Services;
 using System.Text;
-using System.Threading.Tasks;
 
 namespace GrammarNazi.Core.BotCommands.Discord;
 
-public class SetAlgorithmCommand : BaseDiscordCommand, IDiscordBotCommand
+public class SetAlgorithmCommand(IDiscordChannelConfigService channelConfigService) : BaseDiscordCommand, IDiscordBotCommand
 {
-    private readonly IDiscordChannelConfigService _channelConfigService;
-
     public string Command => DiscordBotCommands.SetAlgorithm;
-
-    public SetAlgorithmCommand(IDiscordChannelConfigService discordChannelConfigService)
-    {
-        _channelConfigService = discordChannelConfigService;
-    }
 
     public async Task Handle(IMessage message)
     {
@@ -34,7 +26,7 @@ public class SetAlgorithmCommand : BaseDiscordCommand, IDiscordBotCommand
         var parameters = message.Content.Split(" ");
         if (parameters.Length == 1)
         {
-            var channelConfig = await _channelConfigService.GetConfigurationByChannelId(message.Channel.Id);
+            var channelConfig = await channelConfigService.GetConfigurationByChannelId(message.Channel.Id);
 
             messageBuilder.AppendLine($"Parameter not received. Type `{DiscordBotCommands.SetAlgorithm}` <algorithm_numer> to set an algorithm").AppendLine();
             messageBuilder.AppendLine($"Algorithms:");
@@ -45,14 +37,14 @@ public class SetAlgorithmCommand : BaseDiscordCommand, IDiscordBotCommand
 
         bool parsedOk = int.TryParse(parameters[1], out int algorithm);
 
-        if (parsedOk && algorithm.IsAssignableToEnum<GrammarAlgorithms>() && !((GrammarAlgorithms)algorithm).IsDisabled())
+        if (parsedOk && algorithm.IsAssignableToEnum<GrammarAlgorithms>() && !((GrammarAlgorithms)algorithm).IsDisabled)
         {
-            var channelConfig = await _channelConfigService.GetConfigurationByChannelId(message.Channel.Id);
+            var channelConfig = await channelConfigService.GetConfigurationByChannelId(message.Channel.Id);
             channelConfig.GrammarAlgorithm = (GrammarAlgorithms)algorithm;
 
-            await _channelConfigService.Update(channelConfig);
+            await channelConfigService.Update(channelConfig);
 
-            await SendMessage(message, $"Algorithm updated: {channelConfig.GrammarAlgorithm.GetDescription()}", DiscordBotCommands.SetAlgorithm);
+            await SendMessage(message, $"Algorithm updated: {channelConfig.GrammarAlgorithm.Description}", DiscordBotCommands.SetAlgorithm);
             await SendWarningMessageIfLanguageNotSupported(message, DiscordBotCommands.SetAlgorithm, channelConfig.SelectedLanguage, channelConfig.GrammarAlgorithm);
             return;
         }

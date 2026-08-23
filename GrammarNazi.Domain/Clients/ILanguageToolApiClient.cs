@@ -1,5 +1,4 @@
 ﻿using GrammarNazi.Domain.Entities.LanguageToolAPI;
-using System.Threading.Tasks;
 
 namespace GrammarNazi.Domain.Clients;
 
